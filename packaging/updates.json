@@ -1,6 +1,6 @@
 {
-  "version": "0.7.0",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.0-setup.exe",
-  "sha256": "12cf5995cb579dc58a00802f3a8b1482e646bb399c0792ebe47f5edf55958326",
-  "notiz": "Leihgaben des Hosts aus dem Mod-Abdruck, im Format das der Launcher erwartet."
+  "version": "0.7.1",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.1-setup.exe",
+  "sha256": "97fd248131a1a66b969cfd236083b5ea13785e92a272d803ebd20fbb32adfa51",
+  "notiz": "Beitreten verlangt ein frisch gestartetes Spiel; nur so kommen die Kennungen mit."
 }

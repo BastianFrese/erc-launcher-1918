@@ -197,7 +197,13 @@ fn leihgaben_ablegen(
     host: &Fingerprint,
     code: &str,
 ) -> Option<std::path::PathBuf> {
-    let eigen = eigener_abdruck(store, profile, install).ok()?;
+    let eigen = match eigener_abdruck(store, profile, install) {
+        Ok(e) => e,
+        Err(e) => {
+            crate::app_log::note(&format!("lobby: eigener Abdruck nicht lesbar: {e}"));
+            return None;
+        }
+    };
     let leihgaben = fingerprint::host_overrides(&eigen, host);
     if leihgaben.is_empty() {
         crate::app_log::note("lobby: keine Leihgaben noetig");
@@ -725,14 +731,20 @@ mod view {
 
                 // 2) Laeuft das Spiel schon mit dem alten Stand, hilft nur ein Neustart.
                 if spiel_laeuft {
-                    if geaendert {
+                    // Laeuft F1 25 schon, kann der Launcher die Leihgaben des Hosts
+                    // nicht mehr mitgeben - ohne sie lehnt das Spiel den Beitritt mit
+                    // "Die Version der Spiel-Session ist nicht identisch" ab.
+                    {
                         this.update(cx, |s, cx| {
                             s.lobby.arbeitet = false;
                             s.reload_in_background(cx);
-                            s.lobby.meldung = Some(
-                                "Deine Mods wurden an den Host angeglichen. F1 25 laeuft aber                      schon mit dem alten Stand: beende das Spiel, starte es ueber Play neu und                      tritt dann noch einmal bei."
-                                    .to_owned(),
-                            );
+                            s.lobby.meldung = Some(if geaendert {
+                                "Deine Mods wurden an den Host angeglichen. F1 25 laeuft aber                                      schon mit dem alten Stand: beende das Spiel und tritt noch einmal                                      bei - der Launcher startet es dann selbst mit dem Stand des Hosts."
+                                    .to_owned()
+                            } else {
+                                "F1 25 laeuft schon. Damit es mit den Kennungen des Hosts                                      gebaut wird, muss der Launcher es selbst starten: beende das Spiel                                      und tritt noch einmal bei."
+                                    .to_owned()
+                            });
                             cx.notify();
                         })
                         .ok();
