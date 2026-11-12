@@ -238,6 +238,9 @@ mod fenster {
             };
             Some(
                 v_flex()
+                    // Ohne occlude zieht die Titelleiste den Klick als
+                    // Fensterziehen ab, und der Knopf tut nichts.
+                    .occlude()
                     .flex_shrink_0()
                     .gap(px(4.))
                     .pb(px(4.))
@@ -278,6 +281,7 @@ mod fenster {
             let Some(angebot) = self.aktualisierung.angebot().cloned() else {
                 return;
             };
+            crate::app_log::note(&format!("aktualisieren: Klick auf {}", angebot.version));
             self.aktualisierung_laeuft = true;
             self.aktualisierung_meldung = None;
             cx.notify();

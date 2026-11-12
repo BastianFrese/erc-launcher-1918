@@ -1,6 +1,6 @@
 {
-  "version": "0.6.3",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.3-setup.exe",
-  "sha256": "dce159f68e20b3b45001fe74c0458cd12a3327b43821c8896f517045a03c8720",
-  "notiz": "Angleichen sagt jetzt, dass F1 25 neu gestartet werden muss."
+  "version": "0.6.4",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.4-setup.exe",
+  "sha256": "58903633cd35c01754356a4c262732063687a95dc6460aaf0b38cb01a914f656",
+  "notiz": "Der Knopf zum Aktualisieren reagiert jetzt."
 }

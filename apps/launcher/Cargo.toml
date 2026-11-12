@@ -2,7 +2,7 @@
 name = "erc-launcher"
 # Der Launcher zaehlt eigen: 0.6.0. Der Unterbau bleibt auf seiner Fassung,
 # an der die Addons ihre Mindestfassung messen.
-version = "0.6.3"
+version = "0.6.4"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
