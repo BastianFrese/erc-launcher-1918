@@ -1,6 +1,6 @@
 {
-  "version": "0.6.4",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.4-setup.exe",
-  "sha256": "58903633cd35c01754356a4c262732063687a95dc6460aaf0b38cb01a914f656",
-  "notiz": "Der Knopf zum Aktualisieren reagiert jetzt."
+  "version": "0.6.5",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.5-setup.exe",
+  "sha256": "d6bd2f3ea5cab6d79a3dfd636d9a044e66b8a1abbbb4484e1e6d1a22e14af068",
+  "notiz": "Beitreten gleicht an, startet F1 25 selbst und fuehrt in die Lobby."
 }

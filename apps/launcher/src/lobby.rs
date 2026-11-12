@@ -265,6 +265,15 @@ fn starten(
     Ok(sitzung)
 }
 
+/// Was der Gast in der Hand haelt, zwischen Angleichen und Spielstart.
+pub struct Vorbereitung {
+    pub code: String,
+    ich: u8,
+    transport: Arc<RelayUdp>,
+    abdruck: Option<String>,
+    pub anpassungen: Vec<String>,
+}
+
 impl Sitzung {
     /// Einen Raum aufmachen: Code ziehen, Bruecke starten, das Spiel hosten lassen.
     pub fn hosten(
@@ -294,18 +303,16 @@ impl Sitzung {
         )
     }
 
-    /// Einem Raum ueber seinen Code beitreten. Vorher wird der Mod-Stand des
-    /// Hosts geholt und angeglichen: fehlende Mods kommen dazu, eigene, die der
-    /// Host nicht faehrt, gehen aus.
-    pub fn beitreten(
-        spielordner: &Path,
+    /// Der erste Teil eines Beitritts, bevor das Spiel laeuft: Raumcode, Verbindung
+    /// zum Relay, Mod-Stand des Hosts holen und angleichen. Danach steht das Profil
+    /// auf dem Stand des Hosts — das Spiel muss diesen Stand beim Start lesen.
+    pub fn vorbereiten(
+        code: &str,
         store: &Store,
         profile: &mut Profile,
         install: &Install,
         katalog: &[Addon],
-        code: &str,
-        name: &str,
-    ) -> Result<Self, String> {
+    ) -> Result<Vorbereitung, String> {
         let code = code.trim().to_uppercase();
         room_bytes(&code).map_err(|e| e.to_string())?;
         let ich = freie_nummer();
@@ -313,16 +320,14 @@ impl Sitzung {
             RelayUdp::new(relay(), &code, ich).map_err(|e| format!("Kein Platz im Raum: {e}"))?,
         );
         transport.announce();
-        let des_hosts = transport
+        let abdruck = transport
             .wait_for_host_abdruck(Duration::from_secs(8))
             .map_err(|_| {
                 format!(
-                    "Der Host hat den Raum {code} nicht beschrieben. Stimmt der Code - \
-                     und laeuft drueben der Launcher?"
+                    "Der Host hat den Raum {code} nicht beschrieben. Stimmt der Code -                      und laeuft drueben der Launcher?"
                 )
             })?;
 
-        // Den vollen Mod-Stand holen und angleichen.
         let mut anpassungen = Vec::new();
         let roh = transport
             .hole_abdruck(Duration::from_secs(15))
@@ -338,41 +343,45 @@ impl Sitzung {
             }
             if !ergebnis.gelungen() {
                 return Err(format!(
-                    "Die Mods passen noch nicht:\n\n{}\n\nDer Beitritt unterbleibt, \
-                     sonst stuerzt die Lobby beim Start ab.",
-                    ergebnis.offen.join("\n")
-                ));
-            }
-            // Die Mods sind jetzt gleich - das laufende Spiel kennt sie aber nicht.
-            // Ohne Neustart treffen zwei verschiedene Mod-Staende in der Lobby
-            // aufeinander, und F1 25 bricht mit "Die Version der Spiel-Session ist
-            // nicht identisch" ab.
-            if !ergebnis.getan.is_empty() {
-                return Err(format!(
-                    "Deine Mods wurden an den Host angeglichen:
+                    "Die Mods passen noch nicht:
 
 {}
 
-                     F1 25 laeuft aber schon mit dem alten Stand. Beende das Spiel,                      starte es ueber Play neu und tritt dann noch einmal bei.",
-                    ergebnis.getan.join("
+Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Start ab.",
+                    ergebnis.offen.join("
 ")
                 ));
             }
             anpassungen = ergebnis.getan;
         }
-
-        let mut sitzung = starten(
-            spielordner,
+        Ok(Vorbereitung {
             code,
             ich,
+            transport,
+            abdruck,
+            anpassungen,
+        })
+    }
+
+    /// Der zweite Teil: das Spiel konfigurieren und beitreten. Laeuft, wenn das Spiel
+    /// im Hauptmenue steht.
+    pub fn beitreten(
+        vorbereitung: Vorbereitung,
+        spielordner: &Path,
+        name: &str,
+    ) -> Result<Self, String> {
+        let mut sitzung = starten(
+            spielordner,
+            vorbereitung.code,
+            vorbereitung.ich,
             false,
             name,
             Category::F12026,
             vec![HOST_MEMBER],
-            transport,
-            des_hosts,
+            vorbereitung.transport,
+            vorbereitung.abdruck,
         )?;
-        sitzung.anpassungen = anpassungen;
+        sitzung.anpassungen = vorbereitung.anpassungen;
         Ok(sitzung)
     }
 
@@ -582,7 +591,8 @@ mod view {
             .detach();
         }
 
-        /// Einem Raum beitreten.
+        /// Einem Raum beitreten. Ist das Spiel zu, werden erst die Mods angeglichen,
+        /// dann wird F1 25 gestartet, auf das Hauptmenue gewartet und beigetreten.
         pub(crate) fn lobby_beitreten(&mut self, cx: &mut Context<Self>) {
             if self.lobby.beschaeftigt() {
                 return;
@@ -615,34 +625,99 @@ mod view {
                 return;
             }
             let name = self.lobby.name.read(cx).value().trim().to_owned();
+            let spiel_laeuft = !self.processes.is_empty();
             self.lobby.arbeitet = true;
-            self.lobby.meldung = None;
+            self.lobby.meldung = Some("Mods werden angeglichen ...".to_owned());
+            cx.notify();
             cx.spawn(async move |this, cx| {
-                let ergebnis = cx
+                // 1) Angleichen, ohne dass das Spiel laeuft.
+                let ordner = spielordner.clone();
+                let vor = cx
                     .background_executor()
                     .spawn(async move {
-                        Sitzung::beitreten(
-                            std::path::Path::new(&spielordner),
-                            &store,
-                            &mut profile,
-                            &install,
-                            &katalog,
-                            &code,
-                            &name,
-                        )
+                        Sitzung::vorbereiten(&code, &store, &mut profile, &install, &katalog)
                     })
+                    .await;
+                let vor = match vor {
+                    Ok(v) => v,
+                    Err(e) => {
+                        this.update(cx, |s, cx| {
+                            s.lobby.arbeitet = false;
+                            s.lobby.meldung = Some(e);
+                            cx.notify();
+                        })
+                        .ok();
+                        return;
+                    }
+                };
+                let geaendert = !vor.anpassungen.is_empty();
+
+                // 2) Laeuft das Spiel schon mit dem alten Stand, hilft nur ein Neustart.
+                if spiel_laeuft {
+                    if geaendert {
+                        this.update(cx, |s, cx| {
+                            s.lobby.arbeitet = false;
+                            s.reload_in_background(cx);
+                            s.lobby.meldung = Some(
+                                "Deine Mods wurden an den Host angeglichen. F1 25 laeuft aber                      schon mit dem alten Stand: beende das Spiel, starte es ueber Play neu und                      tritt dann noch einmal bei."
+                                    .to_owned(),
+                            );
+                            cx.notify();
+                        })
+                        .ok();
+                        return;
+                    }
+                } else {
+                    // 3) Spiel starten und aufs Hauptmenue warten.
+                    let gestartet = this.update(cx, |s, cx| {
+                        if geaendert {
+                            s.reload_in_background(cx);
+                        }
+                        let ok = s.spiel_fuer_lobby_starten(cx);
+                        if let Err(e) = &ok {
+                            s.lobby.arbeitet = false;
+                            s.lobby.meldung = Some(e.clone());
+                        } else {
+                            s.lobby.meldung = Some("F1 25 startet ...".to_owned());
+                        }
+                        cx.notify();
+                        ok.is_ok()
+                    });
+                    if !matches!(gestartet, Ok(true)) {
+                        return;
+                    }
+                    let bis = std::time::Instant::now() + std::time::Duration::from_secs(420);
+                    let bereit = cx
+                        .background_executor()
+                        .spawn(async move { warte_auf_hauptmenue(Path::new(&ordner), bis) })
+                        .await;
+                    if !bereit {
+                        this.update(cx, |s, cx| {
+                            s.lobby.arbeitet = false;
+                            s.lobby.meldung = Some(
+                                "F1 25 ist nicht bis ins Hauptmenue gekommen. Sieh in der                                  Konsole nach, was zuletzt passiert ist."
+                                    .to_owned(),
+                            );
+                            cx.notify();
+                        })
+                        .ok();
+                        return;
+                    }
+                }
+
+                // 4) Beitreten.
+                let ordner = spielordner.clone();
+                let ergebnis = cx
+                    .background_executor()
+                    .spawn(async move { Sitzung::beitreten(vor, Path::new(&ordner), &name) })
                     .await;
                 this.update(cx, |s, cx| {
                     s.lobby.arbeitet = false;
                     match ergebnis {
                         Ok(sitzung) => {
-                            let geaendert = !sitzung.anpassungen.is_empty();
                             s.lobby.sitzung = Some(sitzung);
                             s.lobby.meldung = None;
-                            if geaendert {
-                                // Das Profil hat sich geaendert: Addons und Schalter neu lesen.
-                                s.reload_in_background(cx);
-                            }
+                            s.fetch_lobbys(cx);
                         }
                         Err(e) => s.lobby.meldung = Some(e),
                     }
@@ -921,6 +996,26 @@ mod view {
         }
 
         /// Die Spielkopie, deren Mod-Stand in den Abdruck geht.
+        /// F1 25 so starten, wie es der Beitritt braucht: mit armiertem Netplay.
+        fn spiel_fuer_lobby_starten(&mut self, cx: &mut Context<Self>) -> Result<(), String> {
+            let install = self
+                .install_fuer_lobby()
+                .ok_or_else(|| "F1 25 wurde nicht gefunden.".to_owned())?;
+            let launch = crate::game::Launch::start(
+                &self.store,
+                &self.library.profile.name,
+                &install,
+                self.launch_mode(),
+                Some(swofty_core::multiplayer::bridge::ARMED),
+                None,
+                None,
+                false,
+            )?;
+            self.launch = Some(launch);
+            let _ = cx;
+            Ok(())
+        }
+
         fn install_fuer_lobby(&self) -> Option<Install> {
             self.install.clone().or_else(|| self.copies.first().cloned())
         }
@@ -933,6 +1028,20 @@ mod view {
                 .or_else(|| self.copies.first().map(|c| c.dir.clone()))
                 .map(|p| p.to_string_lossy().into_owned())
         }
+    }
+
+    /// Wartet, bis das Spiel im Hauptmenue steht und auf Befehle hoert.
+    fn warte_auf_hauptmenue(ordner: &std::path::Path, bis: std::time::Instant) -> bool {
+        use swofty_core::multiplayer::game::{self, Command, Screen};
+        while std::time::Instant::now() < bis {
+            if let Ok(reply) = game::send(ordner, &Command::Status, Duration::from_secs(2))
+                && reply.status.screen == Screen::MainMenu
+            {
+                return true;
+            }
+            std::thread::sleep(Duration::from_secs(3));
+        }
+        false
     }
 
     fn raum_karte(raum: &Raum, p: Palette) -> AnyElement {

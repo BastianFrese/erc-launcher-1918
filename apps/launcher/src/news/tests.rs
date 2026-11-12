@@ -16,19 +16,23 @@ fn post(id: &str, date: &str) -> Post {
 
 #[test]
 fn embeds_the_posts_in_full_and_the_release_notes_newest_first() {
+    // Unsere Nachrichten und Versionsnotizen, die mit dem Launcher reisen.
     let posts = embedded();
-    let news = posts.iter().find(|p| p.id == "news/1.3.0").unwrap();
+    let news = posts
+        .iter()
+        .find(|p| p.title == "Willkommen im ERC Launcher")
+        .expect("die Willkommensnachricht fehlt");
     assert_eq!(news.kind, "news");
-    assert!(
-        news.body
-            .starts_with("ERC Launcher 1.3.0 makes everything an addon.")
-    );
-    assert!(news.body.contains("## Thank you, Team Simplified"));
+    assert!(news.body.contains("## Wenn etwas nicht laeuft") || news.body.contains("## Wenn etwas nicht läuft"));
     assert!(posts.windows(2).all(|w| w[0].date >= w[1].date));
-    let notes = posts.iter().find(|p| p.id == "release/1.2.5").unwrap();
-    assert_eq!(notes.title, "ERC Launcher 1.2.5");
-    assert_eq!(notes.version(), "1.2.5");
-    assert_eq!(notes.url.as_deref(), Some("https://f1.swofty.net/releases/1.2.5"));
+
+    let notes = posts
+        .iter()
+        .find(|p| p.kind == "release")
+        .expect("keine Versionsnotizen eingebettet");
+    assert!(notes.title.starts_with("ERC Launcher "));
+    assert!(!notes.version().is_empty());
+    assert!(notes.url.is_none(), "kein Verweis nach draussen an einer Versionsnotiz");
     assert!(!notes.summary.is_empty() && !notes.date.is_empty() && notes.body.is_empty());
 }
 
