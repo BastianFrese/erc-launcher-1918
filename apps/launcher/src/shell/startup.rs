@@ -24,6 +24,7 @@ impl Prepared {
         crate::app_log::step("opening the store");
         swofty_core::store::set_warning_sink(crate::app_log::note);
         let store = Store::open_default().with_builtins(swofty_builtins::all());
+        mitgelieferte_addons(&store);
         let migrated = store.migrate();
         crate::app_log::step("store migrated");
         swofty_core::multiplayer::diag::open(&store.root);
@@ -427,4 +428,47 @@ impl Shell {
             .detach();
         }
     }
+}
+
+/// Addons, die mit dem Launcher kommen (Ordner `addons` neben der .exe), in den
+/// Datenordner uebernehmen, falls sie dort fehlen. So hat jeder Fahrer die Mods
+/// der Liga, ohne sie von Hand zu holen; eingeschaltet werden sie beim Angleichen
+/// vor dem Beitritt, wenn der Host sie faehrt.
+fn mitgelieferte_addons(store: &Store) {
+    let Some(quelle) = std::env::current_exe()
+        .ok()
+        .and_then(|e| Some(e.parent()?.join("addons")))
+    else {
+        return;
+    };
+    let ziel = store.addons_dir();
+    let Ok(eintraege) = std::fs::read_dir(&quelle) else {
+        return;
+    };
+    for eintrag in eintraege.flatten() {
+        let pfad = eintrag.path();
+        if !pfad.is_dir() || ziel.join(eintrag.file_name()).exists() {
+            continue;
+        }
+        if let Err(e) = kopiere_ordner(&pfad, &ziel.join(eintrag.file_name())) {
+            crate::app_log::note(&format!(
+                "mitgeliefertes Addon {} liess sich nicht uebernehmen: {e}",
+                eintrag.file_name().to_string_lossy()
+            ));
+        }
+    }
+}
+
+fn kopiere_ordner(von: &std::path::Path, nach: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(nach)?;
+    for eintrag in std::fs::read_dir(von)? {
+        let eintrag = eintrag?;
+        let ziel = nach.join(eintrag.file_name());
+        if eintrag.file_type()?.is_dir() {
+            kopiere_ordner(&eintrag.path(), &ziel)?;
+        } else {
+            std::fs::copy(eintrag.path(), ziel)?;
+        }
+    }
+    Ok(())
 }

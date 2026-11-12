@@ -1,6 +1,6 @@
 {
-  "version": "0.6.0",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.0-setup.exe",
-  "sha256": "be034c76eb2c103c939c66c807a13c0ef72e00175ea947cac3b1ead54635e74e",
-  "notiz": "Neue Grundlage: mehr Bilder pro Sekunde, Lobbys wie gehabt."
+  "version": "0.6.1",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.1-setup.exe",
+  "sha256": "06240e4b375d960d2e643f38c738334a2d96a1ab900d277efd013f73a695b1aa",
+  "notiz": "Die ERC-Liga-Mod kommt jetzt mit dem Launcher."
 }
