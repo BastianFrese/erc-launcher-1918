@@ -122,6 +122,27 @@ fn forget(data_dir: &Path) {
     let _ = std::fs::remove_file(session_path(data_dir));
 }
 
+/// A token for the room server, which has no accounts: one fixed value per installation, made once
+/// and kept next to the sign-in. It only has to stay the same, so the server keeps telling players
+/// apart between launches.
+pub fn local_token(data_dir: &Path) -> std::io::Result<String> {
+    let path = data_dir.join("multiplayer").join("guest-token");
+    if let Ok(text) = std::fs::read_to_string(&path) {
+        let text = text.trim();
+        if text.len() >= 16 && text.bytes().all(|b| b.is_ascii_alphanumeric()) {
+            return Ok(text.to_owned());
+        }
+    }
+    let mut raw = [0u8; 16];
+    getrandom(&mut raw);
+    let token: String = raw.iter().map(|b| format!("{b:02x}")).collect();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(&path, &token)?;
+    Ok(token)
+}
+
 fn query_pairs(request_line: &str) -> Vec<(String, String)> {
     let path = request_line.split_whitespace().nth(1).unwrap_or("");
     let query = path.split_once('?').map(|(_, q)| q).unwrap_or("");
@@ -460,6 +481,19 @@ mod tests {
             avatar_link(None, Some("https://cdn.discordapp.com/a.png")).as_deref(),
             Some("https://cdn.discordapp.com/a.png")
         );
+    }
+
+    #[test]
+    fn the_local_token_is_made_once_and_kept() {
+        let dir = std::env::temp_dir().join(format!("swofty-mpauth-token-{}", std::process::id()));
+        std::fs::remove_dir_all(&dir).ok();
+        let first = local_token(&dir).unwrap();
+        assert_eq!(first.len(), 32);
+        assert!(first.bytes().all(|b| b.is_ascii_hexdigit()));
+        assert_eq!(local_token(&dir).unwrap(), first, "the same token on the next launch");
+        std::fs::write(dir.join("multiplayer").join("guest-token"), "kaputt").unwrap();
+        let fresh = local_token(&dir).unwrap();
+        assert_ne!(fresh, "kaputt", "a broken file is replaced");
     }
 
     #[test]

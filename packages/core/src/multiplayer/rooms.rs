@@ -22,6 +22,8 @@ const LEAVE_TIMEOUT: Duration = Duration::from_secs(3);
 pub struct Api {
     server: String,
     token: String,
+    /// The name this player is listed under, for a server without accounts.
+    name: Option<String>,
 }
 
 impl fmt::Debug for Api {
@@ -359,7 +361,15 @@ impl Api {
         Self {
             server: server.trim().trim_end_matches('/').to_owned(),
             token: token.to_owned(),
+            name: None,
         }
+    }
+
+    /// The name to list this player under, sent as `X-ERC-Name`. A server without accounts has no
+    /// other way to tell players apart.
+    pub fn with_name(mut self, name: &str) -> Self {
+        self.name = Some(header_name(name));
+        self
     }
 
     pub fn server(&self) -> &str {
@@ -462,9 +472,11 @@ impl Api {
         }
         let url = format!("{}{path}", self.server);
         let auth = format!("Bearer {}", self.token);
+        let name = self.name.clone().unwrap_or_default();
         let sent = match body {
             Some(body) => ureq::post(&url)
                 .header("Authorization", &auth)
+                .header("X-ERC-Name", &name)
                 .header("User-Agent", "swofty-launcher")
                 .header("Content-Type", "application/json")
                 .config()
@@ -477,6 +489,7 @@ impl Api {
                 debug_assert_eq!(method, "GET");
                 ureq::get(&url)
                     .header("Authorization", &auth)
+                    .header("X-ERC-Name", &name)
                     .header("User-Agent", "swofty-launcher")
                     .config()
                     .timeout_global(Some(timeout))
@@ -510,6 +523,20 @@ impl Api {
 #[derive(Deserialize)]
 struct Wrapped {
     lobby: Lobby,
+}
+
+/// A player's name as a header value: ASCII only, everything else percent-encoded so a name with
+/// an umlaut still reaches the server.
+fn header_name(name: &str) -> String {
+    let mut out = String::new();
+    for b in name.trim().bytes() {
+        if b.is_ascii_alphanumeric() || matches!(b, b' ' | b'-' | b'_' | b'.') {
+            out.push(char::from(b));
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out.chars().take(96).collect()
 }
 
 /// An invite code as a path segment: letters, digits and dashes only.

@@ -70,6 +70,14 @@ pub fn default_relay() -> String {
         .unwrap_or_else(|| DEFAULT_RELAY.to_owned())
 }
 
+/// [`default_relay`] with its name resolved, for [`super::session::Relay::Own`].
+pub fn default_relay_addr() -> io::Result<SocketAddr> {
+    default_relay()
+        .to_socket_addrs()?
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "the relay has no address"))
+}
+
 pub struct RelayUdp {
     socket: UdpSocket,
     relay: SocketAddr,

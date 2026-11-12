@@ -21,7 +21,7 @@ use swofty_core::multiplayer::game::{self as mp_game, Command, GameStatus, Scree
 use swofty_core::multiplayer::progress::{self, MemberStage, Problem, Progress, Step};
 use swofty_core::multiplayer::rooms::{Api, RoomAddon, RoomSettings, RoomSummary};
 use swofty_core::multiplayer::session::{
-    Local, MemberState, Phase, RoomContent, Session, SessionState, Setup,
+    Local, MemberState, Phase, Relay, RoomContent, Session, SessionState, Setup,
 };
 use swofty_core::store::Store;
 use swofty_i18n::{tr, trn};
@@ -37,6 +37,18 @@ const STATUS_TIMEOUT: Duration = Duration::from_secs(3);
 const MIN_PLAYERS: u8 = 2;
 const MAX_PLAYERS: u8 = 24;
 const AVATARS_DIR: &str = "avatars";
+
+/// Our room server: it hands out room codes, keys and member numbers, and nothing else. The
+/// packets go through the relay (`ERC_RELAY` / `f1.erdi-erc.de:35501`).
+pub(crate) const ROOM_SERVER: &str = "https://raum.erdi-erc.de";
+
+/// The room server's address, `ERC_RAUM` overriding it for a server next to you.
+pub(crate) fn room_server() -> String {
+    std::env::var("ERC_RAUM")
+        .ok()
+        .filter(|v| !v.trim().is_empty())
+        .unwrap_or_else(|| ROOM_SERVER.to_owned())
+}
 
 /// Where the game is, in the page header.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -413,8 +425,25 @@ fn due(at: Option<Instant>, every: Duration, now: Instant) -> bool {
 }
 
 impl Shell {
+    /// Multiplayer needs no account: without a sign-in the room server still takes this player,
+    /// under the fixed local token. A sign-in that was refused still closes it.
     pub(crate) fn mp_allowed(&self) -> bool {
-        self.mp.as_ref().is_some_and(|m| m.allowed)
+        self.mp.as_ref().is_none_or(|m| m.allowed)
+    }
+
+    /// The token the room server sees: the sign-in's when there is one, else this installation's
+    /// fixed one.
+    pub(crate) fn mp_token(&self) -> Option<String> {
+        if let Some(mp) = &self.mp {
+            return Some(mp.token.clone());
+        }
+        match swofty_core::mpauth::local_token(&self.store.root) {
+            Ok(token) => Some(token),
+            Err(e) => {
+                diag::line(format!("room server: couldn't make the local token: {e}"));
+                None
+            }
+        }
     }
 
     pub(crate) fn watch_multiplayer(window: &mut Window, cx: &mut Context<Self>) {
@@ -760,14 +789,15 @@ impl Shell {
     }
 
     fn mp_poll_rooms(&mut self, cx: &mut Context<Self>) {
-        let Some(token) = self.mp.as_ref().map(|m| m.token.clone()) else {
+        let Some(token) = self.mp_token() else {
             return;
         };
+        let server = room_server();
         self.mp_page.rooms_polling = true;
         cx.spawn(async move |this, cx| {
             let result = cx
                 .background_executor()
-                .spawn(async move { Api::new(&token).rooms() })
+                .spawn(async move { Api::with_server(&server, &token).rooms() })
                 .await;
             this.update(cx, |s, cx| {
                 let m = &mut s.mp_page;
@@ -824,7 +854,7 @@ impl Shell {
         if self.mp_page.busy() {
             return;
         }
-        let Some(token) = self.mp.as_ref().map(|m| m.token.clone()) else {
+        let Some(token) = self.mp_token() else {
             return;
         };
         let Some(dir) = self.install.as_ref().map(|i| i.dir.clone()) else {
@@ -833,6 +863,7 @@ impl Shell {
             return;
         };
         let (store, profile) = (self.store.clone(), self.library.profile.name.clone());
+        let (server, player) = (room_server(), self.library.profile.name.clone());
         let m = &mut self.mp_page;
         m.starting = Some(match &start {
             Start::Create(_) => "create".into(),
@@ -846,7 +877,11 @@ impl Shell {
                     let local = read_local(&store, &profile, &dir).inspect_err(|e| {
                         diag::line(format!("session not started: couldn't read the addons: {e}"));
                     })?;
-                    let mut setup = Setup::new(Api::new(&token), &dir, local);
+                    let relay = swofty_core::multiplayer::relay::default_relay_addr()
+                        .map_err(|e| format!("the relay has no address: {e}"))?;
+                    let api = Api::with_server(&server, &token).with_name(&player);
+                    let mut setup = Setup::new(api, &dir, local);
+                    setup.relay = Relay::Own(relay);
                     setup.room_launch = true;
                     let (refresh_store, refresh_profile, refresh_dir) =
                         (store.clone(), profile.clone(), dir.clone());
@@ -895,7 +930,7 @@ impl Shell {
     }
 
     fn mp_default_name(&self) -> String {
-        let you = self.mp.as_ref().map_or("Your", |m| m.name.as_str());
+        let you = self.mp.as_ref().map_or(&self.library.profile.name, |m| &m.name);
         format!("{you}'s room")
     }
 

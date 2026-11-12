@@ -24,6 +24,7 @@ use zeroize::Zeroize;
 use super::bridge::{self, Bridge, BridgeConfig, MemberStats, Stats};
 use super::diag;
 use super::direct::DirectUdp;
+use super::relay::RelayUdp;
 use super::fingerprint::{self, Fingerprint, Mismatch, MismatchKind};
 use super::game::{self, Category, Command, GameStatus, Screen};
 use super::progress::{self, MemberStage, NEEDS_F1_2026, OPENS_LOBBY};
@@ -136,6 +137,9 @@ pub enum Relay {
     /// Plain UDP on this address, announced as the relay: for tests and a server on this machine
     /// without TURN.
     Direct(SocketAddr),
+    /// Our own relay at this address: every member sends to it and it fans out to the room, so
+    /// nobody needs an open port and no TURN account is involved.
+    Own(SocketAddr),
 }
 
 /// This player's fingerprint, the blob the lobby shows the others, and the Addon Browser listing
@@ -638,6 +642,7 @@ impl Session {
             match setup.relay {
                 Relay::Turn => "turn".to_owned(),
                 Relay::Direct(a) => format!("direct {a}"),
+                Relay::Own(a) => format!("own {a}"),
             },
             diag::digest_prefix(&setup.local.digest()),
         ));
@@ -750,6 +755,7 @@ enum Halt {
 enum RelayLink {
     Turn(Arc<TurnTransport>),
     Direct(Arc<DirectUdp>),
+    Own(Arc<RelayUdp>),
 }
 
 impl RelayLink {
@@ -757,13 +763,14 @@ impl RelayLink {
         match self {
             RelayLink::Turn(t) => t.clone(),
             RelayLink::Direct(d) => d.clone(),
+            RelayLink::Own(o) => o.clone(),
         }
     }
 
     fn needs_reconnect(&self) -> bool {
         match self {
             RelayLink::Turn(t) => t.needs_reconnect(),
-            RelayLink::Direct(_) => false,
+            RelayLink::Direct(_) | RelayLink::Own(_) => false,
         }
     }
 }
@@ -1382,6 +1389,19 @@ impl Worker {
             Relay::Direct(addr) => DirectUdp::bind(addr)
                 .map(|d| RelayLink::Direct(Arc::new(d)))
                 .map_err(|e| Halt::Fail(format!("couldn't bind {addr}: {e}"))),
+            Relay::Own(addr) => {
+                let code = self
+                    .code
+                    .clone()
+                    .ok_or_else(|| Halt::Fail("no room code for the relay".into()))?;
+                let me = self
+                    .self_number()
+                    .ok_or_else(|| Halt::Retry("waiting for this player's number".into(), RELAY_BACKOFF))?;
+                diag::line(format!("relay: joining room {code} as member {me} at {addr}"));
+                RelayUdp::new(addr, &code, me)
+                    .map(|r| RelayLink::Own(Arc::new(r)))
+                    .map_err(|e| Halt::Fail(format!("couldn't reach the relay at {addr}: {e}")))
+            }
             Relay::Turn => {
                 let creds = self.setup.api.turn().map_err(|e| {
                     diag::line(format!("server: TURN credentials refused: {e}"));
