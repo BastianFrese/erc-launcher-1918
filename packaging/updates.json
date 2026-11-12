@@ -1,6 +1,6 @@
 {
-  "version": "0.6.9",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.9-setup.exe",
-  "sha256": "56d35105bcc6fdbeb60a67cb5c8c34ce3840e145d69957b6463ea11ee31447fa",
-  "notiz": "Kennungen lagen im Datenordner, nicht im Spielordner - jetzt richtig."
+  "version": "0.7.0",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.0-setup.exe",
+  "sha256": "12cf5995cb579dc58a00802f3a8b1482e646bb399c0792ebe47f5edf55958326",
+  "notiz": "Leihgaben des Hosts aus dem Mod-Abdruck, im Format das der Launcher erwartet."
 }

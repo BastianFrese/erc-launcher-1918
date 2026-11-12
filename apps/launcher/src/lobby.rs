@@ -188,6 +188,44 @@ fn eigener_abdruck(
         .map_err(|e| format!("Der Mod-Stand ließ sich nicht lesen: {e}"))
 }
 
+/// Bildet die Leihgaben des Hosts (Kennungen, Reihenfolge, Optionen) aus dem Abdruck
+/// und legt sie als Datei ab, mit der das Gast-Spiel gebaut wird.
+fn leihgaben_ablegen(
+    store: &Store,
+    profile: &Profile,
+    install: &Install,
+    host: &Fingerprint,
+    code: &str,
+) -> Option<std::path::PathBuf> {
+    let eigen = eigener_abdruck(store, profile, install).ok()?;
+    let leihgaben = fingerprint::host_overrides(&eigen, host);
+    if leihgaben.is_empty() {
+        crate::app_log::note("lobby: keine Leihgaben noetig");
+        return None;
+    }
+    let bytes = match serde_json::to_vec(&leihgaben) {
+        Ok(b) => b,
+        Err(e) => {
+            crate::app_log::note(&format!("lobby: Leihgaben nicht schreibbar: {e}"));
+            return None;
+        }
+    };
+    let pfad = std::env::temp_dir().join(format!("erc-row-ids-{code}.json"));
+    match std::fs::write(&pfad, &bytes) {
+        Ok(()) => {
+            crate::app_log::note(&format!(
+                "lobby: Leihgaben des Hosts abgelegt ({} Bytes)",
+                bytes.len()
+            ));
+            Some(pfad)
+        }
+        Err(e) => {
+            crate::app_log::note(&format!("lobby: Leihgaben nicht ablegbar: {e}"));
+            None
+        }
+    }
+}
+
 fn starten(
     spielordner: &Path,
     code: String,
@@ -198,7 +236,6 @@ fn starten(
     bekannte: Vec<u8>,
     transport: Arc<RelayUdp>,
     abdruck: Option<String>,
-    ids: Option<Vec<u8>>,
 ) -> Result<Sitzung, String> {
     let game_port = NetplayStatus::read(spielordner)
         .map(|s| s.game_port)
@@ -252,11 +289,6 @@ fn starten(
             "Das Spiel konnte den Raum nicht öffnen: {e}. Steht es im Hauptmenü?"
         )
     })?;
-
-    if host {
-        // Der Host leiht seine Inhalts-Kennungen: der Gast baut damit dieselbe Session.
-        transport.set_ids(ids);
-    }
 
     let mut mitglieder = BTreeSet::from([ich]);
     mitglieder.extend(bekannte);
@@ -328,7 +360,6 @@ impl Sitzung {
             Vec::new(),
             transport,
             abdruck.map(|f| f.digest),
-            ids,
         )
     }
 
@@ -358,6 +389,7 @@ impl Sitzung {
             })?;
 
         let mut anpassungen = Vec::new();
+        let mut row_ids = None;
         let roh = transport
             .hole_abdruck(Duration::from_secs(15))
             .map_err(|e| format!("Der Mod-Stand des Hosts kam nicht an: {e}"))?;
@@ -381,35 +413,11 @@ Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Star
 ")
                 ));
             }
+            // Was der Host leiht, steht in seinem Abdruck. Ohne diese Leihgaben baut
+            // das Spiel eine andere Session und lehnt den Beitritt ab.
+            row_ids = leihgaben_ablegen(store, profile, install, &host, &code);
             anpassungen = ergebnis.getan;
         }
-        // Die Inhalts-Kennungen des Hosts holen: ohne sie baut das Spiel eine
-        // andere Session und lehnt den Beitritt ab.
-        let row_ids = match transport.hole_ids(Duration::from_secs(10)) {
-            Ok(Some(bytes)) if !bytes.is_empty() => {
-                crate::app_log::note(&format!(
-                    "lobby: Inhalts-Kennungen des Hosts erhalten ({} Bytes)",
-                    bytes.len()
-                ));
-                let pfad = std::env::temp_dir().join(format!("erc-row-ids-{code}.json"));
-                match std::fs::write(&pfad, &bytes) {
-                    Ok(()) => Some(pfad),
-                    Err(e) => {
-                        return Err(format!(
-                            "Die Kennungen des Hosts liessen sich nicht ablegen: {e}"
-                        ))
-                    }
-                }
-            }
-            Ok(_) => {
-                crate::app_log::note("lobby: der Host hat keine Inhalts-Kennungen");
-                None
-            }
-            Err(e) => {
-                crate::app_log::note(&format!("lobby: Kennungen kamen nicht an: {e}"));
-                None
-            }
-        };
 
         Ok(Vorbereitung {
             code,
@@ -438,7 +446,6 @@ Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Star
             vec![HOST_MEMBER],
             vorbereitung.transport,
             vorbereitung.abdruck,
-            None,
         )?;
         sitzung.anpassungen = vorbereitung.anpassungen;
         Ok(sitzung)
