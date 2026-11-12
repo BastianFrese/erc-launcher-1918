@@ -252,6 +252,16 @@ fn starten(
         )
     })?;
 
+    if host {
+        // Der Host leiht seine Inhalts-Kennungen: der Gast baut damit dieselbe Session.
+        let datei = spielordner.join("swofty/registry/row-ids.json");
+        let kennungen = std::fs::read(&datei).ok().filter(|b| !b.is_empty());
+        if kennungen.is_none() {
+            eprintln!("erc-launcher: keine Inhalts-Kennungen in {}", datei.display());
+        }
+        transport.set_ids(kennungen);
+    }
+
     let mut mitglieder = BTreeSet::from([ich]);
     mitglieder.extend(bekannte);
     if host {
@@ -277,6 +287,9 @@ pub struct Vorbereitung {
     ich: u8,
     transport: Arc<RelayUdp>,
     abdruck: Option<String>,
+    /// Die Inhalts-Kennungen des Hosts, in eine Datei geschrieben. Das Spiel baut
+    /// damit dieselbe Session wie er.
+    pub row_ids: Option<std::path::PathBuf>,
     pub anpassungen: Vec<String>,
 }
 
@@ -360,11 +373,30 @@ Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Star
             }
             anpassungen = ergebnis.getan;
         }
+        // Die Inhalts-Kennungen des Hosts holen: ohne sie baut das Spiel eine
+        // andere Session und lehnt den Beitritt ab.
+        let row_ids = match transport.hole_ids(Duration::from_secs(10)) {
+            Ok(Some(bytes)) if !bytes.is_empty() => {
+                let pfad = std::env::temp_dir().join(format!("erc-row-ids-{code}.json"));
+                match std::fs::write(&pfad, &bytes) {
+                    Ok(()) => Some(pfad),
+                    Err(e) => {
+                        return Err(format!(
+                            "Die Kennungen des Hosts liessen sich nicht ablegen: {e}"
+                        ))
+                    }
+                }
+            }
+            Ok(_) => None,
+            Err(e) => return Err(format!("Die Kennungen des Hosts kamen nicht an: {e}")),
+        };
+
         Ok(Vorbereitung {
             code,
             ich,
             transport,
             abdruck,
+            row_ids,
             anpassungen,
         })
     }
@@ -684,7 +716,7 @@ mod view {
                         if geaendert {
                             s.reload_in_background(cx);
                         }
-                        let ok = s.spiel_fuer_lobby_starten(cx);
+                        let ok = s.spiel_fuer_lobby_starten(cx, vor.row_ids.clone());
                         if let Err(e) = &ok {
                             s.lobby.arbeitet = false;
                             s.lobby.meldung = Some(e.clone());
@@ -1043,7 +1075,11 @@ mod view {
 
         /// Die Spielkopie, deren Mod-Stand in den Abdruck geht.
         /// F1 25 so starten, wie es der Beitritt braucht: mit armiertem Netplay.
-        fn spiel_fuer_lobby_starten(&mut self, cx: &mut Context<Self>) -> Result<(), String> {
+        fn spiel_fuer_lobby_starten(
+            &mut self,
+            cx: &mut Context<Self>,
+            row_ids: Option<std::path::PathBuf>,
+        ) -> Result<(), String> {
             let install = self
                 .install_fuer_lobby()
                 .ok_or_else(|| "F1 25 wurde nicht gefunden.".to_owned())?;
@@ -1053,7 +1089,7 @@ mod view {
                 &install,
                 self.launch_mode(),
                 Some(swofty_core::multiplayer::bridge::ARMED),
-                None,
+                row_ids.as_deref(),
                 None,
                 false,
             )?;

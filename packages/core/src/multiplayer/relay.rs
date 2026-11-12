@@ -39,6 +39,11 @@ const DESCRIBE: &[u8] = b"ERC-RAUM ";
 const ABDRUCK: &[u8] = b"ERC-FP";
 /// A guest asking for it.
 const ABDRUCK_FRAGE: &[u8] = b"ERC-FP?";
+/// Die Inhalts-Kennungen des Hosts (`row-ids.json`): der Gast baut mit denselben,
+/// sonst meldet das Spiel eine abweichende Version der Spiel-Session.
+const IDS: &[u8] = b"ERC-IDS";
+/// Ein Gast, der sie haben will.
+const IDS_FRAGE: &[u8] = b"ERC-IDS?";
 /// Klopfen: der Gast fragt, ob der Weg zum Host wirklich steht.
 const PING: &[u8] = b"ERC-PING";
 /// Antwort des Hosts darauf.
@@ -58,6 +63,7 @@ fn control(payload: &[u8]) -> bool {
         || payload == PONG
         || payload.starts_with(DESCRIBE)
         || payload.starts_with(ABDRUCK)
+        || payload.starts_with(IDS)
 }
 
 /// The relay as deployed. `ERC_RELAY` overrides it, for a relay next to you.
@@ -84,6 +90,8 @@ pub struct RelayUdp {
     heard_at: AtomicU64,
     /// The host's mod fingerprint as compressed JSON, sent to guests that ask.
     abdruck: RwLock<Option<Vec<u8>>>,
+    /// Die Inhalts-Kennungen des Hosts, roh als JSON, ebenso auf Anfrage.
+    ids: RwLock<Option<Vec<u8>>>,
 }
 
 impl RelayUdp {
@@ -111,6 +119,7 @@ impl RelayUdp {
             unknown: AtomicU64::new(0),
             heard_at: AtomicU64::new(0),
             abdruck: RwLock::default(),
+            ids: RwLock::default(),
         })
     }
 
@@ -144,6 +153,87 @@ impl RelayUdp {
     }
 
     /// Sends the stored fingerprint in as many pieces as it takes.
+    /// Merkt die Inhalts-Kennungen dieses Rechners; der Host schickt sie auf Anfrage.
+    pub fn set_ids(&self, bytes: Option<Vec<u8>>) {
+        *self.ids.write().unwrap_or_else(|e| e.into_inner()) = bytes;
+    }
+
+    fn sende_ids(&self) {
+        let packet = self.ids.read().unwrap_or_else(|e| e.into_inner()).clone();
+        let Some(bytes) = packet else { return };
+        let raum = MAX_DATAGRAM - HEADER - IDS.len() - 2;
+        let stuecke = bytes.len().div_ceil(raum).min(255) as u8;
+        for (i, teil) in bytes.chunks(raum).take(255).enumerate() {
+            let mut payload = Vec::with_capacity(IDS.len() + 2 + teil.len());
+            payload.extend_from_slice(IDS);
+            payload.push(stuecke);
+            payload.push(i as u8);
+            payload.extend_from_slice(teil);
+            let _ = self.socket.send_to(&self.frame(&payload), self.relay);
+        }
+    }
+
+    /// Holt die Inhalts-Kennungen des Hosts. `None`, wenn er keine hat.
+    pub fn hole_ids(&self, frist: Duration) -> io::Result<Option<Vec<u8>>> {
+        let _ = self.socket.send_to(&self.frame(IDS_FRAGE), self.relay);
+        let deadline = Instant::now() + frist;
+        let mut packet = [0u8; MAX_DATAGRAM];
+        let mut teile: Option<Vec<Option<Vec<u8>>>> = None;
+        loop {
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                return match teile {
+                    Some(t) if t.iter().all(Option::is_some) => {
+                        Ok(Some(t.into_iter().flatten().flatten().collect()))
+                    }
+                    Some(_) => Err(io::Error::new(
+                        io::ErrorKind::TimedOut,
+                        "die Kennungen kamen nicht vollstaendig an",
+                    )),
+                    None => Ok(None),
+                };
+            }
+            self.announce_if_due();
+            self.socket
+                .set_read_timeout(Some(left.max(Duration::from_millis(1))))?;
+            let n = match self.socket.recv_from(&mut packet) {
+                Ok((n, from)) => {
+                    if from.ip() != self.relay.ip() {
+                        continue;
+                    }
+                    n
+                }
+                Err(e) if timed_out(&e) => continue,
+                Err(e) if e.kind() == io::ErrorKind::ConnectionReset => continue,
+                Err(e) => return Err(e),
+            };
+            let Some((_, payload)) = self.unframe(&packet[..n]) else {
+                continue;
+            };
+            if !payload.starts_with(IDS) || payload.starts_with(IDS_FRAGE) {
+                continue;
+            }
+            if payload.len() < IDS.len() + 2 {
+                continue;
+            }
+            let total = payload[IDS.len()] as usize;
+            let seq = payload[IDS.len() + 1] as usize;
+            if total == 0 || seq >= total {
+                continue;
+            }
+            let stuecke = teile.get_or_insert_with(|| vec![None; total]);
+            if stuecke.len() != total {
+                continue;
+            }
+            if stuecke[seq].is_none() {
+                stuecke[seq] = Some(payload[IDS.len() + 2..].to_vec());
+            }
+            if stuecke.iter().all(Option::is_some) {
+                return Ok(Some(stuecke.iter().flatten().flatten().copied().collect()));
+            }
+        }
+    }
+
     fn sende_abdruck(&self) {
         let packet = self.abdruck.read().unwrap_or_else(|e| e.into_inner()).clone();
         let Some(bytes) = packet else { return };
@@ -462,6 +552,8 @@ impl Transport for RelayUdp {
                     if control(payload) {
                         if payload == ABDRUCK_FRAGE {
                             self.sende_abdruck();
+                        } else if payload == IDS_FRAGE {
+                            self.sende_ids();
                         } else if payload == PING {
                             // Der Gast will wissen, ob der Weg steht: kurz antworten.
                             let _ = self.socket.send_to(&self.frame(PONG), self.relay);

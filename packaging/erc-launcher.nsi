@@ -10,7 +10,7 @@ Unicode true
 SetCompressor /SOLID lzma
 
 !define NAME "ERC Launcher"
-!define VERSION "0.6.7"
+!define VERSION "0.6.8"
 !define HERSTELLER "Erdi's Racing Community"
 !define QUELLE "C:\Users\basti\source\repos\swofty-erc-1918\dist-1918"
 !define ZIEL "$LOCALAPPDATA\Programs\ERCL"
