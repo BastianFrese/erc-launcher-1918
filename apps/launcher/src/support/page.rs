@@ -128,7 +128,7 @@ impl Shell {
         let main = self.support_main(inputs, p, cx);
         let header = self.header(
             tr("Support"),
-            tr("Keep Swofty Launcher free and open source").to_owned(),
+            tr("Keep ERC Launcher free and open source").to_owned(),
             h_flex().gap(px(8.)).items_center().child(claim).child(refresh),
             p,
         );

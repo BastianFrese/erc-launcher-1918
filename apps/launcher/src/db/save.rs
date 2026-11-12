@@ -575,7 +575,7 @@ impl Shell {
     }
 }
 
-const GAME_FILES_NOTE: &str = "Players extract this .zip into the F1 25 folder. Steam's Verify integrity of game files undoes it, and Swofty Launcher won't start modded sessions while that file is replaced. Players who use Swofty Launcher should get the addon .zip instead.";
+const GAME_FILES_NOTE: &str = "Players extract this .zip into the F1 25 folder. Steam's Verify integrity of game files undoes it, and ERC Launcher won't start modded sessions while that file is replaced. Players who use ERC Launcher should get the addon .zip instead.";
 
 fn choice_row(
     id: &'static str,

@@ -243,7 +243,7 @@ pub struct Console {
     _poll: Task<()>,
 }
 
-const TITLE: &str = "Swofty Launcher for F1 25: Console";
+const TITLE: &str = "ERC Launcher for F1 25: Console";
 
 pub fn open(store: Store, shell: WeakEntity<Shell>, cx: &mut App) -> Option<AnyWindowHandle> {
     let options = WindowOptions {

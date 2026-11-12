@@ -115,7 +115,7 @@ impl Shell {
             Some(d) => (d.title.clone(), d.what.clone(), d.steps.clone()),
             None => (
                 tr("We couldn't tell why it crashed").to_owned(),
-                tr("Swofty Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the Swofty Developments Discord so they can get back to you.").to_owned(),
+                tr("ERC Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the ERC Developments Discord so they can get back to you.").to_owned(),
                 vec![
                     trf!(
                         "Press {button} and say what you were doing when it crashed.",

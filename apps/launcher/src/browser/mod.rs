@@ -1,4 +1,4 @@
-//! The Addon Browser: the addons published to the Swofty registry, to search,
+//! The Addon Browser: the addons published to the ERC registry, to search,
 //! sort, filter, star, read about, and install or update in one click.
 
 mod authors;

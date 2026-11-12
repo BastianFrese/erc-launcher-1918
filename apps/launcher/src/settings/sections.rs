@@ -73,12 +73,12 @@ impl Shell {
             )
             .row(
                 SettingRow::new(tr("Time Trial boards"))
-                    .description(tr("Upload your Time Trial laps to the Swofty leaderboards. Ranked laps load a closed-source integrity module from Swofty's server."))
+                    .description(tr("Upload your Time Trial laps to the ERC leaderboards. Ranked laps load a closed-source integrity module from ERC server."))
                     .control(time_trial),
             )
             .row(
                 SettingRow::new(tr("In-game leaderboards"))
-                    .description(tr("Show the Swofty boards and rival ghosts inside Time Trial for addon seasons. Experimental."))
+                    .description(tr("Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental."))
                     .control(time_trial_ingame),
             )
             .into_any_element()
@@ -305,7 +305,7 @@ impl Shell {
         v_flex()
             .gap(px(24.))
             .child(
-                SettingsSection::new(tr("Swofty Launcher"))
+                SettingsSection::new(tr("ERC Launcher"))
                     .row(
                         SettingRow::new(tr("Version"))
                             .control(ValuePill::new(format!("v{}", update::current_version()))),

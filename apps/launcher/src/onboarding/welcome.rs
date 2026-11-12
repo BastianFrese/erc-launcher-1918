@@ -12,7 +12,7 @@ use crate::theme::Palette;
 
 const INTRO: Duration = Duration::from_millis(1500);
 /// The product name, which stays the same in every language.
-const PRODUCT: &str = "Swofty Launcher";
+const PRODUCT: &str = "ERC Launcher";
 const RING_CYCLE: Duration = Duration::from_millis(3200);
 const LOGO_SIZE: f32 = 112.;
 const STAGE: f32 = 260.;

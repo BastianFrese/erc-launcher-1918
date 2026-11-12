@@ -1,4 +1,4 @@
-//! The Simplified Importer: the managed Simplified for Swofty addon's section, shown
+//! The Simplified Importer: the managed Simplified for ERC addon's section, shown
 //! as a big section of its own.
 
 use std::time::{Duration, Instant};
@@ -48,7 +48,7 @@ impl Shell {
                 trf!("Install {name}", name = managed::NAME),
                 format!(
                     "{} is an addon by Team Simplified. Its Simplified Importer turns mods made for the game \
-                     folder into Swofty addons. The launcher downloads it from GitHub.",
+                     folder into ERC addons. The launcher downloads it from GitHub.",
                     managed::NAME
                 ),
                 Button::new("importer-install")

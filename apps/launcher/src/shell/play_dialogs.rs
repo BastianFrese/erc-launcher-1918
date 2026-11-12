@@ -104,7 +104,7 @@ impl Shell {
             alert
                 .title(tr("Cancel the build?"))
                 .description(tr(
-                    "Swofty stops after the file it is on and puts the game files back. \
+                    "ERC stops after the file it is on and puts the game files back. \
                      Your profile and addons stay as they are, and the next Play builds again.",
                 ))
                 .ok_text(tr("Cancel build"))

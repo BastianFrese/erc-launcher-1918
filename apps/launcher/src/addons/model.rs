@@ -70,7 +70,7 @@ impl Facet {
     }
 }
 
-/// Addons that load first, in this order: SwoftyMod, then Simplified for Swofty.
+/// Addons that load first, in this order: SwoftyMod, then Simplified for ERC.
 /// They make up Built In, and nothing is placed above them.
 pub(super) const PINNED: [&str; 2] = [swofty_core::builtin::CORE_ID, swofty_core::managed::ID];
 

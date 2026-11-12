@@ -21,7 +21,7 @@ const TITLE: &str = "Your game files have been edited";
 const MISSING_TITLE: &str = "Some game files are missing";
 
 /// A blocked launch the player can fix: files that aren't Steam's copy, or
-/// files Swofty did not put in the game folder.
+/// files ERC did not put in the game folder.
 #[derive(Clone)]
 pub(crate) enum Edited {
     NotStock(stock::Report),
@@ -70,14 +70,14 @@ impl Edited {
                     }
                 };
                 format!(
-                    "{gone} missing from the F1 25 folder, so Swofty stopped before changing anything. \
+                    "{gone} missing from the F1 25 folder, so ERC stopped before changing anything. \
                      {puts}, and then Play works."
                 )
             }
             Self::NotStock(r) if r.mixed() => {
                 let (changed, missing) = stock::split_absent(&r.detail);
                 format!(
-                    "{} changed outside Swofty and {} missing from the F1 25 folder, so it stopped before \
+                    "{} changed outside ERC and {} missing from the F1 25 folder, so it stopped before \
                      changing anything. {} puts them back, and then Play works.",
                     count(changed.len(), "was", "were"),
                     count(missing.len(), "is", "are"),
@@ -90,13 +90,13 @@ impl Edited {
                     n => (format!("{n} game files were"), "them"),
                 };
                 format!(
-                    "{changed} changed outside Swofty, so it stopped before changing anything. \
+                    "{changed} changed outside ERC, so it stopped before changing anything. \
                      This usually happens when a mod is copied into the game folder by hand. {} \
                      restores {them}, and then Play works.",
                     repair.restores
                 )
             }
-            Self::Leftovers(_) => "Swofty keeps F1 25 fully restorable: it only changes files it owns and \
+            Self::Leftovers(_) => "ERC keeps F1 25 fully restorable: it only changes files it owns and \
                                    undoes them when you quit. It found files in the F1 25 folder that it \
                                    didn't put there, so it stopped before touching anything. Files edited \
                                    by another tool or copied in by hand break that and can crash the game."
@@ -366,7 +366,7 @@ fn steps(edited: &Edited, repair: &Repair, p: Palette) -> AnyElement {
         .child(step(
             first + 1,
             "Add mods the safe way",
-            "Use the Simplified Importer below to add a mod as an addon Swofty installs and removes cleanly.",
+            "Use the Simplified Importer below to add a mod as an addon ERC installs and removes cleanly.",
             p,
         ))
         .when(leftovers, |d| {
@@ -478,7 +478,7 @@ fn footer(
 
 impl Shell {
     /// The modal for a launch stopped because the game files were edited: files
-    /// that aren't Steam's copy, or files Swofty did not put in the folder. It
+    /// that aren't Steam's copy, or files ERC did not put in the folder. It
     /// lists the files and what to do; the NotStock case on a Steam copy also
     /// offers Verify game files in Steam, the Leftovers case Restore game
     /// folder. The play bar reopens it from [`Shell::game_edited`].
@@ -603,7 +603,7 @@ mod tests {
         ]);
         let why = Edited::NotStock(report).why(&repair(Source::Steam));
         assert!(
-            why.starts_with("1 game file was changed outside Swofty and 2 game files are missing"),
+            why.starts_with("1 game file was changed outside ERC and 2 game files are missing"),
             "{why}"
         );
     }
@@ -651,7 +651,7 @@ mod tests {
         let r = repair(Source::Steam);
         let why = not_stock(52).why(&r);
         assert!(
-            why.starts_with("52 game files were changed outside Swofty"),
+            why.starts_with("52 game files were changed outside ERC"),
             "{why}"
         );
         assert!(

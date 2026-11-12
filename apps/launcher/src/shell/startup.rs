@@ -417,7 +417,7 @@ impl Shell {
                 if elevated {
                     let note = Notification::warning(
                         tr("Windows blocks dragging files onto a program that runs as administrator. Choose files \
-                         with the launcher's buttons instead, or open Swofty Launcher normally to drag and drop."),
+                         with the launcher's buttons instead, or open ERC Launcher normally to drag and drop."),
                     )
                     .title(tr("Running as administrator"));
                     cx.update(|window, cx| window.notify(note, cx)).ok();

@@ -1,5 +1,5 @@
 //! The Tools page: a sideways row of large cards for the tools that make or
-//! edit Swofty addons, listed in `assets/tools.json` with their art in
+//! edit ERC addons, listed in `assets/tools.json` with their art in
 //! `assets/tools/`.
 
 use std::collections::HashMap;
@@ -478,7 +478,7 @@ impl Shell {
             .size_full()
             .child(self.header(
                 Page::Tools.label(),
-                tr("Tools that make or edit Swofty addons").to_owned(),
+                tr("Tools that make or edit ERC addons").to_owned(),
                 arrows,
                 p,
             ))

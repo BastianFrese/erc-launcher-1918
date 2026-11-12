@@ -1,5 +1,5 @@
 //! The Settings page: a category list on the left and the chosen category's
-//! sections on the right. Storage shows where Swofty keeps its files: the data
+//! sections on the right. Storage shows where ERC keeps its files: the data
 //! folder's size by part, the room left on its drive and on the drive F1 25
 //! needs, and clearing old game session logs.
 
@@ -83,7 +83,7 @@ impl Shell {
             .size_full()
             .child(self.header(
                 Page::Settings.label(),
-                tr("Launcher options, and where Swofty keeps its files").to_owned(),
+                tr("Launcher options, and where ERC keeps its files").to_owned(),
                 div(),
                 p,
             ))

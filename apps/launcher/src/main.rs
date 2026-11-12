@@ -78,9 +78,9 @@ fn main() {
                 cx,
             ))),
             window_min_size: Some(size(px(1024.), px(680.))),
-            app_id: Some("net.swofty.ModLauncher".into()),
+            app_id: Some("de.erdi-erc.launcher".into()),
             titlebar: Some(TitlebarOptions {
-                title: Some("Swofty Launcher for F1 25".into()),
+                title: Some("ERC Launcher for F1 25".into()),
                 ..TitleBar::title_bar_options()
             }),
             ..TitleBar::window_options()

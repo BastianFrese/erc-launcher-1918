@@ -85,7 +85,7 @@ pub(crate) fn banner(
                     div()
                         .text_size(px(if compact { 17. } else { 20. }))
                         .font_weight(FontWeight::BOLD)
-                        .child(tr("Swofty Developments")),
+                        .child(tr("ERC Developments")),
                 )
                 .when(!compact, |d| {
                     d.child(

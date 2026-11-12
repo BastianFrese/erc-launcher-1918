@@ -21,12 +21,12 @@ fn embeds_the_posts_in_full_and_the_release_notes_newest_first() {
     assert_eq!(news.kind, "news");
     assert!(
         news.body
-            .starts_with("Swofty Launcher 1.3.0 makes everything an addon.")
+            .starts_with("ERC Launcher 1.3.0 makes everything an addon.")
     );
     assert!(news.body.contains("## Thank you, Team Simplified"));
     assert!(posts.windows(2).all(|w| w[0].date >= w[1].date));
     let notes = posts.iter().find(|p| p.id == "release/1.2.5").unwrap();
-    assert_eq!(notes.title, "Swofty Launcher 1.2.5");
+    assert_eq!(notes.title, "ERC Launcher 1.2.5");
     assert_eq!(notes.version(), "1.2.5");
     assert_eq!(notes.url.as_deref(), Some("https://f1.swofty.net/releases/1.2.5"));
     assert!(!notes.summary.is_empty() && !notes.date.is_empty() && notes.body.is_empty());

@@ -239,7 +239,7 @@ impl SectionItem {
         self.addon == swofty_core::managed::ID && self.spec.id == IMPORTER_SECTION
     }
 
-    /// A page of Simplified for Swofty, which the sidebar lists under its own heading.
+    /// A page of Simplified for ERC, which the sidebar lists under its own heading.
     pub fn is_simplified(&self) -> bool {
         self.addon == swofty_core::managed::ID
     }

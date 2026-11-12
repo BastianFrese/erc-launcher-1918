@@ -164,9 +164,9 @@ impl Shell {
                 .free
                 .map_or_else(|| tr("Unknown").to_owned(), size);
             let note = if plan.same_volume {
-                tr("It is on the same drive, so it moves in a moment. Swofty Launcher restarts when it is done.")
+                tr("It is on the same drive, so it moves in a moment. ERC Launcher restarts when it is done.")
             } else {
-                tr("Swofty Launcher locks while it copies and restarts when it is done. Your addons and saves stay where they are until the copy checks out.")
+                tr("ERC Launcher locks while it copies and restarts when it is done. Your addons and saves stay where they are until the copy checks out.")
             };
             alert
                 .width(px(560.))
@@ -269,7 +269,7 @@ impl Shell {
                 cx.notify();
                 self.data_move_failed(
                     &trf!(
-                        "Your addons and saves are copied. Close Swofty Launcher and open it again to finish the move. ({error})",
+                        "Your addons and saves are copied. Close ERC Launcher and open it again to finish the move. ({error})",
                         error = e
                     ),
                     window,

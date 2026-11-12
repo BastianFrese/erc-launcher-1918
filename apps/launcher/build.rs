@@ -61,7 +61,7 @@ fn posts(dir: &Path, kind: &str, out: &mut Vec<serde_json::Value>) {
         }
         let title = get("title").unwrap_or_else(|| slug.to_owned());
         let title = if kind == "release" && title.starts_with(|c: char| c.is_ascii_digit()) {
-            format!("Swofty Launcher {title}")
+            format!("ERC Launcher {title}")
         } else {
             title
         };

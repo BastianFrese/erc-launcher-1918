@@ -25,7 +25,7 @@ use swofty_i18n::tr;
 const TICK: Duration = Duration::from_secs(5);
 const RESTART_DELAY: Duration = Duration::from_millis(1500);
 pub(crate) const BUILDING: &str =
-    "Swofty is still building your mods. Update when it finishes, or cancel the build.";
+    "ERC is still building your mods. Update when it finishes, or cancel the build.";
 pub const BUTTON_WIDTH: f32 = 204.;
 const MOVE_DOCS: &str = "https://f1.swofty.net/guide/installation#moving-your-addons-and-saves";
 
@@ -110,7 +110,7 @@ impl Updates {
             .unwrap_or_else(update::current_version);
         let c = self.addon.waiting(&target, self.addon_installed.as_ref())?;
         Some(format!(
-            "{} {} needs Swofty Launcher {} and installs once that launcher is out. You have {}.",
+            "{} {} needs ERC Launcher {} and installs once that launcher is out. You have {}.",
             managed::NAME,
             c.version,
             c.needs.as_ref()?,
@@ -141,7 +141,7 @@ fn log_change(part: Part, before: &Option<String>, after: &Option<String>) {
 
 fn blocked_text(version: &Version, reason: &str) -> String {
     format!(
-        "Swofty Launcher {version} is available. {}. You have {}.",
+        "ERC Launcher {version} is available. {}. You have {}.",
         sentence(reason),
         update::current_version()
     )
@@ -174,7 +174,14 @@ impl Shell {
         let check_launcher = self.store.config().updates.check;
         let u = &self.updates;
         let addon_due = u.addon.probe_due(now);
-        let launcher_due = check_launcher && u.launcher.probe_due(now);
+        // Der ERC Launcher aktualisiert sich ueber den eigenen Server
+        // (aktualisierung.rs). Die Selbstaktualisierung des Unterbaus bleibt aus:
+        // sie wuerde die Fassung des Unterbaus als Launcher-Fassung anbieten.
+        let launcher_due = {
+            let _ = check_launcher;
+            let _ = u.launcher.probe_due(now);
+            false
+        };
         if u.checking
             || matches!(u.phase, Phase::Installing | Phase::Restarting)
             || !(addon_due || launcher_due)

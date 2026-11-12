@@ -1889,6 +1889,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
+name = "erc-launcher"
+version = "0.6.0"
+dependencies = [
+ "anyhow",
+ "gpui-kit",
+ "image",
+ "lsp-types",
+ "png 0.18.1",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "swofty-builtins",
+ "swofty-core",
+ "swofty-i18n",
+ "swofty-preview",
+ "swofty-shaders",
+ "ureq",
+ "winresource",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7175,28 +7197,6 @@ name = "swofty-i18n"
 version = "1.9.18"
 dependencies = [
  "serde_json",
-]
-
-[[package]]
-name = "swofty-launcher"
-version = "1.9.18"
-dependencies = [
- "anyhow",
- "gpui-kit",
- "image",
- "lsp-types",
- "png 0.18.1",
- "semver",
- "serde",
- "serde_json",
- "sha2 0.11.1",
- "swofty-builtins",
- "swofty-core",
- "swofty-i18n",
- "swofty-preview",
- "swofty-shaders",
- "ureq",
- "winresource",
 ]
 
 [[package]]
