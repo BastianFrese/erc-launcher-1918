@@ -44,3 +44,11 @@ templates/mod/native/build/
 re/db/*.tmp
 !packages/sdk/std/fixtures/*.bin
 /target
+
+dist-1918/
+
+# Testaufnahmen und Setup-Bauten
+dist-1918/
+ERC-Launcher-*-setup.exe
+spiel-*.png
+fenster-*.png

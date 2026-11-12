@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERC Launcher — Download</title>
+<style>
+  :root {
+    --track: #0b0c0e; --tarmac: #14171b; --kerb: #202630;
+    --rule: rgba(255,255,255,.1); --rule-strong: rgba(255,255,255,.22);
+    --ink: #f2f4f7; --ink-2: rgba(242,244,247,.68);
+    --team: #e10600; --on-team: #fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: var(--track); color: var(--ink);
+    font-family: "Saira", "Segoe UI", system-ui, sans-serif; line-height: 1.6;
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--team); }
+  main { width: min(46rem, calc(100% - 2rem)); padding: 2.5rem 0 4rem; }
+  .kürzel { font-weight: 600; letter-spacing: .14em; color: var(--ink); font-size: 1.25rem; }
+  .name { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  h1 { font-size: 1.75rem; margin: 2rem 0 .5rem; }
+  p.lead { color: var(--ink-2); margin: 0 0 2rem; max-width: 60ch; }
+  a.laden {
+    display: inline-block; padding: 1rem 1.75rem; border-radius: 3px;
+    background: var(--team); color: var(--on-team); text-decoration: none;
+    font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 1rem;
+  }
+  a.laden:hover { background: #b30500; }
+  .klein { color: var(--ink-2); font-size: .8125rem; margin-top: .75rem; }
+  h2 { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 2.5rem 0 .75rem; }
+  ol, ul { padding-left: 1.25rem; color: var(--ink-2); }
+  li { margin-bottom: .5rem; }
+  code { background: var(--kerb); padding: .1rem .35rem; border-radius: 2px; color: var(--ink); font-size: .9em; }
+  .warnung { border-left: 2px solid #ffd100; background: var(--tarmac); padding: 1rem 1.25rem; border-radius: 3px; }
+  .warnung strong { color: #ffd100; }
+  .neu { border-left: 2px solid var(--team); background: var(--tarmac); padding: 1rem 1.25rem; border-radius: 3px; }
+  .neu strong { color: var(--ink); }
+  .marke { display: inline-block; padding: .15rem .5rem; border-radius: 2px; border: 1px solid var(--team); color: var(--team); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; }
+  footer { margin-top: 3rem; color: var(--ink-2); font-size: .8125rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="kürzel">ERC</div>
+  <div class="name">Erdi's Racing Community</div>
+
+  <h1>ERC Launcher <span class="marke">0.5.0 · Testfassung</span></h1>
+  <p class="lead">
+    Das Fenster, mit dem wir F1 25 modifiziert starten. Es hält Spiel und Mods aktuell,
+    setzt die Telemetrie und öffnet die Lobby — ohne Konto, ohne offenen Port.
+  </p>
+
+  <a class="laden" href="ERC-Launcher-0.5.0-setup.exe" download>Launcher installieren</a>
+  <div class="klein">Windows, rund 25 MB. Wird für den angemeldeten Benutzer installiert — keine Administratorrechte nötig. Alles Nötige ist darin.</div>
+
+  <div class="neu" style="margin-top:2rem">
+    <strong>Neu — die Lobbys.</strong> Der Launcher fährt jetzt auf dem vollen Unterbau
+    statt nur auf dem Kern. Räume gehen über unseren eigenen Server, mit einem Code zum
+    Weitergeben. Vor dem Beitritt wird verglichen, was auf beiden Rechnern läuft:
+    weicht euer Profilstand ab, sagt der Launcher es, statt die Lobby abstürzen zu
+    lassen. <strong>Angeglichen wird noch nicht</strong> — bringt eure Mods vorher auf
+    denselben Stand wie der Host.
+  </div>
+
+  <h2>So geht es</h2>
+  <ol>
+    <li>Herunterladen und ausführen — der Installer richtet alles ein.</li>
+    <li><strong>F1 25</strong> muss installiert sein (Steam). Sonst wird nichts weiter gebraucht.</li>
+    <li>Starten, und beim ersten Mal die Bedingungen für das modifizierte Spiel bestätigen.</li>
+  </ol>
+
+  <h2>Zusammen fahren</h2>
+  <ol>
+    <li>Beide starten <strong>F1 25</strong> und warten im Hauptmenü.</li>
+    <li>Einer öffnet im Launcher links <em>Lobby</em> und drückt <em>Lobby erstellen</em> — es erscheint ein Raumcode aus vier Zeichen.</li>
+    <li>Die anderen tippen den Code unter <em>Einem Raum beitreten</em> ein.</li>
+    <li>Zurück in der Lobby auf <em>Play</em> — das Spiel öffnet die gemeinsame Sitzung.</li>
+  </ol>
+  <p class="klein">
+    Kein Konto, keine Anmeldung, kein Port in der Firewall. Die Lobbyliste kommt von
+    unserem Server. Wer noch nicht beigetreten ist, sieht die offenen Räume unter
+    <em>Lobby</em> mit Code und Fahrerzahl.
+  </p>
+
+  <div class="warnung">
+    <strong>Windows wird warnen.</strong> Die Datei ist nicht signiert, deshalb meldet sich
+    SmartScreen beim ersten Start („Weitere Informationen“ → „Trotzdem ausführen“). Das ist
+    bei einer Eigenentwicklung normal und kein Fehler.
+  </div>
+
+  <h2>Wenn etwas klemmt</h2>
+  <p class="lead" style="margin-bottom:0">
+    Im Fenster unten die <em>Konsole</em> aufklappen — dort steht, was zuletzt passiert ist.
+    Ein Bildschirmfoto davon hilft mehr als eine Beschreibung.
+  </p>
+
+  <p class="klein" style="margin-top:2rem">
+    Diese Testfassung holt sich <strong>keine</strong> Aktualisierungen. Wenn es eine neue
+    gibt, sagen wir es hier. Die vorige, ohne Lobbys, liegt weiter daneben:
+    <a href="ERC-Launcher-0.3.30-setup.exe" style="color:inherit">0.3.30</a>.
+  </p>
+
+  <footer>Erdi's Racing Community · nur für Ligamitglieder</footer>
+</main>
+</body>
+</html>
