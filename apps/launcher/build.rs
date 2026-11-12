@@ -79,7 +79,9 @@ fn posts(dir: &Path, kind: &str, out: &mut Vec<serde_json::Value>) {
             "date": get("date").unwrap_or_default(),
             "summary": get("description").unwrap_or_default(),
             "image": image,
-            "url": format!("{SITE}/{}/{slug}", if kind == "release" { "releases" } else { "news" }),
+            // Nachrichten und Changelog stehen vollstaendig im Launcher;
+            // ein Verweis nach draussen gibt es nicht.
+            "url": serde_json::Value::Null,
         });
         if kind == "news" {
             post["body"] = body(&text).into();

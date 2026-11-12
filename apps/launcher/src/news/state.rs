@@ -179,12 +179,10 @@ impl NewsScroll {
 
 impl News {
     pub fn load(root: &Path) -> Self {
-        let cached = std::fs::read_to_string(root.join(CACHE_DIR).join(FEED_FILE))
-            .ok()
-            .and_then(|t| parse(&t))
-            .unwrap_or_default();
-        let saved = !cached.is_empty();
-        let posts = merge(embedded(), cached);
+        // Nur der eingebettete Stand; ein alter Abruf im Zwischenspeicher zaehlt nicht mehr.
+        let _ = root;
+        let saved = false;
+        let posts = embedded();
         let blocks = posts.iter().map(parsed_body).collect();
         Self {
             saved,

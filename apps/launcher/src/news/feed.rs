@@ -190,25 +190,12 @@ pub(super) struct Fetched {
 }
 
 pub(super) fn fetch(root: &Path, shown: Vec<Post>) -> Fetched {
+    // Nachrichten und Aenderungsverlauf reisen mit dem Programm: sie stehen in
+    // docs/news und docs/releases und werden beim Bauen eingebettet. Es gibt
+    // keinen fremden Abruf mehr.
     let dir = root.join(CACHE_DIR);
-    let remote = download().and_then(|text| {
-        parse(&text).map(|p| (text, p)).ok_or_else(|| {
-            (
-                Trouble::Failed,
-                trf!("{feed_url}: not a news feed", feed_url = FEED_URL),
-            )
-        })
-    });
-    let (posts, error) = match remote {
-        Ok((text, posts)) => {
-            std::fs::create_dir_all(&dir).ok();
-            if let Err(e) = std::fs::write(dir.join(FEED_FILE), text) {
-                eprintln!("swofty-launcher: could not save the news: {e}");
-            }
-            (Some(merge(embedded(), posts)), None)
-        }
-        Err(e) => (None, Some(e)),
-    };
+    let _ = (&download, FEED_URL);
+    let (posts, error): (Option<Vec<Post>>, Option<(Trouble, String)>) = (Some(embedded()), None);
     let images = posts
         .as_ref()
         .unwrap_or(&shown)
