@@ -1,6 +1,6 @@
 {
-  "version": "0.7.2",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.2-setup.exe",
-  "sha256": "beafe36a9199417298df0fd96b6686747978b8d7770bda001dd05c9ff169d073",
-  "notiz": "Der Host veroeffentlicht jetzt seinen Mod-Stand - Grundlage fuer Angleichen und Kennungen."
+  "version": "0.7.3",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.3-setup.exe",
+  "sha256": "018f2c3886ea0431864f0e69d1650b2711c26f8ce3e21ee7713aeb6b26e8f868",
+  "notiz": "Die Lobby laeuft jetzt ueber unseren eigenen Server: Raumcode, Schluessel und Nummern von raum.erdi-erc.de, die Pakete weiter ueber unseren Relay. Kein Konto, kein TURN."
 }
