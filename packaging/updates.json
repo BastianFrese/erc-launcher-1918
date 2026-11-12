@@ -1,6 +1,6 @@
 {
-  "version": "0.6.2",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.2-setup.exe",
-  "sha256": "9e86a283d96d7e0d864436f2db1b8551fd807d58d43b76d4d62f96362dcc2281",
-  "notiz": "Aktualisieren aus dem Fenster, Protokolle gehen an unseren Server."
+  "version": "0.6.3",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.3-setup.exe",
+  "sha256": "dce159f68e20b3b45001fe74c0458cd12a3327b43821c8896f517045a03c8720",
+  "notiz": "Angleichen sagt jetzt, dass F1 25 neu gestartet werden muss."
 }

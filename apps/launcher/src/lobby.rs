@@ -343,6 +343,21 @@ impl Sitzung {
                     ergebnis.offen.join("\n")
                 ));
             }
+            // Die Mods sind jetzt gleich - das laufende Spiel kennt sie aber nicht.
+            // Ohne Neustart treffen zwei verschiedene Mod-Staende in der Lobby
+            // aufeinander, und F1 25 bricht mit "Die Version der Spiel-Session ist
+            // nicht identisch" ab.
+            if !ergebnis.getan.is_empty() {
+                return Err(format!(
+                    "Deine Mods wurden an den Host angeglichen:
+
+{}
+
+                     F1 25 laeuft aber schon mit dem alten Stand. Beende das Spiel,                      starte es ueber Play neu und tritt dann noch einmal bei.",
+                    ergebnis.getan.join("
+")
+                ));
+            }
             anpassungen = ergebnis.getan;
         }
 
