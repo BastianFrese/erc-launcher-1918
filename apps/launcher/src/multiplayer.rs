@@ -803,7 +803,7 @@ impl Shell {
                 s.mp_page.digest_busy = false;
                 match digest {
                     Ok(d) => s.mp_page.digest = Some(d),
-                    Err(e) => eprintln!("swofty-launcher: couldn't read this profile's addons: {e}"),
+                    Err(e) => eprintln!("erc-launcher: couldn't read this profile's addons: {e}"),
                 }
                 cx.notify();
             })

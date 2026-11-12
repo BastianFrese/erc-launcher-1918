@@ -135,7 +135,7 @@ fn log_change(part: Part, before: &Option<String>, after: &Option<String>) {
     if before != after
         && let Some(e) = after
     {
-        eprintln!("swofty-launcher: {} update check: {e}", part.name());
+        eprintln!("erc-launcher: {} update check: {e}", part.name());
     }
 }
 
@@ -271,11 +271,11 @@ impl Shell {
                 s.updates.adding = false;
                 match result {
                     Ok(version) => {
-                        eprintln!("swofty-launcher: installed {} {version}", managed::ID);
+                        eprintln!("erc-launcher: installed {} {version}", managed::ID);
                         s.updates.addon_installed = Some(version);
                         s.reload(cx);
                     }
-                    Err(e) => eprintln!("swofty-launcher: could not install {}: {e}", managed::ID),
+                    Err(e) => eprintln!("erc-launcher: could not install {}: {e}", managed::ID),
                 }
             })
             .ok();

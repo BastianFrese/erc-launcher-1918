@@ -290,7 +290,7 @@ impl Shell {
                         return false;
                     };
                     if let Some(Err(e)) = plugin.try_tick(&host.cx(), &section) {
-                        eprintln!("swofty-launcher: {addon} tick: {e}");
+                        eprintln!("erc-launcher: {addon} tick: {e}");
                     }
                     plugin.failure().is_some()
                 })

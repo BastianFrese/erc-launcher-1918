@@ -34,7 +34,7 @@ impl Prepared {
         crate::app_log::step("library loaded");
         match migrated {
             Ok(notes) => notes.iter().for_each(|n| {
-                eprintln!("swofty-launcher: {n}");
+                eprintln!("erc-launcher: {n}");
                 crate::app_log::note(n);
             }),
             Err(e) => library.error = Some(e.to_string()),
@@ -275,8 +275,8 @@ impl Shell {
         cx.background_executor()
             .spawn(async move {
                 match game::recover_stale(&stale) {
-                    Ok(lines) => lines.iter().for_each(|l| eprintln!("swofty-launcher: {l}")),
-                    Err(e) => eprintln!("swofty-launcher: could not check for an unfinished session: {e}"),
+                    Ok(lines) => lines.iter().for_each(|l| eprintln!("erc-launcher: {l}")),
+                    Err(e) => eprintln!("erc-launcher: could not check for an unfinished session: {e}"),
                 }
                 game::vault_at_start(&stale);
                 if clear_old_session_logs {

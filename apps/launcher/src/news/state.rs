@@ -239,7 +239,7 @@ impl Shell {
                 news.checked = Some(Instant::now());
                 news.trouble = fetched.error.as_ref().map(|(t, _)| *t);
                 if let Some((_, e)) = &fetched.error {
-                    eprintln!("swofty-launcher: could not check for news: {e}");
+                    eprintln!("erc-launcher: could not check for news: {e}");
                 }
                 let mut changed = !fetched.images.is_empty();
                 if let Some(posts) = fetched.posts {

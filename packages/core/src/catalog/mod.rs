@@ -558,7 +558,7 @@ pub fn epoch(iso: &str) -> Option<i64> {
 
 /// Adds a line to the registry log Save Logs sends, and to stderr.
 pub fn log(root: &Path, line: &str) {
-    eprintln!("swofty-launcher: registry: {line}");
+    eprintln!("erc-launcher: registry: {line}");
     let path = root.join(LOG_FILE);
     if std::fs::metadata(&path).is_ok_and(|m| m.len() > LOG_LIMIT)
         && let Ok(text) = std::fs::read_to_string(&path)

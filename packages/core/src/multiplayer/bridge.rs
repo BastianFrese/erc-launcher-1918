@@ -644,7 +644,7 @@ impl Shared {
                 "{len}-byte datagram {direction} member {member} is over {LARGE_PAYLOAD} bytes ({count} so far)"
             );
             super::diag::line(format!("bridge: {text}"));
-            eprintln!("swofty-launcher: netplay: {text}");
+            eprintln!("erc-launcher: netplay: {text}");
         }
     }
 

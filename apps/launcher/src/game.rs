@@ -273,8 +273,8 @@ fn build_state(store: &Store) -> Option<Busy> {
     let live = Busy::live(&store.root);
     if live.is_none() {
         match recover_stale(store) {
-            Ok(lines) => lines.iter().for_each(|l| eprintln!("swofty-launcher: {l}")),
-            Err(e) => eprintln!("swofty-launcher: could not clean up an unfinished build: {e}"),
+            Ok(lines) => lines.iter().for_each(|l| eprintln!("erc-launcher: {l}")),
+            Err(e) => eprintln!("erc-launcher: could not clean up an unfinished build: {e}"),
         }
         if let Ok(Some(_lock)) = SessionLock::try_acquire(&store.root) {
             Busy::clear(&store.root);
@@ -529,9 +529,9 @@ pub(crate) fn run_args(
 /// refused is also recorded for Send Logs, and says what blocked it.
 fn not_started(store: &Store, log: &Path, cli: &Path, e: &std::io::Error) -> String {
     let block = Block::of(cli, e);
-    let mut lines = format!("swofty-launcher: could not start {}: {e}\n", cli.display());
+    let mut lines = format!("erc-launcher: could not start {}: {e}\n", cli.display());
     if let Some(b) = &block {
-        lines.push_str(&format!("swofty-launcher: {}\n", b.headline()));
+        lines.push_str(&format!("erc-launcher: {}\n", b.headline()));
         launch::Failure::new(launch::Cause::Blocked(b.clone()))
             .write(&store.root)
             .ok();
@@ -744,7 +744,7 @@ mod tests {
         let written = std::fs::read_to_string(&log).unwrap();
         assert_eq!(
             written,
-            format!("swofty-launcher: could not start {}: {missing}\n", cli.display())
+            format!("erc-launcher: could not start {}: {missing}\n", cli.display())
         );
         assert_eq!(launch::Failure::read(&root), None);
         let blocked = std::io::Error::from_raw_os_error(4551);
@@ -754,7 +754,7 @@ mod tests {
             Some(b) => {
                 assert_eq!(text, b.text());
                 assert!(
-                    written.ends_with(&format!("swofty-launcher: {}\n", b.headline())),
+                    written.ends_with(&format!("erc-launcher: {}\n", b.headline())),
                     "{written}"
                 );
                 assert_eq!(

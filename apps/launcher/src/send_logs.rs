@@ -198,7 +198,7 @@ impl SendLogs {
         cx: &mut Context<Self>,
     ) {
         if let Err(e) = &zip {
-            eprintln!("swofty-launcher: could not keep the logs zip: {e}");
+            eprintln!("erc-launcher: could not keep the logs zip: {e}");
         }
         self.phase = match (sent, zip) {
             (Some(Ok(parts)), zip) => Phase::Sent { parts, zip: zip.ok() },
@@ -217,7 +217,7 @@ impl SendLogs {
             if config.discord_username.as_deref() != Some(name.as_str()) {
                 config.discord_username = Some(name);
                 if let Err(e) = self.store.save_config(&config) {
-                    eprintln!("swofty-launcher: could not remember the Discord username: {e}");
+                    eprintln!("erc-launcher: could not remember the Discord username: {e}");
                 }
             }
         }

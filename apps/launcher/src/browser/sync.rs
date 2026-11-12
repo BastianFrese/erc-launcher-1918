@@ -243,7 +243,7 @@ impl Shell {
                     }
                 }
                 if let Err(e) = s.browser.stars.save(&s.store.root) {
-                    eprintln!("swofty-launcher: could not save the stars: {e}");
+                    eprintln!("erc-launcher: could not save the stars: {e}");
                 }
                 if std::mem::take(&mut s.browser.sync_again) {
                     s.sync_stars(cx);
@@ -260,7 +260,7 @@ impl Shell {
         let listed = self.browser.find(id).map_or(0, |a| a.stars);
         let on = self.browser.stars.toggle(id, listed, catalog::iso_now());
         if let Err(e) = self.browser.stars.save(&self.store.root) {
-            eprintln!("swofty-launcher: could not save the stars: {e}");
+            eprintln!("erc-launcher: could not save the stars: {e}");
         }
         catalog::log(
             &self.store.root,
