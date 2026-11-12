@@ -198,6 +198,7 @@ fn starten(
     bekannte: Vec<u8>,
     transport: Arc<RelayUdp>,
     abdruck: Option<String>,
+    ids: Option<Vec<u8>>,
 ) -> Result<Sitzung, String> {
     let game_port = NetplayStatus::read(spielordner)
         .map(|s| s.game_port)
@@ -254,12 +255,7 @@ fn starten(
 
     if host {
         // Der Host leiht seine Inhalts-Kennungen: der Gast baut damit dieselbe Session.
-        let datei = spielordner.join("swofty/registry/row-ids.json");
-        let kennungen = std::fs::read(&datei).ok().filter(|b| !b.is_empty());
-        if kennungen.is_none() {
-            eprintln!("erc-launcher: keine Inhalts-Kennungen in {}", datei.display());
-        }
-        transport.set_ids(kennungen);
+        transport.set_ids(ids);
     }
 
     let mut mitglieder = BTreeSet::from([ich]);
@@ -304,6 +300,19 @@ impl Sitzung {
         kategorie: Category,
     ) -> Result<Self, String> {
         let abdruck = eigener_abdruck(store, profile, install).ok();
+        // Die Inhalts-Kennungen liegen im Datenordner, nicht im Spielordner.
+        let datei = store.root.join("registry/row-ids.json");
+        let ids = std::fs::read(&datei).ok().filter(|b| !b.is_empty());
+        match &ids {
+            Some(b) => crate::app_log::note(&format!(
+                "lobby: Inhalts-Kennungen bereitgestellt ({} Bytes)",
+                b.len()
+            )),
+            None => crate::app_log::note(&format!(
+                "lobby: keine Inhalts-Kennungen unter {}",
+                datei.display()
+            )),
+        }
         let code = raum_neu();
         let transport = Arc::new(
             RelayUdp::new(relay(), &code, HOST_MEMBER)
@@ -319,6 +328,7 @@ impl Sitzung {
             Vec::new(),
             transport,
             abdruck.map(|f| f.digest),
+            ids,
         )
     }
 
@@ -377,6 +387,10 @@ Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Star
         // andere Session und lehnt den Beitritt ab.
         let row_ids = match transport.hole_ids(Duration::from_secs(10)) {
             Ok(Some(bytes)) if !bytes.is_empty() => {
+                crate::app_log::note(&format!(
+                    "lobby: Inhalts-Kennungen des Hosts erhalten ({} Bytes)",
+                    bytes.len()
+                ));
                 let pfad = std::env::temp_dir().join(format!("erc-row-ids-{code}.json"));
                 match std::fs::write(&pfad, &bytes) {
                     Ok(()) => Some(pfad),
@@ -387,8 +401,14 @@ Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Star
                     }
                 }
             }
-            Ok(_) => None,
-            Err(e) => return Err(format!("Die Kennungen des Hosts kamen nicht an: {e}")),
+            Ok(_) => {
+                crate::app_log::note("lobby: der Host hat keine Inhalts-Kennungen");
+                None
+            }
+            Err(e) => {
+                crate::app_log::note(&format!("lobby: Kennungen kamen nicht an: {e}"));
+                None
+            }
         };
 
         Ok(Vorbereitung {
@@ -418,6 +438,7 @@ Der Beitritt unterbleibt,                      sonst stuerzt die Lobby beim Star
             vec![HOST_MEMBER],
             vorbereitung.transport,
             vorbereitung.abdruck,
+            None,
         )?;
         sitzung.anpassungen = vorbereitung.anpassungen;
         Ok(sitzung)

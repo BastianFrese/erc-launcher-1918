@@ -1,6 +1,6 @@
 {
-  "version": "0.6.8",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.8-setup.exe",
-  "sha256": "c84ed37f63eb5658013dc6fe8a5953dc0077a267109c27756930a108c47f791b",
-  "notiz": "Der Gast baut mit den Inhalts-Kennungen des Hosts - gleiche Session."
+  "version": "0.6.9",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.9-setup.exe",
+  "sha256": "56d35105bcc6fdbeb60a67cb5c8c34ce3840e145d69957b6463ea11ee31447fa",
+  "notiz": "Kennungen lagen im Datenordner, nicht im Spielordner - jetzt richtig."
 }
