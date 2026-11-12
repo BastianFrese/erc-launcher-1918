@@ -23,6 +23,7 @@ impl Prepared {
     pub(crate) fn load() -> Self {
         crate::app_log::step("opening the store");
         swofty_core::store::set_warning_sink(crate::app_log::note);
+        swofty_core::send_logs::set_launcher_label(env!("CARGO_PKG_VERSION"));
         let store = Store::open_default().with_builtins(swofty_builtins::all());
         mitgelieferte_addons(&store);
         let migrated = store.migrate();

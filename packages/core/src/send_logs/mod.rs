@@ -42,11 +42,37 @@ const PERF_READ: u64 = 1 << 20;
 const DUMP_CAP: u64 = 24 << 20;
 const OVERLAY_READ: u64 = 32 << 20;
 
+/// Die Fassung, die im Bericht stehen soll. Der Launcher setzt hier seine eigene;
+/// ohne sie steht die gemeinsame Fassung des Unterbaus da, an der die Addons
+/// ihre Mindestfassung messen.
+static LABEL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+pub fn set_launcher_label(version: &str) {
+    let _ = LABEL.set(version.to_owned());
+}
+
+pub fn launcher_label() -> String {
+    LABEL
+        .get()
+        .cloned()
+        .unwrap_or_else(|| crate::update::current_version().to_string())
+}
+
+/// Unser Abnehmer im Homelab; das Kennwort steckt im Pfad, damit ohne Zusatz
+/// niemand Bündel ablegen kann. Ueberschreibbar ueber `SWOFTY_LOGS_URL`.
+pub const DEFAULT_URL: &str =
+    "https://protokoll.erdi-erc.de/logs/mZxPpZ3eMnlS3faFjn_n7yQRov9J8H4M";
+
 /// Where the logs go: `SWOFTY_LOGS_URL` at run time, else the address baked in
-/// at build time, if any.
+/// at build time, else our own collector.
 pub fn destination() -> Option<LogServer> {
     let runtime = std::env::var("SWOFTY_LOGS_URL").ok();
-    LogServer::new(runtime.as_deref().or(option_env!("SWOFTY_LOGS_URL")))
+    LogServer::new(
+        runtime
+            .as_deref()
+            .or(option_env!("SWOFTY_LOGS_URL"))
+            .or(Some(DEFAULT_URL)),
+    )
 }
 
 pub fn available() -> bool {
@@ -500,7 +526,7 @@ impl Bundle {
             stem: format!("swofty-logs-{}-{stamp}", file_safe(&report.name)),
             name: report.name.clone(),
             message: report.message.clone(),
-            launcher: crate::update::current_version().to_string(),
+            launcher: launcher_label(),
             os,
             game: report.game.describe(),
             entries: c.entries,

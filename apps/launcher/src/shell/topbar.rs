@@ -326,6 +326,7 @@ impl Shell {
                             .items_center()
                             .gap(fixed(4.))
                             .mr(fixed(6.))
+                            .children(self.aktualisierung_knopf(p, cx))
                             .child(self.bell(notices, action_focus(0), p, cx))
                             .child(
                                 self.icon_button(

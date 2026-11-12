@@ -1,6 +1,6 @@
 {
-  "version": "0.6.1",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.1-setup.exe",
-  "sha256": "06240e4b375d960d2e643f38c738334a2d96a1ab900d277efd013f73a695b1aa",
-  "notiz": "Die ERC-Liga-Mod kommt jetzt mit dem Launcher."
+  "version": "0.6.2",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.2-setup.exe",
+  "sha256": "9e86a283d96d7e0d864436f2db1b8551fd807d58d43b76d4d62f96362dcc2281",
+  "notiz": "Aktualisieren aus dem Fenster, Protokolle gehen an unseren Server."
 }

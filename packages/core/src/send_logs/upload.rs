@@ -127,7 +127,7 @@ impl LogServer {
             let response = ureq::post(&self.url)
                 .header(
                     "User-Agent",
-                    concat!("swofty-launcher/", env!("CARGO_PKG_VERSION")),
+                    format!("erc-launcher/{}", crate::send_logs::launcher_label()),
                 )
                 .header("Content-Type", &content_type)
                 .config()

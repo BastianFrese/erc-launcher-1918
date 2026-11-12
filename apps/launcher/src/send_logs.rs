@@ -21,7 +21,7 @@ use crate::theme::{Palette, palette};
 use crate::ui::Callout;
 use swofty_i18n::tr;
 
-pub const LABEL: &str = "Send Logs to Developers";
+pub const LABEL: &str = "Send Logs to the ERC Team";
 pub const SAVE_LABEL: &str = "Save Logs";
 
 pub fn label() -> &'static str {
@@ -453,7 +453,7 @@ impl Shell {
                 .width(px(560.))
                 .title(label())
                 .description(if send_logs::available() {
-                    tr("Sends your logs to the developers on Discord, so they can see what went wrong.")
+                    tr("Sends your logs to the ERC team, so they can see what went wrong.")
                 } else {
                     "Saves your logs to a zip you can send yourself. Sending them to the developers isn't available in this build."
                 })
