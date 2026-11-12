@@ -89,6 +89,8 @@ impl Shell {
         let catalog = Self::watch_catalog(cx);
         let mp = Self::start_account(&store, cx);
         Self::watch_multiplayer(window, cx);
+        Self::watch_lobby(window, cx);
+        Self::watch_aktualisierung(window, cx);
         let root = store.root.clone();
         let mut shell = Self {
             library,
@@ -176,6 +178,10 @@ impl Shell {
             db: crate::db::Db::new(cx),
             news,
             news_scroll: Default::default(),
+            lobby: crate::lobby::Lobby::new(window, cx),
+            aktualisierung: crate::aktualisierung::Stand::Ruhe,
+            aktualisierung_laeuft: false,
+            aktualisierung_meldung: None,
             browser,
             shaders,
             _shaders_events: shaders_events,

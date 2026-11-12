@@ -135,6 +135,11 @@ pub struct Shell {
     pub(crate) db: crate::db::Db,
     pub(crate) news: crate::news::News,
     pub(crate) news_scroll: crate::news::NewsScroll,
+    pub(crate) lobby: crate::lobby::Lobby,
+    /// Was der Server als neue Fassung anbietet.
+    pub(crate) aktualisierung: crate::aktualisierung::Stand,
+    pub(crate) aktualisierung_laeuft: bool,
+    pub(crate) aktualisierung_meldung: Option<String>,
     pub(crate) browser: crate::browser::Browser,
     pub(crate) shaders: Entity<crate::shaders::ShadersView>,
     _shaders_events: Subscription,

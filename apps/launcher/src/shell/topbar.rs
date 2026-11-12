@@ -87,9 +87,7 @@ impl Shell {
             }
             Some(Tab::Online) => {
                 let mut links = vec![Link::new(Page::Online, None)];
-                if self.nav_mp() {
-                    links.push(Link::new(Page::Multiplayer, None));
-                }
+                links.push(Link::new(Page::Multiplayer, None));
                 if self.tt_admin() {
                     links.push(Link::new(Page::Moderation, None));
                 }

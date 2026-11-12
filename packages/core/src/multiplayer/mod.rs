@@ -6,6 +6,7 @@ pub mod direct;
 pub mod fingerprint;
 pub mod game;
 pub mod progress;
+pub mod relay;
 pub mod rooms;
 pub mod seal;
 pub mod session;

@@ -192,12 +192,10 @@ impl Shell {
                 cx,
             );
         }
-        let armed = match &room {
-            Some(_) => Some(swofty_core::multiplayer::bridge::ARMED),
-            None => self
-                .mp_allowed()
-                .then_some(swofty_core::multiplayer::bridge::ARMED),
-        };
+        // Immer arm: unser Netzweg braucht kein Konto. Wer nicht angemeldet ist, bekam sonst
+        // ein Spiel, das auf die Lade im Raumordner nicht hoert (ERC 0.4.7).
+        let armed = Some(swofty_core::multiplayer::bridge::ARMED);
+        let _ = &room;
         match Launch::start(
             &self.store,
             &self.library.profile.name,

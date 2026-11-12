@@ -59,7 +59,7 @@ impl Render for Shell {
             Page::Shaders => self.shaders.clone().into_any_element(),
             Page::Database => self.db_page(p, cx),
             Page::Careers => self.careers_page(p, wide, cx),
-            Page::Multiplayer => self.multiplayer_page(p, cx),
+            Page::Multiplayer => self.lobby_page(p, cx),
             Page::Online => self.online_page(p, window, cx),
             Page::Moderation => self.time_trial_page(p, window, cx),
             Page::Support => self.support_page(p, window, cx),

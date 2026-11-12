@@ -33,7 +33,7 @@ impl Page {
             Self::Tools => tr("Tools"),
             Self::Careers => tr("Saves"),
             Self::Database => tr("DB Editor"),
-            Self::Multiplayer => tr("Multiplayer"),
+            Self::Multiplayer => tr("Lobby"),
             Self::Online => tr("Online"),
             Self::Moderation => tr("Moderation"),
             Self::Support => tr("Support"),
