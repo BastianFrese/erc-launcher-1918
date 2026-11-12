@@ -47,22 +47,25 @@
   <div class="kürzel">ERC</div>
   <div class="name">Erdi's Racing Community</div>
 
-  <h1>ERC Launcher <span class="marke">0.5.0 · Testfassung</span></h1>
+  <h1>ERC Launcher <span class="marke">0.6.0 · Testfassung</span></h1>
   <p class="lead">
     Das Fenster, mit dem wir F1 25 modifiziert starten. Es hält Spiel und Mods aktuell,
     setzt die Telemetrie und öffnet die Lobby — ohne Konto, ohne offenen Port.
   </p>
 
-  <a class="laden" href="ERC-Launcher-0.5.0-setup.exe" download>Launcher installieren</a>
-  <div class="klein">Windows, rund 25 MB. Wird für den angemeldeten Benutzer installiert — keine Administratorrechte nötig. Alles Nötige ist darin.</div>
+  <a class="laden" href="ERC-Launcher-0.6.0-setup.exe" download>Launcher installieren</a>
+  <div class="klein">Windows, rund 40 MB. Wird für den angemeldeten Benutzer installiert — keine Administratorrechte nötig. Alles Nötige ist darin.</div>
 
   <div class="neu" style="margin-top:2rem">
-    <strong>Neu — die Lobbys.</strong> Der Launcher fährt jetzt auf dem vollen Unterbau
-    statt nur auf dem Kern. Räume gehen über unseren eigenen Server, mit einem Code zum
-    Weitergeben. Vor dem Beitritt wird verglichen, was auf beiden Rechnern läuft:
-    weicht euer Profilstand ab, sagt der Launcher es, statt die Lobby abstürzen zu
-    lassen. <strong>Angeglichen wird noch nicht</strong> — bringt eure Mods vorher auf
-    denselben Stand wie der Host.
+    <strong>Neu — eine schnellere Grundlage.</strong> Der Kern prüft den Spielspeicher
+    nicht mehr bei jedem Zugriff über Windows; das kostete in Ranglisten bis zu
+    3,5 ms und in Rennen 25–28 ms je Sekunde. Dazu stürzen gleichjährige Seasons nicht
+    mehr beim Start ab, und es passen etwa 76 statt 44 Season-Mods nebeneinander ins
+    Spiel.
+    <br><br>
+    <strong>Die Lobbys bleiben, wie sie waren</strong> — eigener Server, Code zum
+    Weitergeben, kein Konto. <strong>Neu ist das Angleichen:</strong> fehlt euch eine Mod
+    des Hosts, holt der Launcher sie und schaltet sie ein, statt euch abzuweisen.
   </div>
 
   <h2>So geht es</h2>
@@ -75,7 +78,7 @@
   <h2>Zusammen fahren</h2>
   <ol>
     <li>Beide starten <strong>F1 25</strong> und warten im Hauptmenü.</li>
-    <li>Einer öffnet im Launcher links <em>Lobby</em> und drückt <em>Lobby erstellen</em> — es erscheint ein Raumcode aus vier Zeichen.</li>
+    <li>Einer öffnet im Launcher oben <em>Online</em> → <em>Lobby</em> und drückt <em>Lobby erstellen</em> — es erscheint ein Raumcode aus vier Zeichen.</li>
     <li>Die anderen tippen den Code unter <em>Einem Raum beitreten</em> ein.</li>
     <li>Zurück in der Lobby auf <em>Play</em> — das Spiel öffnet die gemeinsame Sitzung.</li>
   </ol>

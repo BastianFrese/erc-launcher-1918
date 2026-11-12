@@ -1,6 +1,6 @@
 {
-  "version": "0.5.0",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.5.0-setup.exe",
-  "sha256": "8a3c196a027a1a02ce1fe6d6190535e4cefef8085a45d4553499bbe2ef1ca736",
-  "notiz": "Aktualisierung in einem Klick, still und mit Neustart."
+  "version": "0.6.0",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.0-setup.exe",
+  "sha256": "be034c76eb2c103c939c66c807a13c0ef72e00175ea947cac3b1ead54635e74e",
+  "notiz": "Neue Grundlage: mehr Bilder pro Sekunde, Lobbys wie gehabt."
 }
