@@ -476,11 +476,12 @@ class Abnehmer(BaseHTTPRequestHandler):
         with SPERR:
             raum = raum_von(code)
             if raum is None or mit not in raum.mitglieder:
-                sockel.schliessen(4004)
+                sockel.schliessen(4002)  # Raum weg: der Launcher soll nicht endlos neu verbinden
                 return
             alt = raum.mitglieder[mit].sockel
             if alt is not None:
-                alt.schliessen(4001)
+                # 4000 heisst beim Launcher "in einem anderen Fenster geoeffnet" — genau der Fall.
+                alt.schliessen(4000)
             raum.mitglieder[mit].sockel = sockel
             raum.mitglieder[mit].verbunden = True
             raum.mitglieder[mit].fort_seit = None
