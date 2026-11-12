@@ -38,6 +38,7 @@ from urllib.parse import unquote
 
 PORT = int(os.environ.get("ERC_RAUM_PORT", "8091"))
 STILLE_SEK = 600  # so lange bleibt eine Lobby ohne Verbindung stehen
+HOST_FRIST = 120  # so lange darf der Host ohne Verbindung weg sein, dann schliesst der Raum
 MAX_NACHRICHT = 4 * 1024 * 1024
 MAX_MITGLIEDER = 254
 
@@ -75,6 +76,7 @@ class Mitglied:
         self.blob = None
         self.relay: str | None = None
         self.sockel: "Sockel | None" = None
+        self.fort_seit: float | None = None  # wann die Verbindung abriss
 
     def wie(self) -> dict:
         return {
@@ -156,6 +158,8 @@ class Raum:
             stand.pop("key", None)
         return stand
 
+    # ponytail: ein Schreibvorgang je Mitglied unter der globalen Sperre; bei einem
+    # haengenden Teilnehmer warten alle. Fuer eine Liga-Lobby reicht das.
     def senden(self, text: str) -> None:
         for m in list(self.mitglieder.values()):
             if m.sockel is not None:
@@ -479,6 +483,7 @@ class Abnehmer(BaseHTTPRequestHandler):
                 alt.schliessen(4001)
             raum.mitglieder[mit].sockel = sockel
             raum.mitglieder[mit].verbunden = True
+            raum.mitglieder[mit].fort_seit = None
             raum.uebertragen()
             for andere in raum.mitglieder.values():
                 if andere.kennung == mit or andere.blob is None:
@@ -529,6 +534,7 @@ class Abnehmer(BaseHTTPRequestHandler):
                     if aktuell is not None and aktuell.sockel is sockel:
                         aktuell.sockel = None
                         aktuell.verbunden = False
+                        aktuell.fort_seit = time.time()
                         raum.uebertragen()
 
     def behandeln(self, mit: str, nachricht: dict) -> None:
@@ -584,6 +590,16 @@ def aufraeumen() -> None:
         jetzt = time.time()
         with SPERR:
             for code, raum in list(RAEUME.items()):
+                host = raum.mitglieder.get(raum.host)
+                if host is not None and host.sockel is None and host.fort_seit is not None:
+                    if jetzt - host.fort_seit > HOST_FRIST:
+                        RAEUME.pop(code, None)
+                        print(
+                            f"[{time.strftime('%H:%M:%S')}] Raum {code}: der Host ist weg, Raum geschlossen",
+                            flush=True,
+                        )
+                        raum.beenden("host_gone")
+                        continue
                 beschaeftigt = any(m.sockel is not None for m in raum.mitglieder.values())
                 if not beschaeftigt and jetzt - raum.zuletzt > STILLE_SEK:
                     RAEUME.pop(code, None)

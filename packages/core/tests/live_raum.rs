@@ -4,12 +4,16 @@ use std::time::Duration;
 use swofty_core::multiplayer::rooms::{Api, RoomSettings};
 use swofty_core::multiplayer::ws::{Event, Socket};
 
-const SERVER: &str = "https://raum.erdi-erc.de";
+/// `ERC_RAUM` overrides the address, e.g. for a tunnel to the container.
+fn server() -> String {
+    std::env::var("ERC_RAUM").unwrap_or_else(|_| "https://raum.erdi-erc.de".to_owned())
+}
 
 #[test]
 #[ignore]
 fn der_echte_raumserver_traegt_eine_lobby() {
-    let host = Api::with_server(SERVER, "live-probe-host").with_name("Basti Probe");
+    let server = server();
+    let host = Api::with_server(&server, "live-probe-host").with_name("Basti Probe");
     let me = host.me().unwrap();
     assert_eq!(me.name, "Basti Probe");
     let lobby = host.create(&RoomSettings::default()).unwrap();
@@ -17,7 +21,7 @@ fn der_echte_raumserver_traegt_eine_lobby() {
     assert!(lobby.key.as_ref().and_then(|k| k.bytes()).is_some(), "32-Byte-Schluessel");
     assert_eq!(lobby.members.len(), 1);
 
-    let guest = Api::with_server(SERVER, "live-probe-gast").with_name("Gast Probe");
+    let guest = Api::with_server(&server, "live-probe-gast").with_name("Gast Probe");
     let joined = guest.join(&lobby.code).unwrap();
     assert_eq!(joined.members.len(), 2);
 
