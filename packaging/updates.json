@@ -1,6 +1,6 @@
 {
-  "version": "0.7.1",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.1-setup.exe",
-  "sha256": "97fd248131a1a66b969cfd236083b5ea13785e92a272d803ebd20fbb32adfa51",
-  "notiz": "Beitreten verlangt ein frisch gestartetes Spiel; nur so kommen die Kennungen mit."
+  "version": "0.7.2",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.2-setup.exe",
+  "sha256": "beafe36a9199417298df0fd96b6686747978b8d7770bda001dd05c9ff169d073",
+  "notiz": "Der Host veroeffentlicht jetzt seinen Mod-Stand - Grundlage fuer Angleichen und Kennungen."
 }

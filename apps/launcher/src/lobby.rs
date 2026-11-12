@@ -338,24 +338,28 @@ impl Sitzung {
         kategorie: Category,
     ) -> Result<Self, String> {
         let abdruck = eigener_abdruck(store, profile, install).ok();
-        // Die Inhalts-Kennungen liegen im Datenordner, nicht im Spielordner.
-        let datei = store.root.join("registry/row-ids.json");
-        let ids = std::fs::read(&datei).ok().filter(|b| !b.is_empty());
-        match &ids {
-            Some(b) => crate::app_log::note(&format!(
-                "lobby: Inhalts-Kennungen bereitgestellt ({} Bytes)",
-                b.len()
-            )),
-            None => crate::app_log::note(&format!(
-                "lobby: keine Inhalts-Kennungen unter {}",
-                datei.display()
-            )),
-        }
         let code = raum_neu();
         let transport = Arc::new(
             RelayUdp::new(relay(), &code, HOST_MEMBER)
                 .map_err(|e| format!("Kein Platz im Raum: {e}"))?,
         );
+        // Den eigenen Mod-Stand veroeffentlichen: der Gast gleicht dagegen an und
+        // bildet daraus die Leihgaben fuer seinen Spielstart.
+        match &abdruck {
+            Some(f) => match serde_json::to_string(f) {
+                Ok(text) => {
+                    crate::app_log::note(&format!(
+                        "lobby: Mod-Stand bereitgestellt ({} Addons)",
+                        f.addons.len()
+                    ));
+                    transport.set_abdruck(Some(text));
+                }
+                Err(e) => crate::app_log::note(&format!(
+                    "lobby: Mod-Stand nicht schreibbar: {e}"
+                )),
+            },
+            None => crate::app_log::note("lobby: eigener Mod-Stand nicht lesbar"),
+        }
         starten(
             spielordner,
             code,
@@ -399,6 +403,9 @@ impl Sitzung {
         let roh = transport
             .hole_abdruck(Duration::from_secs(15))
             .map_err(|e| format!("Der Mod-Stand des Hosts kam nicht an: {e}"))?;
+        if roh.is_none() {
+            crate::app_log::note("lobby: der Host hat keinen Mod-Stand veroeffentlicht");
+        }
         if let Some(roh) = roh {
             let host: Fingerprint = serde_json::from_slice(&roh)
                 .map_err(|e| format!("Der Mod-Stand des Hosts ist unlesbar: {e}"))?;
