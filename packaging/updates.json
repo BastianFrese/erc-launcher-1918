@@ -1,6 +1,6 @@
 {
-  "version": "0.6.6",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.6-setup.exe",
-  "sha256": "3e4e6980031af5f9fe883deb7a74080c27fec792f56cd63df13d05a74fe49dbb",
-  "notiz": "Beitreten klopft erst beim Host an, statt blind zu verbinden."
+  "version": "0.6.7",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.6.7-setup.exe",
+  "sha256": "5411192b5346fba9b01707257edca61dfde5f25b44fa839068b66597afd470d1",
+  "notiz": "Fahrzeugklasse der Lobby waehlbar (F1 26 oder F1 25)."
 }

@@ -457,6 +457,9 @@ mod view {
         pub(crate) sitzung: Option<Sitzung>,
         pub(crate) arbeitet: bool,
         pub(crate) meldung: Option<String>,
+        /// Welche Fahrzeugklasse der Raum faehrt. Muss auf beiden Rechnern
+        /// vorhanden sein, sonst lehnt das Spiel den Beitritt ab.
+        pub(crate) kategorie: Category,
         name: Entity<InputState>,
         code: Entity<InputState>,
         _inputs: [Subscription; 2],
@@ -482,6 +485,7 @@ mod view {
                 sitzung: None,
                 arbeitet: false,
                 meldung: None,
+                kategorie: Category::F12026,
                 name,
                 code,
                 _inputs: inputs,
@@ -565,6 +569,7 @@ mod view {
                 cx.notify();
                 return;
             };
+            let kategorie = self.lobby.kategorie;
             let name = self.lobby.name.read(cx).value().trim().to_owned();
             let name = if name.is_empty() {
                 "ERC-Lobby".to_owned()
@@ -577,7 +582,7 @@ mod view {
                 let ergebnis = cx
                     .background_executor()
                     .spawn(async move {
-                        Sitzung::hosten(std::path::Path::new(&spielordner), &store, &profile, &install, &name, Category::F12026)
+                        Sitzung::hosten(std::path::Path::new(&spielordner), &store, &profile, &install, &name, kategorie)
                     })
                     .await;
                 this.update(cx, |s, cx| {
@@ -849,6 +854,41 @@ mod view {
                                         .child(Input::new(&self.lobby.name).small().disabled(macht)),
                                 )
                                 .child(erzeugen),
+                        )
+                        .child(
+                            h_flex()
+                                .gap(px(6.))
+                                .items_center()
+                                .child(
+                                    div()
+                                        .text_size(px(12.))
+                                        .text_color(p.text_muted)
+                                        .child("Fahrzeugklasse:"),
+                                )
+                                .child(
+                                    Button::new("lobby-kat-26")
+                                        .when(self.lobby.kategorie == Category::F12026, |b| b.primary())
+                                        .when(self.lobby.kategorie != Category::F12026, |b| b.outline())
+                                        .small()
+                                        .label("F1 26")
+                                        .disabled(macht)
+                                        .on_click(cx.listener(|this, _, _, cx| {
+                                            this.lobby.kategorie = Category::F12026;
+                                            cx.notify();
+                                        })),
+                                )
+                                .child(
+                                    Button::new("lobby-kat-25")
+                                        .when(self.lobby.kategorie == Category::F12025, |b| b.primary())
+                                        .when(self.lobby.kategorie != Category::F12025, |b| b.outline())
+                                        .small()
+                                        .label("F1 25")
+                                        .disabled(macht)
+                                        .on_click(cx.listener(|this, _, _, cx| {
+                                            this.lobby.kategorie = Category::F12025;
+                                            cx.notify();
+                                        })),
+                                ),
                         ),
                 )
                 .child(
