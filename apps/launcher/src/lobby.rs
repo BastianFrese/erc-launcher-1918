@@ -232,6 +232,12 @@ fn starten(
         )
     })?;
 
+    if !host && !transport.warte_auf_host(Duration::from_secs(20)) {
+        return Err(
+            "Der Host antwortet nicht. Laeuft bei ihm der Launcher mit offenem Raum,                      und steht F1 25 in seiner Lobby?".to_owned(),
+        );
+    }
+
     let befehl = if host {
         Command::Host { category: kategorie }
     } else {

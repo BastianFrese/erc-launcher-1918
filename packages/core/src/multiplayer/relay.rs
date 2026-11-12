@@ -39,6 +39,10 @@ const DESCRIBE: &[u8] = b"ERC-RAUM ";
 const ABDRUCK: &[u8] = b"ERC-FP";
 /// A guest asking for it.
 const ABDRUCK_FRAGE: &[u8] = b"ERC-FP?";
+/// Klopfen: der Gast fragt, ob der Weg zum Host wirklich steht.
+const PING: &[u8] = b"ERC-PING";
+/// Antwort des Hosts darauf.
+const PONG: &[u8] = b"ERC-PONG";
 
 /// The key every member of a room seals with. The room code is the shared secret
 /// — whoever has the code can read the room, and nobody else can.
@@ -49,7 +53,11 @@ pub fn room_key(code: &str) -> [u8; 32] {
 /// A control packet, not game traffic: our own liveness, or the host's room
 /// description. These never reach the bridge.
 fn control(payload: &[u8]) -> bool {
-    payload == HELLO || payload.starts_with(DESCRIBE) || payload.starts_with(ABDRUCK)
+    payload == HELLO
+        || payload == PING
+        || payload == PONG
+        || payload.starts_with(DESCRIBE)
+        || payload.starts_with(ABDRUCK)
 }
 
 /// The relay as deployed. `ERC_RELAY` overrides it, for a relay next to you.
@@ -288,6 +296,37 @@ impl RelayUdp {
         }
     }
 
+    /// Klopft beim Host, bis er antwortet. Beweist, dass der Weg in beide
+    /// Richtungen offen ist - erst dann darf das Spiel beitreten.
+    pub fn warte_auf_host(&self, frist: Duration) -> bool {
+        let ende = Instant::now() + frist;
+        let mut puffer = [0u8; MAX_DATAGRAM];
+        loop {
+            let _ = self.socket.send_to(&self.frame(PING), self.relay);
+            let links = ende.saturating_duration_since(Instant::now());
+            if links.is_zero() {
+                return false;
+            }
+            self.socket
+                .set_read_timeout(Some(links.min(Duration::from_millis(500))))
+                .ok();
+            match self.socket.recv_from(&mut puffer) {
+                Ok((n, from)) => {
+                    if from.ip() != self.relay.ip() {
+                        continue;
+                    }
+                    if let Some((_, payload)) = self.unframe(&puffer[..n])
+                        && payload == PONG
+                    {
+                        return true;
+                    }
+                }
+                Err(e) if timed_out(&e) => {}
+                Err(_) => return false,
+            }
+        }
+    }
+
     /// The address every member sends to: the relay, which fans out from there.
     pub fn relay_addr(&self) -> SocketAddr {
         self.relay
@@ -423,6 +462,9 @@ impl Transport for RelayUdp {
                     if control(payload) {
                         if payload == ABDRUCK_FRAGE {
                             self.sende_abdruck();
+                        } else if payload == PING {
+                            // Der Gast will wissen, ob der Weg steht: kurz antworten.
+                            let _ = self.socket.send_to(&self.frame(PONG), self.relay);
                         }
                         continue;
                     }
