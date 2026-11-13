@@ -19,6 +19,10 @@ pub struct Goal {
     pub since: String,
     #[serde(default)]
     pub costs: Vec<String>,
+    /// Where the donate button goes. Our server sets it; it is not compiled in,
+    /// so the address can change without a new launcher build.
+    #[serde(default)]
+    pub donate_url: Option<String>,
 }
 
 impl Goal {

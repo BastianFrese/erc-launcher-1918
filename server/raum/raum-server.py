@@ -9,6 +9,8 @@ den Relay (f1.erdi-erc.de:35501) — dieser Dienst vergibt nur Raumcode,
 Raumschluessel und Mitgliedsnummern.
 
     GET  /v1/auth/launcher/me          wer bin ich
+    GET  /v1/support/goal              Spendenstand (aus support.json)
+    GET  /v1/support/supporters        die Unterstuetzer (aus support.json)
     GET  /v1/mp/rooms                  offene Lobbys
     POST /v1/mp/lobbies                Lobby aufmachen
     POST /v1/mp/lobbies/<code>/join    beitreten
@@ -62,6 +64,21 @@ def schluessel() -> bytes:
 
 def schluessel_b64(roh: bytes) -> str:
     return base64.urlsafe_b64encode(roh).decode("ascii").rstrip("=")
+
+
+def support_stand() -> dict:
+    """Der Spendenstand: `support.json` neben diesem Dienst, von Hand gepflegt.
+
+    Kein Schreibweg. Wer etwas aendern will, aendert die Datei; der Dienst liest
+    sie bei jeder Anfrage neu, ein Neustart ist dafuer nicht noetig.
+    """
+    datei = os.path.join(os.path.dirname(os.path.abspath(__file__)), "support.json")
+    try:
+        with open(datei, encoding="utf-8") as f:
+            stand = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return stand if isinstance(stand, dict) else {}
 
 
 class Mitglied:
@@ -328,9 +345,24 @@ class Abnehmer(BaseHTTPRequestHandler):
     # -- Wege -----------------------------------------------------------------
 
     def do_GET(self) -> None:  # noqa: N802 - Vorgabe der Basisklasse
+        pfad = self.path.split("?", 1)[0].rstrip("/") or "/"
+        # Der Spendenstand ist oeffentlich: kein Token, keine Kennung.
+        if pfad == "/v1/support/goal":
+            stand = support_stand()
+            return self.antwort(
+                200,
+                {
+                    "goal_cents": int(stand.get("goal_cents") or 0),
+                    "raised_cents": int(stand.get("raised_cents") or 0),
+                    "since": str(stand.get("since") or ""),
+                    "costs": list(stand.get("costs") or []),
+                    "donate_url": str(stand.get("donate_url") or ""),
+                },
+            )
+        if pfad == "/v1/support/supporters":
+            return self.antwort(200, {"supporters": list(support_stand().get("supporters") or [])})
         if not self.token():
             return self.fehler(401, "signed_out", "sign in")
-        pfad = self.path.split("?", 1)[0].rstrip("/") or "/"
         if pfad == "/":
             with SPERR:
                 offen = [r.kurz() for r in RAEUME.values() if r.oeffentlich and not r.gestartet]
