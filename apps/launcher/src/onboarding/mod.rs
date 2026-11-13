@@ -15,6 +15,22 @@ use crate::theme::Palette;
 
 const BUTTON_HEIGHT: f32 = 48.;
 
+/// Die Einrichtung traegt die Farben der ERC-Seite: Tarmac-Schwarz, ein Rot,
+/// sonst nichts Buntes. Der Rest des Launchers bleibt, wie er ist.
+fn erc(p: Palette) -> Palette {
+    Palette {
+        background: rgb(0x0b0c0e).into(),
+        surface: rgb(0x121417).into(),
+        hover: rgb(0x1a1d21).into(),
+        elevated: rgb(0x1a1d21).into(),
+        border_variant: rgb(0x1e2126).into(),
+        border: rgb(0x2c3037).into(),
+        selected: rgb(0x2a1214).into(),
+        text_muted: rgb(0xb6babd).into(),
+        ..p
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum Step {
     Welcome,
@@ -139,6 +155,7 @@ impl Shell {
     }
 
     pub(crate) fn onboarding_view(&self, p: Palette, cx: &mut Context<Self>) -> Option<Stateful<Div>> {
+        let p = erc(p);
         let wizard = self.onboarding.as_ref()?;
         let step = wizard.step;
         let body = match step {

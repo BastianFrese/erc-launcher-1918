@@ -30,16 +30,18 @@ fn embeds_the_news_in_full() {
 #[test]
 fn no_release_notes_before_one_zero() {
     // Bastians Wort (13.11.): der Changelog bleibt leer, bis der Launcher 1.0.0 ist.
-    for notes in embedded().iter().filter(|p| p.release()) {
-        assert!(
-            version(&notes.id) >= vec![1, 0, 0],
-            "Versionsnotiz unter 1.0.0 eingebettet: {}",
-            notes.version()
-        );
-        assert!(notes.title.starts_with("ERC Launcher "));
-        assert!(notes.url.is_none(), "kein Verweis nach draussen an einer Versionsnotiz");
-        assert!(!notes.summary.is_empty() && !notes.date.is_empty() && notes.body.is_empty());
-    }
+    // Der Test haengt an der eigenen Fassung, nicht an der Nummer der Notiz: ein
+    // Merge mit dem Unterbau hat am 13.11. 24 fremde Notizen (1.9.19–1.9.42)
+    // wieder hereingetragen — die waren ">= 1.0.0" undrutschten durch.
+    let ours = version(&format!("release/{}", env!("CARGO_PKG_VERSION")));
+    assert!(ours < vec![1, 0, 0], "ab 1.0.0 darf der Changelog wieder Eintraege haben");
+    let posts = embedded();
+    let notes: Vec<&Post> = posts.iter().filter(|p| p.release()).collect();
+    assert!(
+        notes.is_empty(),
+        "vor 1.0.0 gehoeren keine Versionsnotizen ins Programm, eingebettet sind: {:?}",
+        notes.iter().map(|n| n.version()).collect::<Vec<_>>()
+    );
 }
 
 #[test]
