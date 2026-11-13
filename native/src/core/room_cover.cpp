@@ -79,7 +79,7 @@ void draw(hud::Frame &f, uint64_t now, float alpha)
     if (bg_slot >= 0 && bg_w && bg_h) {
         float s = std::max(W / float(bg_w), H / float(bg_h));
         float dw = bg_w * s, dh = bg_h * s;
-        hud::image(f, bg_slot, (W - dw) * 0.5f, (H - dh) * 0.5f, dw, dh, 0xffffffb4u);
+        hud::image(f, bg_slot, (W - dw) * 0.5f, (H - dh) * 0.5f, dw, dh, 0xffffffffu);
     } else {
         hud::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
     }
