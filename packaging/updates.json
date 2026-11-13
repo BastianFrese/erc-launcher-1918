@@ -1,6 +1,6 @@
 {
-  "version": "0.7.5",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.5-setup.exe",
-  "sha256": "85e8ce20f6f662984fdd024792bbb3e4dfd006ae6723daf525fd4547781822ea",
-  "notiz": "Im Spiel steht jetzt ERC statt des fremden Namens: Ladebildschirm und Hauptmenue ohne fremde Wortmarke, ohne Spielerzahl und ohne Videokarte."
+  "version": "0.7.6",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.6-setup.exe",
+  "sha256": "f82fbd7adf54b6db0cd098270ddf93eccb2af9e2dec58e980c81e23278440d79",
+  "notiz": "Der Reiter Online fuehrt jetzt direkt in die Lobby; die Time-Trial-Bestenlisten sind aus der Navigation genommen."
 }
