@@ -1,6 +1,6 @@
 {
-  "version": "0.7.3",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.3-setup.exe",
-  "sha256": "018f2c3886ea0431864f0e69d1650b2711c26f8ce3e21ee7713aeb6b26e8f868",
-  "notiz": "Die Lobby laeuft jetzt ueber unseren eigenen Server: Raumcode, Schluessel und Nummern von raum.erdi-erc.de, die Pakete weiter ueber unseren Relay. Kein Konto, kein TURN."
+  "version": "0.7.4",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.4-setup.exe",
+  "sha256": "84ae3895ccc5883a3c349078d3b96b4dc3cad110234a69e1bd9bc9365e391184",
+  "notiz": "Beitritt auch ueber Mobilfunk und IPv6: der Relay-Socket spricht jetzt dieselbe Adressfamilie wie der Relay. Dazu bleibt die Lobby-Verbindung stehen (sie riss alle 90 Sekunden ab)."
 }

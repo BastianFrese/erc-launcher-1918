@@ -72,9 +72,11 @@ pub fn default_relay() -> String {
 
 /// [`default_relay`] with its name resolved, for [`super::session::Relay::Own`].
 pub fn default_relay_addr() -> io::Result<SocketAddr> {
-    default_relay()
-        .to_socket_addrs()?
-        .next()
+    let mut addrs: Vec<SocketAddr> = default_relay().to_socket_addrs()?.collect();
+    addrs.sort_by_key(SocketAddr::is_ipv6);
+    addrs
+        .first()
+        .copied()
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "the relay has no address"))
 }
 
@@ -104,11 +106,15 @@ impl RelayUdp {
                 "lobby members are numbered 1 to 254",
             ));
         }
-        let relay = relay
-            .to_socket_addrs()?
-            .next()
+        // The socket has to speak the same address family as the relay, or every send fails:
+        // on a phone hotspot that hands out IPv6-only (NAT64, `64:ff9b::…`) an IPv4 socket
+        // bound to 0.0.0.0 cannot send at all. IPv4 is preferred where both exist.
+        let mut addrs: Vec<SocketAddr> = relay.to_socket_addrs()?.collect();
+        addrs.sort_by_key(SocketAddr::is_ipv6);
+        let relay = *addrs
+            .first()
             .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "the relay has no address"))?;
-        let socket = UdpSocket::bind("0.0.0.0:0")?;
+        let socket = UdpSocket::bind(if relay.is_ipv4() { "0.0.0.0:0" } else { "[::]:0" })?;
         Ok(Self {
             socket,
             relay,
@@ -531,6 +537,19 @@ mod tests {
             }
         });
         (addr, stop)
+    }
+
+    /// Ein Handy-Hotspot loest den Relay als IPv6-Adresse auf (NAT64). Der Socket muss dann
+    /// IPv6 sprechen, sonst scheitert jedes Senden.
+    #[test]
+    fn the_socket_matches_the_relay_address_family() {
+        let v4 = RelayUdp::new("127.0.0.1:35501", "AB12", 1).unwrap();
+        assert!(v4.relay_addr().is_ipv4());
+        assert!(v4.socket.local_addr().unwrap().is_ipv4());
+
+        let v6 = RelayUdp::new("[::1]:35501", "AB12", 1).unwrap();
+        assert!(v6.relay_addr().is_ipv6());
+        assert!(v6.socket.local_addr().unwrap().is_ipv6());
     }
 
     #[test]

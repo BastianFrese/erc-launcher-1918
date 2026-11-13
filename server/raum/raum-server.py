@@ -29,7 +29,6 @@ import json
 import os
 import re
 import secrets
-import socket
 import struct
 import threading
 import time
@@ -500,18 +499,15 @@ class Abnehmer(BaseHTTPRequestHandler):
                     )
                 )
 
-        self.connection.settimeout(90.0)
-        fehlschlaege = 0
+        # Kein Zeitlimit auf dem Socket: ein Lesen mit Zeitlimit hinterlaesst den
+        # gepufferten Leser in unbrauchbarem Zustand, und die Verbindung riss alle 90
+        # Sekunden ab. Der Client haelt die Verbindung selbst offen; geht er, liefert
+        # read() b"".
+        self.connection.settimeout(None)
         try:
             while True:
                 try:
                     opcode, daten = lese_frame(self.rfile)
-                except (TimeoutError, socket.timeout):
-                    sockel.sende(0x9, b"")
-                    fehlschlaege += 1
-                    if fehlschlaege >= 3:
-                        break
-                    continue
                 except (OSError, ValueError):
                     break
                 if opcode is None or opcode == 0x8:
@@ -521,7 +517,6 @@ class Abnehmer(BaseHTTPRequestHandler):
                     continue
                 if opcode != 0x1:
                     continue
-                fehlschlaege = 0
                 try:
                     nachricht = json.loads(daten or b"{}")
                 except ValueError:
