@@ -271,8 +271,10 @@ impl Drop for Refresh {
     }
 }
 
-pub fn publish(data: &Path, game: &Path, version: &str) -> Refresh {
-    publish_from(data, game, version, base_url(), REFRESH)
+/// Writes `home_menu.json` at launch and refreshes it while the game runs. With `show_video` off the file carries
+/// no video and the latest video is not fetched, so the home screen shows no video card.
+pub fn publish(data: &Path, game: &Path, version: &str, show_video: bool) -> Refresh {
+    publish_from(data, game, version, show_video, base_url(), REFRESH)
 }
 
 fn card_of(data: &Path, video: Video) -> VideoCard {
@@ -287,7 +289,14 @@ fn card_of(data: &Path, video: Video) -> VideoCard {
     }
 }
 
-fn publish_from(data: &Path, game: &Path, version: &str, _registry: String, every: Duration) -> Refresh {
+fn publish_from(
+    data: &Path,
+    game: &Path,
+    version: &str,
+    _show_video: bool,
+    _registry: String,
+    every: Duration,
+) -> Refresh {
     // Das Hauptmenue zeigt keine Karte und keine Spielerzahl des Launchers mehr: der Stand
     // geht ohne `video` und ohne `online` hinaus, und keins von beiden wird mehr geholt.
     let _ = write(game, &state(data, version, None, None));
@@ -480,7 +489,7 @@ mod tests {
         let data = temp("online");
         let game = temp("online-game");
         let registry = serve_json(r#"{"online":{"total":77}}"#);
-        let guard = publish_from(&data, &game, "1.8.37", registry, Duration::from_millis(100));
+        let guard = publish_from(&data, &game, "1.8.37", true, registry, Duration::from_millis(100));
         std::thread::sleep(Duration::from_millis(400));
         let bytes = std::fs::read(game.join(STATE_FILE)).unwrap();
         drop(guard);
@@ -490,6 +499,39 @@ mod tests {
         assert_eq!(v["launcher_version"], "1.8.37");
         std::fs::remove_dir_all(&data).ok();
         std::fs::remove_dir_all(&game).ok();
+    }
+
+    #[test]
+    fn a_cached_video_is_published_only_while_the_home_video_setting_is_on() {
+        for show in [true, false] {
+            let data = temp(&format!("show-{show}"));
+            let game = temp(&format!("show-{show}-game"));
+            let cache = data.join(CACHE_DIR);
+            std::fs::create_dir_all(&cache).unwrap();
+            std::fs::write(cache.join(THUMBNAIL), b"jpg").unwrap();
+            std::fs::write(
+                cache.join(VIDEO_CACHE),
+                video_json(
+                    "https://i.ytimg.com/vi/abc123/hqdefault.jpg",
+                    "https://youtu.be/abc123",
+                ),
+            )
+            .unwrap();
+            let guard = publish_from(
+                &data,
+                &game,
+                "1.9.19",
+                show,
+                "http://127.0.0.1:9".into(),
+                Duration::from_secs(60),
+            );
+            let written: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(game.join(STATE_FILE)).unwrap()).unwrap();
+            drop(guard);
+            assert_eq!(written.get("video").is_some(), show, "show_video {show}");
+            std::fs::remove_dir_all(&data).ok();
+            std::fs::remove_dir_all(&game).ok();
+        }
     }
 
     #[test]
