@@ -11,6 +11,11 @@
 #include <cmath>
 #include <mutex>
 
+namespace runtime {
+// Bild in eine Textur laden; steht in hud.cpp und wird auch vom Hauptmenue benutzt.
+int overlay_image(const std::string &id, const std::string &path, uint32_t *width, uint32_t *height);
+}
+
 namespace runtime::room_cover {
 
 namespace {
@@ -63,64 +68,120 @@ void draw(hud::Frame &f, uint64_t now, float alpha)
     hud::reset_state(f);
     f.opacity = alpha;
     float W = f.width, H = f.height, u = H / 1080.0f, cx = W * 0.5f;
-    hud::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
+    // Hintergrund: das Bild aus der Boxengasse, sonst der Verlauf.
+    static int bg_slot = -1;
+    static bool bg_tried = false;
+    static uint32_t bg_w = 0, bg_h = 0;
+    if (!bg_tried) {
+        bg_tried = true;
+        bg_slot = runtime::overlay_image("core.room_cover\nbg", "swofty:addons/core/cover.png", &bg_w, &bg_h);
+    }
+    if (bg_slot >= 0 && bg_w && bg_h) {
+        float s = std::max(W / float(bg_w), H / float(bg_h));
+        float dw = bg_w * s, dh = bg_h * s;
+        hud::image(f, bg_slot, (W - dw) * 0.5f, (H - dh) * 0.5f, dw, dh, 0xffffffb4u);
+    } else {
+        hud::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
+    }
+    // Abdunkeln, damit Text und Instrumente lesbar bleiben.
+    hud::rect_gradient(f, 0, 0, W, H * 0.42f, 0, 0x000000a8, 0x00000000, 0);
+    hud::rect_gradient(f, 0, H * 0.52f, W, H * 0.48f, 0, 0x00000000, 0x000000c4, 0);
 
-    // Die Wortmarke steht klein oben; der Bildschirm gehoert der Sitzung.
-    hud::TextStyle word = style(56 * u, TEXT, 0.34f);
-    std::string name = "ERC";
-    float ww = text_width(word, name);
-    float wy = H * 0.12f;
-    hud::text(f, cx - ww * 0.5f + word.tracking * 0.5f, wy, word, name);
-
-    hud::TextStyle tag = style(18 * u, ACCENT_HI, 0.62f);
-    std::string tagline = "LAUNCHER";
-    float tw = text_width(tag, tagline);
-    float ty = wy + 64 * u;
-    hud::text(f, cx - tw * 0.5f + tag.tracking * 0.5f, ty, tag, tagline);
-    float rule = 56 * u, ry = ty + 9 * u;
-    hud::rect_rounded(f, cx - tw * 0.5f - 20 * u - rule, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
-    hud::rect_rounded(f, cx + tw * 0.5f + 20 * u, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
-
-    hud::TextStyle sub = style(46 * u, TEXT, 0.10f);
-    float sw = text_width(sub, subtitle);
-    float sy = H * 0.34f;
-    hud::text(f, cx - sw * 0.5f + sub.tracking * 0.5f, sy, sub, subtitle);
-
-    // Die Startampel: fuenf Lichter, eins je angefangene 20 Prozent.
-    constexpr int lights = 5;
     bool ready = progress.completed();
     int pct = progress.percent(now);
-    int lit = ready ? lights : std::clamp(pct / 20, 0, lights);
-    float lr = 17 * u, gap = 66 * u;
-    float lx = cx - gap * (lights - 1) * 0.5f, ly = H * 0.49f;
-    for (int i = 0; i < lights; ++i) {
-        bool on = i < lit;
-        uint32_t c = ready ? READY : on ? ACCENT : LIGHT_OFF;
-        float x = lx + gap * i;
-        if (on)
-            hud::rect_rounded(f, x - lr * 1.9f, ly - lr * 1.9f, lr * 3.8f, lr * 3.8f, lr * 1.9f, with_alpha(c, 0.16f));
-        hud::rect_rounded(f, x - lr, ly - lr, lr * 2, lr * 2, lr, c);
-    }
-
-    float bw = std::min(W * 0.34f, 720 * u * 1.6f), bh = 6 * u, bx = cx - bw * 0.5f, by = H * 0.66f;
     float shown = progress.shown(now);
 
-    hud::TextStyle status = style(22 * u, MUTED);
-    hud::TextStyle pctst = style(22 * u, TEXT, 0.04f);
+    // Wortmarke oben in der Mitte.
+    hud::TextStyle word = style(34 * u, TEXT, 0.34f);
+    std::string name = "ERC";
+    float ww = text_width(word, name);
+    hud::text(f, cx - ww * 0.5f + word.tracking * 0.5f, 44 * u, word, name);
+    hud::TextStyle tag = style(13 * u, MUTED, 0.55f);
+    std::string tagline = "LAUNCHER";
+    float tw = text_width(tag, tagline);
+    hud::text(f, cx - tw * 0.5f + tag.tracking * 0.5f, 88 * u, tag, tagline);
+
+    // Vier Instrumente wie auf dem Armaturenbrett.
+    float pw2 = 300 * u, ph = 104 * u, pad = 54 * u;
+    auto panel = [&](float x, float y) {
+        hud::rect_rounded(f, x, y, pw2, ph, 6 * u, 0x101216cc);
+        hud::rect_rounded(f, x, y, pw2, 2 * u, u, with_alpha(ACCENT, 0.45f));
+    };
+    auto heading = [&](float x, float y, const char *t) {
+        hud::TextStyle h = style(13 * u, MUTED, 0.16f);
+        hud::text(f, x + 14 * u, y + 12 * u, h, t);
+    };
+
+    float top_y = 130 * u, bot_y = H - 130 * u - ph;
+    panel(pad, top_y);
+    heading(pad, top_y, "SYSTEM CHECK");
+    {
+        hud::TextStyle v = style(15 * u, ready ? READY : TEXT, 0.10f);
+        hud::text(f, pad + 14 * u, top_y + 40 * u, v, ready ? "PASS" : "LAEUFT");
+        for (int i = 0; i < 5; ++i) {
+            bool on = ready || i < std::clamp(pct / 20, 0, 5);
+            hud::rect_rounded(f, pad + 14 * u + i * 26 * u, top_y + 72 * u, 18 * u, 18 * u, 3 * u,
+                              on ? READY : 0x2a2f37ffu);
+        }
+    }
+    panel(W - pad - pw2, top_y);
+    heading(W - pad - pw2, top_y, "STRECKE");
+    {
+        hud::TextStyle v = style(15 * u, TEXT, 0.08f);
+        hud::text(f, W - pad - pw2 + 14 * u, top_y + 40 * u, v, subtitle);
+        // Ein Streckenumriss als Platzhalter, bis echtes Kartenmaterial da ist.
+        const float pts[][2] = {{0.05f, 0.62f}, {0.18f, 0.34f}, {0.38f, 0.30f}, {0.52f, 0.46f}, {0.44f, 0.66f},
+                                {0.60f, 0.78f}, {0.84f, 0.72f}, {0.90f, 0.52f}, {0.74f, 0.40f}};
+        for (size_t i = 0; i + 1 < sizeof pts / sizeof pts[0]; ++i)
+            hud::line(f, W - pad - pw2 + 14 * u + pts[i][0] * 270 * u, top_y + 52 * u + pts[i][1] * 40 * u,
+                      W - pad - pw2 + 14 * u + pts[i + 1][0] * 270 * u, top_y + 52 * u + pts[i + 1][1] * 40 * u,
+                      2 * u, with_alpha(ACCENT_HI, 0.75f));
+    }
+    panel(pad, bot_y);
+    heading(pad, bot_y, "ANTRIEB");
+    {
+        for (int i = 0; i < 9; ++i) {
+            float hgt = (0.25f + 0.75f * std::fabs(std::sin(float(i) * 1.7f))) * 54 * u;
+            hud::rect_rounded(f, pad + 14 * u + i * 30 * u, bot_y + ph - 16 * u - hgt, 18 * u, hgt, 2 * u,
+                              i * 11 < pct ? ACCENT : 0x2a2f37ffu);
+        }
+    }
+    panel(W - pad - pw2, bot_y);
+    heading(W - pad - pw2, bot_y, "FUNK");
+    {
+        hud::TextStyle v = style(15 * u, READY, 0.10f);
+        hud::text(f, W - pad - pw2 + 14 * u, bot_y + 40 * u, v, "ONLINE");
+        for (int i = 0; i < 22; ++i) {
+            float x = W - pad - pw2 + 14 * u + i * 12 * u;
+            float a = std::sin(float(now % 2400) / 2400.0f * 6.283f + i * 0.7f);
+            float hgt = (0.2f + 0.8f * std::fabs(a)) * 28 * u;
+            hud::rect_rounded(f, x, bot_y + ph - 14 * u - hgt, 3 * u, hgt, 1.5f * u, with_alpha(READY, 0.7f));
+        }
+    }
+
+    // In der Mitte: der Ring mit dem Fortschritt.
+    float r = 150 * u, gy = H * 0.52f;
+    constexpr float PI_ = 3.14159265f, start = -0.75f * PI_, span = 1.5f * PI_;
+    hud::arc(f, cx, gy, r, start, start + span, 8 * u, TRACK);
+    float to = start + span * shown;
+    if (shown > 0.001f) {
+        hud::arc(f, cx, gy, r, start, to, 22 * u, with_alpha(ACCENT, 0.16f));
+        hud::arc(f, cx, gy, r, start, to, 8 * u, ready ? READY : ACCENT);
+    }
+    hud::TextStyle big = style(64 * u, TEXT, 0.02f);
     std::string pt = std::to_string(pct) + "%";
-    float ly2 = by - 20 * u - 30 * u;
-    hud::text(f, bx, ly2, status, progress.label());
-    float pw = text_width(pctst, pt);
-    hud::text(f, bx + bw - pw, ly2, pctst, pt);
+    float pw3 = text_width(big, pt);
+    hud::text(f, cx - pw3 * 0.5f, gy - 40 * u, big, pt);
+    hud::TextStyle rdy = style(16 * u, ready ? READY : MUTED, 0.22f);
+    std::string label = ready ? "BEREIT" : "LAEDT";
+    float lw = text_width(rdy, label);
+    hud::text(f, cx - lw * 0.5f, gy + 40 * u, rdy, label);
 
-    hud::rect_rounded(f, bx, by, bw, bh, bh * 0.5f, TRACK);
-    float fw = std::max(bh, bw * shown);
-    hud::rect_gradient(f, bx, by, fw, bh, bh * 0.5f, ACCENT, ACCENT_HI, SWOFTY_GRADIENT_HORIZONTAL);
-
-    hud::TextStyle foot = style(18 * u, FAINT, 0.10f);
-    std::string note = ready ? "Bereit" : "Einen Moment ...";
-    float nw = text_width(foot, note);
-    hud::text(f, cx - nw * 0.5f + foot.tracking * 0.5f, by + 34 * u, foot, note);
+    // Darunter, was gerade passiert.
+    hud::TextStyle status = style(22 * u, MUTED, 0.06f);
+    std::string line = progress.label();
+    float sw = text_width(status, line);
+    hud::text(f, cx - sw * 0.5f, H - 74 * u, status, line);
 }
 
 }
