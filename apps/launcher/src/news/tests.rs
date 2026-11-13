@@ -34,7 +34,19 @@ fn no_release_notes_before_one_zero() {
     // Merge mit dem Unterbau hat am 13.11. 24 fremde Notizen (1.9.19–1.9.42)
     // wieder hereingetragen — die waren ">= 1.0.0" undrutschten durch.
     let ours = version(&format!("release/{}", env!("CARGO_PKG_VERSION")));
-    assert!(ours < vec![1, 0, 0], "ab 1.0.0 darf der Changelog wieder Eintraege haben");
+    if ours >= vec![1, 0, 0] {
+        // Ab 1.0.0 gehoeren die Notizen wieder ins Programm — dann pruefen wir,
+        // dass keine fremde dabei ist: jede muss unsere Fassungsnummer tragen.
+        let posts = embedded();
+        for note in posts.iter().filter(|p| p.release()) {
+            assert!(
+                version(&note.id) >= vec![1, 0, 0],
+                "fremde Versionsnotiz eingebettet: {}",
+                note.version()
+            );
+        }
+        return;
+    }
     let posts = embedded();
     let notes: Vec<&Post> = posts.iter().filter(|p| p.release()).collect();
     assert!(

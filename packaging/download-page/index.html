@@ -133,7 +133,7 @@
                     <span>HUD-Vorschau</span>
                 </button>
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-f1-panel border border-f1-border text-xs font-mono text-zinc-300 shadow-inner">
-                    <span class="text-white font-semibold">0.7.10</span>
+                    <span class="text-white font-semibold">1.0.0</span>
                     <span class="text-zinc-600">·</span>
                     <span class="text-zinc-400">Windows</span>
                 </div>
@@ -185,7 +185,7 @@
 
                 <!-- Primary CTA Download Button -->
                 <div class="w-full sm:w-auto flex flex-col items-center">
-                    <a id="downloadBtn" href="ERC-Launcher-0.7.10-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
+                    <a id="downloadBtn" href="ERC-Launcher-1.0.0-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
                         <!-- Download Icon -->
                         <svg id="downloadIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -197,7 +197,7 @@
                     <div class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-zinc-400">
                         <div class="flex items-center gap-1.5">
                             <span class="text-zinc-500">Fassung</span>
-                            <span class="text-zinc-200 font-semibold">0.7.10</span>
+                            <span class="text-zinc-200 font-semibold">1.0.0</span>
                         </div>
                         <span class="text-zinc-700 hidden sm:inline">|</span>
                         <div class="flex items-center gap-1.5">
@@ -208,7 +208,7 @@
                         <!-- Interactive SHA-256 Copy Button -->
                         <button onclick="copySha256()" title="Vollständigen SHA-256 Hash kopieren" class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-f1-panel hover:bg-f1-panelLight border border-f1-border/80 hover:border-zinc-600 transition-colors cursor-pointer group">
                             <span class="text-zinc-500">SHA-256</span>
-                            <span class="text-zinc-200 font-semibold group-hover:text-white">caa59662...</span>
+                            <span class="text-zinc-200 font-semibold group-hover:text-white">9186ddcb...</span>
                             <svg id="copyIcon" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-f1-red transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
@@ -231,7 +231,7 @@
                             NEU IN DIESER FASSUNG
                         </h2>
                     </div>
-                    <span class="font-mono text-[11px] text-zinc-500">BUILD #0710-REL</span>
+                    <span class="font-mono text-[11px] text-zinc-500">BUILD #100-REL</span>
                 </div>
 
                 <!-- Pit-Wall Telemetry Release Card -->
@@ -242,38 +242,23 @@
                     </div>
 
                     <ul class="space-y-5 text-sm sm:text-[15px] leading-relaxed text-zinc-300">
-                        <li class="flex items-start gap-3.5">
-                            <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
-                            <div>
-                                <strong class="text-white font-semibold">Das Protokoll-Bündel sagt jetzt, was drin ist.</strong>
-                                Wer Logs schickt, bekommt ein Verzeichnis mit: jede Datei mit Größe, jede ausgelassene mit Grund.
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3.5">
-                            <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
-                            <div class="flex-1">
-                                <strong class="text-white font-semibold">Ladebildschirm:</strong>
-                                Boxengasse und vier Instrumente, in der Mitte der Fortschritt — voll deckend, das Spiel scheint nicht mehr durch.
-                                <!-- Inline Interactive Trigger for the New Loading Screen -->
-                                <div class="mt-2.5">
-                                    <button onclick="openPreviewModal()" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-f1-panelLight hover:bg-zinc-800 border border-f1-border hover:border-f1-red/60 text-xs font-mono text-zinc-200 transition-all cursor-pointer group">
-                                        <svg class="w-3.5 h-3.5 text-f1-red group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
-                                        <span>Vorschau des Ladebildschirms</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3.5">
-                            <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
-                            <div>
-                                <strong class="text-white font-semibold">Einrichtung:</strong>
-                                Farben und Wortmarke der ERC-Seite.
-                            </div>
-                        </li>
-                    </ul>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Die erste stabile Fassung.</strong> Lobby, Raumcode und Schlüssel kommen vom eigenen Server, die Spielpakete laufen über den eigenen Relay — kein Konto, kein TURN.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Mod-Abgleich vor dem Beitreten:</strong> der Host veröffentlicht seinen Mod-Stand, der Launcher gleicht ihn vor dem Spielstart ab und sagt im Klartext, was fehlt.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Ladebildschirm:</strong> Boxengasse und vier Instrumente, in der Mitte der Fortschritt — voll deckend, das Spiel scheint nicht mehr durch.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Support:</strong> die Seite führt zu Ko-fi. <strong class="text-white font-semibold">Protokolle:</strong> das Bündel nennt, was drin ist und was fehlt.</div>
+                                </li>
+                            </ul>
                 </div>
             </section>
 
@@ -377,7 +362,7 @@
             <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <a href="https://ko-fi.com/leutnant_kampfwiener" target="_blank" rel="noopener" class="hover:text-zinc-200">Unterstützen</a>
                 <a href="ERC-Launcher-0.3.30-setup.exe" class="hover:text-zinc-200">Vorige Fassung (0.3.30, ohne Lobbys)</a>
-                <span class="text-zinc-600">BUILD #0710-REL</span>
+                <span class="text-zinc-600">BUILD #100-REL</span>
             </div>
         </div>
     </footer>
@@ -485,7 +470,7 @@
 
             <div class="px-4 py-3 border-t border-f1-border bg-f1-panel font-mono text-[11px] text-zinc-400 flex flex-col sm:flex-row items-center justify-between gap-2">
                 <span>Hintergrund und Aufbau aus dem Launcher &middot; Werte zur Veranschaulichung</span>
-                <span class="text-zinc-600">BUILD #0710-REL</span>
+                <span class="text-zinc-600">BUILD #100-REL</span>
             </div>
         </div>
     </div>
@@ -504,7 +489,7 @@
     <!-- Interactive Scripts -->
     <script>
         // Full SHA-256 checksum string for clipboard copy
-        const FULL_SHA256 = "caa596624045c7612d36cbcab55f854ef20f75fe2d2fe7e0f588fc4a0ba5c2dd";
+        const FULL_SHA256 = "9186ddcb8cd4e72765838b61903cb52a5794ff72cb23e9d36f9eac239089b4a6";
 
         // Toast Helper Function
         let toastTimeout;
@@ -544,7 +529,7 @@
             tempInput.select();
             try {
                 document.execCommand('copy');
-                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-0.7.10.exe in Zwischenablage.');
+                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.0.0-setup.exe in Zwischenablage.');
             } catch (err) {
                 showToast('Hinweis', 'SHA-256: ' + FULL_SHA256.slice(0, 16) + '...', true);
             }
@@ -554,7 +539,7 @@
         // Echter Download: der Browser laedt die Datei, kein Fortschritt wird erfunden
         function startDownload() {
             // Der Klick selbst laedt (download-Attribut am Link); hier nur die Meldung.
-            showToast('Download gestartet', 'ERC-Launcher-0.7.10-setup.exe (41,9 MB)');
+            showToast('Download gestartet', 'ERC-Launcher-1.0.0-setup.exe (41,9 MB)');
         }
 
         // Interactive F1 Start Gantry Sequence
