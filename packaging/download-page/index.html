@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERC Launcher — Download</title>
+<meta name="description" content="Der ERC Launcher startet F1 25 mit den Mods der Liga und öffnet die Lobby über unseren eigenen Server.">
+<style>
+  :root {
+    --track: #0a0b0d; --tarmac: #121417; --kerb: #1a1d22;
+    --rule: rgba(255,255,255,.09); --rule-strong: rgba(255,255,255,.20);
+    --ink: #f2f4f7; --ink-2: #b6babd; --ink-3: #82878d;
+    --team: #e10600; --team-hi: #ff2b1f; --warn: #ffc247; --ok: #00d26a;
+    --mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  }
+  * { box-sizing: border-box; }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(120% 60% at 50% -10%, rgba(225,6,0,.13), transparent 62%);
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--track); color: var(--ink);
+    font-family: "Saira", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6; font-size: 16px;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 10;
+    background: linear-gradient(90deg, var(--team), #8c0400);
+  }
+  .wrap { width: min(60rem, calc(100% - 2.5rem)); margin: 0 auto; }
+
+  /* Kopfleiste */
+  header.bar {
+    position: sticky; top: 0; z-index: 5;
+    background: rgba(10,11,13,.88); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar .wrap { display: flex; align-items: center; gap: 1rem; padding: .85rem 0; }
+  .lockup { display: flex; align-items: baseline; gap: .55rem; }
+  .lockup b { font-size: 1.05rem; letter-spacing: .34em; font-weight: 700; }
+  .lockup span { font-size: .62rem; letter-spacing: .42em; color: var(--team-hi); text-transform: uppercase; }
+  .bar .spacer { flex: 1; }
+  .pill {
+    font: 600 .72rem/1 var(--mono); letter-spacing: .06em;
+    padding: .4rem .6rem; border: 1px solid var(--rule-strong); border-radius: 999px;
+    color: var(--ink-2);
+  }
+
+  /* Auftakt */
+  .hero { padding: clamp(2.6rem, 7vw, 4.6rem) 0 clamp(1.2rem, 3vw, 2rem); }
+  .wordmark { text-align: center; }
+  .wordmark .ec { font-size: clamp(3.4rem, 12vw, 7rem); font-weight: 700; letter-spacing: .30em; margin: 0; line-height: 1; }
+  .wordmark .tag {
+    display: flex; align-items: center; justify-content: center; gap: 1rem;
+    margin-top: 1rem; color: var(--team); font-weight: 600;
+    letter-spacing: .62em; font-size: clamp(.7rem, 1.6vw, .95rem); text-indent: .62em;
+  }
+  .wordmark .tag::before, .wordmark .tag::after {
+    content: ""; width: clamp(2rem, 8vw, 5rem); height: 1px; background: rgba(225,6,0,.65);
+  }
+  .lights { display: flex; justify-content: center; gap: .55rem; margin: 1.6rem 0 0; }
+  .lights i { width: .55rem; height: .55rem; border-radius: 50%; background: #3a1418; }
+  .lights i.on { background: var(--team); box-shadow: 0 0 0 4px rgba(225,6,0,.12); }
+  .lights i.go { background: var(--ok); box-shadow: 0 0 0 4px rgba(0,210,106,.14); }
+
+  .lead {
+    max-width: 46ch; margin: 2.2rem auto 0; text-align: center;
+    color: var(--ink-2); font-size: clamp(1rem, 2.2vw, 1.15rem);
+  }
+
+  .download { margin-top: 2.4rem; text-align: center; }
+  a.laden {
+    display: inline-flex; align-items: center; gap: .75rem;
+    padding: 1.05rem 2rem; border-radius: 4px;
+    background: var(--team); color: #fff; text-decoration: none;
+    font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    font-size: clamp(.95rem, 2.4vw, 1.05rem);
+    box-shadow: 0 10px 30px -12px rgba(225,6,0,.75);
+    transition: transform .12s ease, background .12s ease;
+  }
+  a.laden:hover { background: var(--team-hi); transform: translateY(-1px); }
+  a.laden:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  a.laden svg { width: 1.1em; height: 1.1em; }
+  .facts {
+    margin: 1.1rem auto 0; display: flex; flex-wrap: wrap; justify-content: center;
+    gap: .4rem 1.2rem; font: .74rem/1.6 var(--mono); color: var(--ink-3);
+  }
+  .facts b { color: var(--ink-2); font-weight: 600; }
+
+  /* Abschnitte */
+  section { padding: .9rem 0; }
+  h2 {
+    font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--ink-3); margin: 1.6rem 0 .8rem; font-weight: 700;
+  }
+  .panel { background: var(--tarmac); border: 1px solid var(--rule); border-left: 2px solid var(--team); border-radius: 4px; padding: 1.1rem 1.3rem; }
+  .panel strong { color: var(--ink); }
+  .panel p { margin: .5rem 0 0; color: var(--ink-2); }
+  .panel p:first-of-type { margin-top: .35rem; }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.1rem; counter-reset: s; }
+  ol.steps li { display: grid; grid-template-columns: 2.4rem 1fr; gap: 1rem; align-items: start; color: var(--ink-2); }
+  ol.steps li::before {
+    counter-increment: s; content: counter(s, decimal-leading-zero);
+    font: 700 .85rem/2.4rem var(--mono); color: var(--team);
+    text-align: center; border: 1px solid var(--rule-strong); border-radius: 50%;
+    height: 2.4rem;
+  }
+  ol.steps strong { color: var(--ink); }
+
+  .warnung { border-left-color: var(--warn); }
+  .warnung strong { color: var(--warn); }
+  .note { border-left-color: var(--rule-strong); }
+
+  .support { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; padding: 1.1rem 1.3rem; background: var(--tarmac); border: 1px solid var(--rule); border-radius: 4px; }
+  .support p { margin: 0; color: var(--ink-2); flex: 1 1 20rem; }
+  a.kofi { color: var(--ink); text-decoration: none; border: 1px solid var(--rule-strong); border-radius: 4px; padding: .6rem 1rem; font-weight: 600; font-size: .9rem; white-space: nowrap; }
+  a.kofi:hover { border-color: var(--team); color: #fff; }
+
+  footer { margin: 3.5rem 0 4rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: .8rem; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: space-between; }
+  footer a { color: var(--ink-2); }
+  code { background: var(--kerb); padding: .08rem .35rem; border-radius: 3px; color: var(--ink); font: .85em var(--mono); }
+
+  @media (prefers-reduced-motion: reduce) { a.laden { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="lockup"><b>ERC</b><span>Launcher</span></div>
+    <div class="spacer"></div>
+    <div class="pill">0.7.10 · Windows</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <div class="wordmark">
+      <p class="ec">E R C</p>
+      <div class="tag">Launcher</div>
+    </div>
+    <div class="lights" aria-hidden="true">
+      <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="go"></i>
+    </div>
+    <p class="lead">
+      Startet F1 25 mit den Mods der Liga, gleicht sie vor dem Beitreten ab und öffnet
+      die Lobby über unseren eigenen Server — ohne Konto, ohne offenen Port.
+    </p>
+
+    <div class="download">
+      <a class="laden" href="ERC-Launcher-0.7.10-setup.exe" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+        Launcher installieren
+      </a>
+      <div class="facts">
+        <span>Fassung <b>0.7.10</b></span>
+        <span>Größe <b>41,9 MB</b></span>
+        <span>SHA-256 <b>caa59662…</b></span>
+        <span>Windows 10/11</span>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Neu in dieser Fassung</h2>
+    <div class="panel neu">
+      <p><strong>Das Protokoll-Bündel sagt jetzt, was drin ist.</strong> Wer Logs schickt, bekommt
+      ein Verzeichnis mit: jede Datei mit Größe, jede ausgelassene mit Grund.</p>
+      <p><strong>Ladebildschirm:</strong> Boxengasse und vier Instrumente, in der Mitte der
+      Fortschritt — voll deckend, das Spiel scheint nicht mehr durch.</p>
+      <p><strong>Einrichtung:</strong> Farben und Wortmarke der ERC-Seite.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>So geht es</h2>
+    <ol class="steps">
+      <li><div><strong>Herunterladen und ausführen.</strong> Der Installer richtet alles für den angemeldeten Benutzer ein — keine Administratorrechte nötig.</div></li>
+      <li><div><strong>F1&nbsp;25 muss installiert sein</strong> (Steam). Sonst wird nichts weiter gebraucht.</div></li>
+      <li><div><strong>Starten</strong> und beim ersten Mal die Bedingungen für das modifizierte Spiel bestätigen.</div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Zusammen fahren</h2>
+    <ol class="steps">
+      <li><div>Beide starten <strong>F1&nbsp;25</strong> und bleiben im Hauptmenü.</div></li>
+      <li><div>Einer öffnet im Launcher <strong>Online → Lobby</strong> und drückt <em>Lobby erstellen</em> — es erscheint ein Raumcode aus vier Zeichen.</div></li>
+      <li><div>Die anderen tippen den Code unter <em>Einem Raum beitreten</em> ein.</div></li>
+      <li><div>Zurück in der Lobby auf <strong>Play</strong> — das Spiel öffnet die gemeinsame Sitzung.</div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Gut zu wissen</h2>
+    <div class="panel warnung">
+      <strong>Windows wird warnen.</strong>
+      <p>Die Datei ist nicht signiert, deshalb meldet sich SmartScreen beim ersten Start
+      („Weitere Informationen" → „Trotzdem ausführen"). Das ist bei einer Eigenentwicklung normal.</p>
+    </div>
+    <div class="panel note" style="margin-top:.8rem">
+      <strong>Ein eigenes Steam-Konto pro Rechner.</strong>
+      <p>F1&nbsp;25 erkennt Spieler über die Steam-Kennung. Meldet sich auf zwei Rechnern dasselbe
+      Konto an, hält das Spiel den Gast für den Host — der Beitritt scheitert.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Wenn etwas klemmt</h2>
+    <div class="panel note">
+      <p>Im Fenster unten die <em>Konsole</em> aufklappen — dort steht, was zuletzt passiert ist.
+      Über <em>Send Logs to the ERC Team</em> geht das Bündel mit einem Klick an uns.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Unterstützen</h2>
+    <div class="support">
+      <p>Der Launcher und der Server dahinter kosten Zeit und Strom. Wer mag, gibt einen Kaffee aus.</p>
+      <a class="kofi" href="https://ko-fi.com/leutnant_kampfwiener" target="_blank" rel="noopener">Auf Ko-fi unterstützen</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>Erdi's Racing Community · nur für Ligamitglieder</span>
+    <span>Vorige Fassung ohne Lobbys: <a href="ERC-Launcher-0.3.30-setup.exe">0.3.30</a></span>
+  </footer>
+
+</main>
+</body>
+</html>
