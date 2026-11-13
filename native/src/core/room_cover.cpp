@@ -63,7 +63,7 @@ void draw(hud::Frame &f, uint64_t now, float alpha)
     hud::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
 
     hud::TextStyle word = style(112 * u, TEXT, 0.16f);
-    std::string name = "SWOFTY";
+    std::string name = "ERC";
     float ww = text_width(word, name);
     float wy = H * 0.30f;
     hud::text(f, cx - ww * 0.5f + word.tracking * 0.5f, wy, word, name);

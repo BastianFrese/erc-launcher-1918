@@ -263,17 +263,17 @@ inline std::string with_separators(long long n)
     return (n < 0 ? "-" : "") + out;
 }
 
-constexpr const char *OFFLINE_TEXT = "Launched with Swofty Launcher";
+// Das Hauptmenue traegt keine Zeile des Launchers mehr und keine Spielerzahl.
+constexpr const char *OFFLINE_TEXT = "";
 
 inline std::string online_line(long long n)
 {
     return n <= 0 ? "" : with_separators(n) + " currently playing";
 }
 
-inline std::string offline_text(long long n)
+inline std::string offline_text(long long)
 {
-    std::string line = online_line(n);
-    return line.empty() ? std::string(OFFLINE_TEXT) : std::string(OFFLINE_TEXT) + "\n" + line;
+    return std::string(OFFLINE_TEXT);
 }
 
 inline State parse_state(const std::string &text)

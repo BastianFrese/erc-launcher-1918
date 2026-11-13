@@ -1,6 +1,6 @@
 {
-  "version": "0.7.4",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.4-setup.exe",
-  "sha256": "84ae3895ccc5883a3c349078d3b96b4dc3cad110234a69e1bd9bc9365e391184",
-  "notiz": "Beitritt auch ueber Mobilfunk und IPv6: der Relay-Socket spricht jetzt dieselbe Adressfamilie wie der Relay. Dazu bleibt die Lobby-Verbindung stehen (sie riss alle 90 Sekunden ab)."
+  "version": "0.7.5",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.5-setup.exe",
+  "sha256": "85e8ce20f6f662984fdd024792bbb3e4dfd006ae6723daf525fd4547781822ea",
+  "notiz": "Im Spiel steht jetzt ERC statt des fremden Namens: Ladebildschirm und Hauptmenue ohne fremde Wortmarke, ohne Spielerzahl und ohne Videokarte."
 }

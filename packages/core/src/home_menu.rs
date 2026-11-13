@@ -288,28 +288,19 @@ fn card_of(data: &Path, video: Video) -> VideoCard {
 }
 
 fn publish_from(data: &Path, game: &Path, version: &str, registry: String, every: Duration) -> Refresh {
-    let _ = write(
-        game,
-        &state(data, version, cached_video(data).map(|v| card_of(data, v)), None),
-    );
+    // Das Hauptmenue zeigt keine Karte und keine Spielerzahl des Launchers mehr: der Stand
+    // geht ohne `video` und ohne `online` hinaus, und keins von beiden wird mehr geholt.
+    let _ = write(game, &state(data, version, None, None));
     let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
     let flag = stop.clone();
     let (data, game, version) = (data.to_path_buf(), game.to_path_buf(), version.to_owned());
     std::thread::spawn(move || {
-        let mut online: Option<u64> = None;
-        let mut card: Option<VideoCard> = cached_video(&data).map(|v| card_of(&data, v));
         let mut first = true;
         while !flag.load(std::sync::atomic::Ordering::Relaxed) {
             if first {
                 fetch_avatar(&data);
             }
-            if let Some(fresh) = latest_video(&data, &registry) {
-                card = Some(fresh);
-            }
-            if let Some(n) = fetch_online(&registry) {
-                online = Some(n);
-            }
-            let _ = write(&game, &state(&data, &version, card.clone(), online));
+            let _ = write(&game, &state(&data, &version, None, None));
             first = false;
             let until = std::time::Instant::now() + every;
             while std::time::Instant::now() < until && !flag.load(std::sync::atomic::Ordering::Relaxed) {
@@ -485,24 +476,18 @@ mod tests {
     }
 
     #[test]
-    fn the_published_file_gains_the_online_count_and_keeps_it_when_a_refresh_fails() {
+    fn the_published_file_carries_neither_the_online_count_nor_a_video() {
         let data = temp("online");
         let game = temp("online-game");
         let registry = serve_json(r#"{"online":{"total":77}}"#);
         let guard = publish_from(&data, &game, "1.8.37", registry, Duration::from_millis(100));
-        let mut seen = None;
-        for _ in 0..50 {
-            std::thread::sleep(Duration::from_millis(100));
-            if let Ok(bytes) = std::fs::read(game.join(STATE_FILE))
-                && let Ok(v) = serde_json::from_slice::<serde_json::Value>(&bytes)
-                && v.get("online").is_some()
-            {
-                seen = Some(v["online"].clone());
-                break;
-            }
-        }
+        std::thread::sleep(Duration::from_millis(400));
+        let bytes = std::fs::read(game.join(STATE_FILE)).unwrap();
         drop(guard);
-        assert_eq!(seen, Some(serde_json::json!(77)));
+        let v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert!(v.get("online").is_none(), "{v}");
+        assert!(v.get("video").is_none(), "{v}");
+        assert_eq!(v["launcher_version"], "1.8.37");
         std::fs::remove_dir_all(&data).ok();
         std::fs::remove_dir_all(&game).ok();
     }
