@@ -1,4 +1,4 @@
-use super::feed::{Post, Trouble, embedded, format_date, image_format, merge, parse};
+use super::feed::{Post, Trouble, embedded, format_date, image_format, merge, parse, version};
 use super::state::{News, NewsScroll, StackedRow};
 
 fn post(id: &str, date: &str) -> Post {
@@ -15,8 +15,8 @@ fn post(id: &str, date: &str) -> Post {
 }
 
 #[test]
-fn embeds_the_posts_in_full_and_the_release_notes_newest_first() {
-    // Unsere Nachrichten und Versionsnotizen, die mit dem Launcher reisen.
+fn embeds_the_news_in_full() {
+    // Unsere Nachrichten reisen mit dem Launcher.
     let posts = embedded();
     let news = posts
         .iter()
@@ -25,15 +25,40 @@ fn embeds_the_posts_in_full_and_the_release_notes_newest_first() {
     assert_eq!(news.kind, "news");
     assert!(news.body.contains("## Wenn etwas nicht laeuft") || news.body.contains("## Wenn etwas nicht läuft"));
     assert!(posts.windows(2).all(|w| w[0].date >= w[1].date));
+}
 
-    let notes = posts
-        .iter()
-        .find(|p| p.kind == "release")
-        .expect("keine Versionsnotizen eingebettet");
-    assert!(notes.title.starts_with("ERC Launcher "));
-    assert!(!notes.version().is_empty());
-    assert!(notes.url.is_none(), "kein Verweis nach draussen an einer Versionsnotiz");
-    assert!(!notes.summary.is_empty() && !notes.date.is_empty() && notes.body.is_empty());
+#[test]
+fn no_release_notes_before_one_zero() {
+    // Bastians Wort (13.11.): der Changelog bleibt leer, bis der Launcher 1.0.0 ist.
+    for notes in embedded().iter().filter(|p| p.release()) {
+        assert!(
+            version(&notes.id) >= vec![1, 0, 0],
+            "Versionsnotiz unter 1.0.0 eingebettet: {}",
+            notes.version()
+        );
+        assert!(notes.title.starts_with("ERC Launcher "));
+        assert!(notes.url.is_none(), "kein Verweis nach draussen an einer Versionsnotiz");
+        assert!(!notes.summary.is_empty() && !notes.date.is_empty() && notes.body.is_empty());
+    }
+}
+
+#[test]
+fn leaves_out_the_changelog_while_it_is_empty() {
+    let mut news = News::load(std::path::Path::new("/nonexistent"));
+    news.posts.clear();
+    news.blocks.clear();
+    let mut scroll = NewsScroll::default();
+    scroll.sync(&news, false, true, false);
+    assert!(scroll.release_indices.is_empty());
+    assert!(
+        !scroll.stacked_rows.iter().any(|r| matches!(
+            r,
+            StackedRow::ReleasesHeader | StackedRow::Release(_) | StackedRow::ReleasesBottom
+        )),
+        "der Changelog-Abschnitt steht da, obwohl es keine Notizen gibt"
+    );
+    scroll.sync(&news, false, false, false);
+    assert!(scroll.release_indices.is_empty());
 }
 
 #[test]

@@ -336,7 +336,10 @@ impl Shell {
             .items_stretch()
             .gap(px(16.))
             .child(posts)
-            .child(v_flex().w(px(side)).flex_shrink_0().min_h_0().child(changelogs));
+            // Vor 1.0.0 gibt es keine Versionsnotizen — dann steht hier nur die Nachrichtenspalte.
+            .when(!self.news_scroll.release_indices.is_empty(), |d| {
+                d.child(v_flex().w(px(side)).flex_shrink_0().min_h_0().child(changelogs))
+            });
         let content = v_flex()
             .flex_1()
             .min_h_0()

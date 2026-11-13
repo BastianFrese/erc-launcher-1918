@@ -151,11 +151,14 @@ impl NewsScroll {
         self.stacked_rows.push(StackedRow::ArticlesTop);
         self.stacked_rows
             .extend((0..self.rows.len()).map(StackedRow::Article));
-        self.stacked_rows
-            .extend([StackedRow::ArticlesBottom, StackedRow::ReleasesHeader]);
-        self.stacked_rows
-            .extend((0..self.release_indices.len()).map(StackedRow::Release));
-        self.stacked_rows.push(StackedRow::ReleasesBottom);
+        self.stacked_rows.push(StackedRow::ArticlesBottom);
+        // Vor 1.0.0 gibt es keine Versionsnotizen — dann faellt der ganze Abschnitt weg.
+        if !self.release_indices.is_empty() {
+            self.stacked_rows.push(StackedRow::ReleasesHeader);
+            self.stacked_rows
+                .extend((0..self.release_indices.len()).map(StackedRow::Release));
+            self.stacked_rows.push(StackedRow::ReleasesBottom);
+        }
         // Preserve the current item and its offset while remeasuring refreshed content.
         for (state, count) in [
             (&self.articles, self.rows.len()),
