@@ -35,7 +35,7 @@ import struct
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote
 
 PORT = int(os.environ.get("ERC_RAUM_PORT", "8091"))
 STILLE_SEK = 600  # so lange bleibt eine Lobby ohne Verbindung stehen
@@ -79,6 +79,25 @@ def support_stand() -> dict:
     except (OSError, ValueError):
         return {}
     return stand if isinstance(stand, dict) else {}
+
+
+def support_schreiben(stand: dict) -> None:
+    """Schreibt den Stand zurueck — erst daneben, dann umbenannt, damit nie halb."""
+    datei = os.path.join(os.path.dirname(os.path.abspath(__file__)), "support.json")
+    with open(datei + ".neu", "w", encoding="utf-8") as f:
+        json.dump(stand, f, ensure_ascii=False, indent=2)
+    os.replace(datei + ".neu", datei)
+
+
+def kofi_einstellungen() -> dict:
+    """Verification Token und Stufen-Zuordnung: `kofi.json` neben diesem Dienst."""
+    datei = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kofi.json")
+    try:
+        with open(datei, encoding="utf-8") as f:
+            daten = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return daten if isinstance(daten, dict) else {}
 
 
 class Mitglied:
@@ -344,6 +363,81 @@ class Abnehmer(BaseHTTPRequestHandler):
 
     # -- Wege -----------------------------------------------------------------
 
+    def kofi_spende(self) -> None:
+        """Eine Meldung von Ko-fi: Spende, Mitgliedschaft, Shop-Bestellung.
+
+        Ko-fi signiert nicht; es legt denselben `verification_token` in jedes
+        Paket. Der steht in `kofi.json` und wird hier verglichen. Doppelte
+        Meldungen erkennt `message_id`.
+        """
+        roh = self.rfile.read(int(self.headers.get("Content-Length") or 0))
+        felder = parse_qs(roh.decode("utf-8", "replace"))
+        try:
+            daten = json.loads((felder.get("data") or [""])[0])
+        except ValueError:
+            return self.fehler(400, "bad_payload", "data is not JSON")
+        if not isinstance(daten, dict):
+            return self.fehler(400, "bad_payload", "data is not an object")
+
+        einstellung = kofi_einstellungen()
+        geheim = str(einstellung.get("verification_token") or "")
+        if not geheim or not secrets.compare_digest(
+            str(daten.get("verification_token") or ""), geheim
+        ):
+            return self.fehler(403, "bad_token", "the verification token does not match")
+
+        kennung = str(daten.get("message_id") or daten.get("kofi_transaction_id") or "")
+        try:
+            betrag = float(str(daten.get("amount") or "0").replace(",", "."))
+        except ValueError:
+            betrag = 0.0
+        waehrung = str(daten.get("currency") or "").upper()
+        stufe = str(daten.get("tier_name") or "")
+        zuordnung = einstellung.get("tiers") or {}
+        tier = str(
+            zuordnung.get(stufe)
+            or ("supporter_plus" if any(w in stufe.lower() for w in ("plus", "+")) else "supporter")
+        )
+        oeffentlich = daten.get("is_public") is True
+        wer = str(daten.get("email") or daten.get("from_name") or kennung)
+        person = hashlib.sha256(wer.encode("utf-8")).hexdigest()[:12]
+
+        with SPERR:
+            stand = support_stand()
+            gesehen = [str(x) for x in (stand.get("kofi_seen") or [])]
+            if kennung and kennung in gesehen:
+                return self.antwort(200, {"ok": True, "duplicate": True})
+            eintrag = {
+                "_id": person,
+                "_since": str(daten.get("timestamp") or "")[:10],
+                "tier": tier,
+                "bio": (str(daten.get("message") or "")[:140] or None),
+                "display": {
+                    "anonymous": not oeffentlich,
+                    "name": (str(daten.get("from_name") or "") if oeffentlich else None) or None,
+                    "avatar_url": None,
+                },
+            }
+            liste = [s for s in (stand.get("supporters") or []) if isinstance(s, dict)]
+            for i, alt in enumerate(liste):
+                if alt.get("_id") == person:
+                    # Eine Verlaengerung ist kein neuer Mensch: erster Tag und
+                    # seine Nachricht bleiben stehen.
+                    eintrag["_since"] = alt.get("_since") or eintrag["_since"]
+                    eintrag["bio"] = eintrag["bio"] or alt.get("bio")
+                    liste[i] = eintrag
+                    break
+            else:
+                liste.insert(0, eintrag)
+            stand["supporters"] = liste
+            if waehrung == "EUR":
+                stand["raised_cents"] = int(stand.get("raised_cents") or 0) + int(round(betrag * 100))
+            if kennung:
+                gesehen.append(kennung)
+                stand["kofi_seen"] = gesehen[-500:]
+            support_schreiben(stand)
+        return self.antwort(200, {"ok": True})
+
     def do_GET(self) -> None:  # noqa: N802 - Vorgabe der Basisklasse
         pfad = self.path.split("?", 1)[0].rstrip("/") or "/"
         # Der Spendenstand ist oeffentlich: kein Token, keine Kennung.
@@ -360,7 +454,13 @@ class Abnehmer(BaseHTTPRequestHandler):
                 },
             )
         if pfad == "/v1/support/supporters":
-            return self.antwort(200, {"supporters": list(support_stand().get("supporters") or [])})
+            # Felder mit Unterstrich sind Buchhaltung und gehen niemanden etwas an.
+            liste = [
+                {k: v for k, v in s.items() if not k.startswith("_")}
+                for s in (support_stand().get("supporters") or [])
+                if isinstance(s, dict)
+            ]
+            return self.antwort(200, {"supporters": liste})
         if not self.token():
             return self.fehler(401, "signed_out", "sign in")
         if pfad == "/":
@@ -395,9 +495,12 @@ class Abnehmer(BaseHTTPRequestHandler):
         return self.fehler(404, "not_found", "no route")
 
     def do_POST(self) -> None:  # noqa: N802 - Vorgabe der Basisklasse
+        pfad = self.path.split("?", 1)[0].rstrip("/") or "/"
+        # Ko-fi meldet Zahlungen hierher; kein Bearer-Token, dafuer der eigene.
+        if pfad == "/v1/support/kofi":
+            return self.kofi_spende()
         if not self.token():
             return self.fehler(401, "signed_out", "sign in")
-        pfad = self.path.split("?", 1)[0].rstrip("/") or "/"
         mit = kennung_von(self.token())
         name = self.name()
         if pfad == "/v1/mp/lobbies":
