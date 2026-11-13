@@ -11,10 +11,6 @@ impl Shell {
         // `ERC_ONBOARDING=1` zeigt die Einrichtung zum Ansehen, ohne die
         // eigene Einstellung zurueckzusetzen.
         let forced = std::env::var_os("ERC_ONBOARDING").is_some();
-        eprintln!(
-            "erc-launcher: onboarding forced={forced} due={}",
-            self.store.config().needs_onboarding()
-        );
         if !forced && !self.store.config().needs_onboarding() {
             window.focus(&self.root_focus, cx);
             return;
