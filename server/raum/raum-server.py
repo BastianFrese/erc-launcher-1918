@@ -457,6 +457,9 @@ class Abnehmer(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - Vorgabe der Basisklasse
         pfad = self.path.split("?", 1)[0].rstrip("/") or "/"
         # Der Spendenstand ist oeffentlich: kein Token, keine Kennung.
+        # Manche Dienste pruefen die Adresse beim Speichern mit einem GET.
+        if pfad in ("/v1/support/kofi", "/v1/support/kofi/"):
+            return self.antwort(200, {"ok": True})
         if pfad == "/v1/support/goal":
             stand = support_stand()
             return self.antwort(
