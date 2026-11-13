@@ -19,19 +19,22 @@ std::mutex lock;
 Cover cover;
 Kind kind = Kind::none;
 Progress progress;
-std::string subtitle = "Starting your session";
+std::string subtitle = "Sitzung wird gestartet";
 std::atomic<bool> armed{false};
 uint64_t polled_at = 0;
 Signal last = Signal::waiting;
 
-constexpr uint32_t BG_TOP = 0x0b0d12ffu;
-constexpr uint32_t BG_BOTTOM = 0x181b22ffu;
-constexpr uint32_t TEXT = 0xe9ecf3ffu;
-constexpr uint32_t MUTED = 0xa3a8b7ffu;
+constexpr uint32_t BG_TOP = 0x0a0b0dffu;
+constexpr uint32_t BG_BOTTOM = 0x16181cffu;
+constexpr uint32_t TEXT = 0xf2f4f7ffu;
+constexpr uint32_t MUTED = 0xb6babdffu;
 constexpr uint32_t FAINT = 0x737988ffu;
-constexpr uint32_t ACCENT = 0x8b7fd6ffu;
-constexpr uint32_t ACCENT_HI = 0xa196e6ffu;
-constexpr uint32_t TRACK = 0x272b35ffu;
+constexpr uint32_t ACCENT = 0xe10600ffu;
+constexpr uint32_t ACCENT_HI = 0xff2b1fff;
+constexpr uint32_t TRACK = 0x22262dffu;
+/// Startampel: dunkel, solange das Licht aus ist; gruen, wenn es losgeht.
+constexpr uint32_t LIGHT_OFF = 0x3a1418ffu;
+constexpr uint32_t READY = 0x00d26affu;
 
 uint32_t with_alpha(uint32_t rgba, float k)
 {
@@ -62,51 +65,62 @@ void draw(hud::Frame &f, uint64_t now, float alpha)
     float W = f.width, H = f.height, u = H / 1080.0f, cx = W * 0.5f;
     hud::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
 
-    hud::TextStyle word = style(112 * u, TEXT, 0.16f);
+    // Die Wortmarke steht klein oben; der Bildschirm gehoert der Sitzung.
+    hud::TextStyle word = style(56 * u, TEXT, 0.34f);
     std::string name = "ERC";
     float ww = text_width(word, name);
-    float wy = H * 0.30f;
+    float wy = H * 0.12f;
     hud::text(f, cx - ww * 0.5f + word.tracking * 0.5f, wy, word, name);
 
-    hud::TextStyle tag = style(26 * u, ACCENT_HI, 0.62f);
+    hud::TextStyle tag = style(18 * u, ACCENT_HI, 0.62f);
     std::string tagline = "LAUNCHER";
     float tw = text_width(tag, tagline);
-    float ty = wy + 112 * u * 1.25f;
+    float ty = wy + 64 * u;
     hud::text(f, cx - tw * 0.5f + tag.tracking * 0.5f, ty, tag, tagline);
-    float rule = 64 * u, ry = ty + 13 * u;
-    hud::rect_rounded(f, cx - tw * 0.5f - 24 * u - rule, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
-    hud::rect_rounded(f, cx + tw * 0.5f + 24 * u, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
+    float rule = 56 * u, ry = ty + 9 * u;
+    hud::rect_rounded(f, cx - tw * 0.5f - 20 * u - rule, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
+    hud::rect_rounded(f, cx + tw * 0.5f + 20 * u, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
 
-    hud::TextStyle sub = style(34 * u, MUTED, 0.04f);
+    hud::TextStyle sub = style(46 * u, TEXT, 0.10f);
     float sw = text_width(sub, subtitle);
-    float sy = H * 0.55f;
-    hud::text(f, cx - sw * 0.5f, sy, sub, subtitle);
+    float sy = H * 0.34f;
+    hud::text(f, cx - sw * 0.5f + sub.tracking * 0.5f, sy, sub, subtitle);
 
-    float bw = std::min(W * 0.34f, 720 * u * 1.6f), bh = 8 * u, bx = cx - bw * 0.5f, by = H * 0.67f;
-    float shown = progress.shown(now);
+    // Die Startampel: fuenf Lichter, eins je angefangene 20 Prozent.
+    constexpr int lights = 5;
+    bool ready = progress.completed();
     int pct = progress.percent(now);
+    int lit = ready ? lights : std::clamp(pct / 20, 0, lights);
+    float lr = 17 * u, gap = 66 * u;
+    float lx = cx - gap * (lights - 1) * 0.5f, ly = H * 0.49f;
+    for (int i = 0; i < lights; ++i) {
+        bool on = i < lit;
+        uint32_t c = ready ? READY : on ? ACCENT : LIGHT_OFF;
+        float x = lx + gap * i;
+        if (on)
+            hud::rect_rounded(f, x - lr * 1.9f, ly - lr * 1.9f, lr * 3.8f, lr * 3.8f, lr * 1.9f, with_alpha(c, 0.16f));
+        hud::rect_rounded(f, x - lr, ly - lr, lr * 2, lr * 2, lr, c);
+    }
 
-    hud::TextStyle status = style(24 * u, MUTED);
-    hud::TextStyle pctst = style(24 * u, TEXT, 0.04f);
+    float bw = std::min(W * 0.34f, 720 * u * 1.6f), bh = 6 * u, bx = cx - bw * 0.5f, by = H * 0.66f;
+    float shown = progress.shown(now);
+
+    hud::TextStyle status = style(22 * u, MUTED);
+    hud::TextStyle pctst = style(22 * u, TEXT, 0.04f);
     std::string pt = std::to_string(pct) + "%";
-    float ly = by - 24 * u - 34 * u;
-    hud::text(f, bx, ly, status, progress.label());
+    float ly2 = by - 20 * u - 30 * u;
+    hud::text(f, bx, ly2, status, progress.label());
     float pw = text_width(pctst, pt);
-    hud::text(f, bx + bw - pw, ly, pctst, pt);
+    hud::text(f, bx + bw - pw, ly2, pctst, pt);
 
     hud::rect_rounded(f, bx, by, bw, bh, bh * 0.5f, TRACK);
     float fw = std::max(bh, bw * shown);
     hud::rect_gradient(f, bx, by, fw, bh, bh * 0.5f, ACCENT, ACCENT_HI, SWOFTY_GRADIENT_HORIZONTAL);
-    float sweep = std::fmod(float(now % 1800) / 1800.0f, 1.0f);
-    float sx = bx + (fw + 90 * u) * sweep - 90 * u, sl = std::max(sx, bx), sr = std::min(sx + 90 * u, bx + fw);
-    if (!progress.completed() && sr - sl > bh)
-        hud::rect_rounded(f, sl, by, sr - sl, bh, bh * 0.5f, with_alpha(0xffffffffu, 0.22f));
-    hud::rect_rounded(f, bx + fw - bh, by - 2 * u, bh, bh + 4 * u, (bh + 4 * u) * 0.5f, with_alpha(ACCENT_HI, 0.35f));
 
-    hud::TextStyle foot = style(20 * u, FAINT, 0.04f);
-    std::string note = "This only takes a moment";
+    hud::TextStyle foot = style(18 * u, FAINT, 0.10f);
+    std::string note = ready ? "Bereit" : "Einen Moment ...";
     float nw = text_width(foot, note);
-    hud::text(f, cx - nw * 0.5f, by + 40 * u, foot, note);
+    hud::text(f, cx - nw * 0.5f + foot.tracking * 0.5f, by + 34 * u, foot, note);
 }
 
 }
@@ -154,7 +168,7 @@ bool setup()
     if (k == Kind::session) {
         json::Value v;
         bool tt = json::parse(text, v) && v["mode"].str() == "time_trial";
-        subtitle = tt ? "Starting a Time Trial" : "Starting a Grand Prix session";
+        subtitle = tt ? "Zeitfahren" : "Grand-Prix-Sitzung";
     }
     cover.arm(k == Kind::session ? SESSION_CAP_MS : CAP_MS);
     armed.store(true);
@@ -197,7 +211,7 @@ void paint(hud::Frame &f, uint64_t now)
     if (alpha <= 0)
         return;
     if (last == Signal::shown)
-        progress.complete("Ready", now);
+        progress.complete("Bereit", now);
     draw(f, now, alpha);
 }
 
