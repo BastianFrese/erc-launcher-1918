@@ -119,6 +119,7 @@ fn collects_the_logs_the_developers_need() {
     let zip = bundle.zip().unwrap();
     let mut want: BTreeSet<String> = [
         "summary.txt",
+        "manifest.txt",
         "config.json",
         "addons.json",
         "addons/t.helper/helper.log",
@@ -317,7 +318,7 @@ fn caps_big_files_and_the_whole_bundle() {
         total: 2048,
     };
     let bundle = Bundle::collect_with(&store, &report(&game), limits, "x");
-    let used: usize = bundle.entries.iter().skip(1).map(|e| e.data.len()).sum();
+    let used: usize = bundle.entries.iter().skip(2).map(|e| e.data.len()).sum();
     assert!(used <= 2048 + 64, "{used}");
     assert!(!bundle.skipped.is_empty());
     assert!(
@@ -812,11 +813,12 @@ fn bundles_the_running_games_logs_first_with_its_performance_summary() {
     put(&game.join("swofty/loader.log"), "live loader line\n");
     put(&game.join("swofty/perf.log"), PERF);
     let bundle = Bundle::collect_with(&store, &report(&game), Limits::default(), "20261021-091500");
-    let order: Vec<_> = bundle.entries.iter().take(5).map(|e| e.path.as_str()).collect();
+    let order: Vec<_> = bundle.entries.iter().take(6).map(|e| e.path.as_str()).collect();
     assert_eq!(
         order,
         [
             "summary.txt",
+            "manifest.txt",
             "config.json",
             "addons.json",
             "game/loader.log",

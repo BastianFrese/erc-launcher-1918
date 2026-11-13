@@ -542,6 +542,30 @@ impl Bundle {
                 note: None,
             },
         );
+        // Ein Verzeichnis des Buendels: was drin ist und was warum fehlt. Ohne das
+        // laesst sich hinterher nicht sagen, ob eine Datei fehlte oder nie da war
+        // (Fund vom 13.11.: ein Buendel trug nur alte Sitzungen).
+        let mut manifest = String::from("What is in this bundle\n\n");
+        for e in &bundle.entries {
+            manifest.push_str(&format!("{:>9}  {}{}\n", e.data.len(), e.path, match &e.note {
+                Some(n) => format!("  ({n})"),
+                None => String::new(),
+            }));
+        }
+        if !bundle.skipped.is_empty() {
+            manifest.push_str("\nLeft out\n\n");
+            for why in &bundle.skipped {
+                manifest.push_str(&format!("           {why}\n"));
+            }
+        }
+        bundle.entries.insert(
+            1,
+            Entry {
+                path: "manifest.txt".into(),
+                data: manifest.into_bytes(),
+                note: None,
+            },
+        );
         bundle
     }
 

@@ -234,6 +234,7 @@ mod tests {
             raised_cents: 12_500,
             since: String::new(),
             costs: Vec::new(),
+            donate_url: None,
         };
         assert_eq!(g.fraction(), 0.25);
         assert_eq!(
