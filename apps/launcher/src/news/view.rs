@@ -10,7 +10,7 @@ use gpui_kit::component::button::{Button, ButtonVariants};
 use gpui_kit::component::{ActiveTheme, Disableable, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
-use swofty_i18n::{tr, trf};
+use swofty_i18n::{tr, trf, trn};
 
 pub(super) const TEXT: f32 = 15.;
 
@@ -214,7 +214,8 @@ pub(super) fn changelog_header(count: usize, p: Palette) -> Div {
             div()
                 .text_size(px(12.))
                 .text_color(p.text_placeholder)
-                .child(trf!("{count} releases", count = count)),
+                // Mehrzahl ueber die Sprachdatei: `trf` kennt nur eine Form.
+                .child(trn(count, "{count} release", "{count} releases")),
         )
 }
 

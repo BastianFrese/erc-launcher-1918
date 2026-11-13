@@ -66,7 +66,8 @@ impl Shell {
             config,
             seen,
         } = prepared;
-        swofty_i18n::set_language(config.language.as_deref());
+        // Ohne eigene Wahl startet der Launcher auf Deutsch — die Liga ist deutsch.
+        swofty_i18n::set_language(Some(config.language.as_deref().unwrap_or("de")));
         let vr_profiles = config.vr_profiles;
         let start_store = config.launch.start_store;
         let ui_mode = config.ui_mode;
