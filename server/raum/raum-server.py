@@ -579,6 +579,18 @@ class Abnehmer(BaseHTTPRequestHandler):
                     wer.sockel.sende_text(json.dumps({"type": "pong"}))
 
 
+def wachhalten() -> None:
+    """Haelt jede Lobby-Verbindung offen: ohne Verkehr schliesst Cloudflare sie nach
+    ein paar Minuten, und der Launcher zeigt derweil "getrennt"."""
+    while True:
+        time.sleep(20)
+        with SPERR:
+            for raum in RAEUME.values():
+                for m in raum.mitglieder.values():
+                    if m.sockel is not None:
+                        m.sockel.sende(0x9, b"")
+
+
 def aufraeumen() -> None:
     """Lobbys ohne Verbindung und ohne Leben entfernen."""
     while True:
@@ -607,6 +619,7 @@ def main() -> None:
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Abnehmer)
     server.daemon_threads = True
     threading.Thread(target=aufraeumen, daemon=True).start()
+    threading.Thread(target=wachhalten, daemon=True).start()
     print(f"ERC-Raum auf TCP {PORT}", flush=True)
     server.serve_forever()
 

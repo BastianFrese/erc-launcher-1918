@@ -287,7 +287,7 @@ fn card_of(data: &Path, video: Video) -> VideoCard {
     }
 }
 
-fn publish_from(data: &Path, game: &Path, version: &str, registry: String, every: Duration) -> Refresh {
+fn publish_from(data: &Path, game: &Path, version: &str, _registry: String, every: Duration) -> Refresh {
     // Das Hauptmenue zeigt keine Karte und keine Spielerzahl des Launchers mehr: der Stand
     // geht ohne `video` und ohne `online` hinaus, und keins von beiden wird mehr geholt.
     let _ = write(game, &state(data, version, None, None));

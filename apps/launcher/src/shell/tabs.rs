@@ -30,7 +30,7 @@ impl Tab {
             Self::Home => IconName::Newspaper,
             Self::Library => IconName::Puzzle,
             Self::Discover => IconName::PackageSearch,
-            Self::Online => IconName::Trophy,
+            Self::Online => IconName::Users,
             Self::Support => IconName::Heart,
         }
     }
@@ -50,7 +50,9 @@ impl Tab {
             Self::Home => Page::News,
             Self::Library => Page::Addons,
             Self::Discover => Page::Browser,
-            Self::Online => Page::Online,
+            // Der Online-Reiter führt in die Lobby; die Time-Trial-Bestenlisten sind aus der
+            // Navigation genommen (die Seite selbst bleibt im Code).
+            Self::Online => Page::Multiplayer,
             Self::Support => Page::Support,
         }
     }

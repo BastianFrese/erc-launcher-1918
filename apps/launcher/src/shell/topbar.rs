@@ -86,8 +86,8 @@ impl Shell {
                 (links, 3)
             }
             Some(Tab::Online) => {
-                let mut links = vec![Link::new(Page::Online, None)];
-                links.push(Link::new(Page::Multiplayer, None));
+                // Keine Time-Trial-Bestenlisten mehr im Online-Reiter: nur die Lobby.
+                let mut links = vec![Link::new(Page::Multiplayer, None)];
                 if self.tt_admin() {
                     links.push(Link::new(Page::Moderation, None));
                 }
