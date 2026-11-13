@@ -66,13 +66,26 @@ def schluessel_b64(roh: bytes) -> str:
     return base64.urlsafe_b64encode(roh).decode("ascii").rstrip("=")
 
 
-def support_stand() -> dict:
-    """Der Spendenstand: `support.json` neben diesem Dienst, von Hand gepflegt.
+def daten_datei(name: str) -> str:
+    """Wo die gepflegten Daten liegen.
 
-    Kein Schreibweg. Wer etwas aendern will, aendert die Datei; der Dienst liest
-    sie bei jeder Anfrage neu, ein Neustart ist dafuer nicht noetig.
+    `DynamicUser=yes` macht `/opt` schreibgeschuetzt, deshalb gibt systemd ueber
+    `StateDirectory` einen beschreibbaren Ordner vor (`/var/lib/raum`). Ohne
+    systemd — etwa in einer Probe — liegen die Dateien neben dem Dienst.
     """
-    datei = os.path.join(os.path.dirname(os.path.abspath(__file__)), "support.json")
+    ordner = (os.environ.get("STATE_DIRECTORY") or "").split(":")[0]
+    if not ordner or not os.path.isdir(ordner):
+        ordner = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(ordner, name)
+
+
+def support_stand() -> dict:
+    """Der Spendenstand: `support.json`, von Hand gepflegt und vom Webhook gefuellt.
+
+    Wer etwas aendern will, aendert die Datei; der Dienst liest sie bei jeder
+    Anfrage neu, ein Neustart ist dafuer nicht noetig.
+    """
+    datei = daten_datei("support.json")
     try:
         with open(datei, encoding="utf-8") as f:
             stand = json.load(f)
@@ -83,15 +96,15 @@ def support_stand() -> dict:
 
 def support_schreiben(stand: dict) -> None:
     """Schreibt den Stand zurueck — erst daneben, dann umbenannt, damit nie halb."""
-    datei = os.path.join(os.path.dirname(os.path.abspath(__file__)), "support.json")
+    datei = daten_datei("support.json")
     with open(datei + ".neu", "w", encoding="utf-8") as f:
         json.dump(stand, f, ensure_ascii=False, indent=2)
     os.replace(datei + ".neu", datei)
 
 
 def kofi_einstellungen() -> dict:
-    """Verification Token und Stufen-Zuordnung: `kofi.json` neben diesem Dienst."""
-    datei = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kofi.json")
+    """Stufen-Zuordnung aus `kofi.json`; der Token kommt aus der Umgebung."""
+    datei = daten_datei("kofi.json")
     try:
         with open(datei, encoding="utf-8") as f:
             daten = json.load(f)
@@ -380,7 +393,10 @@ class Abnehmer(BaseHTTPRequestHandler):
             return self.fehler(400, "bad_payload", "data is not an object")
 
         einstellung = kofi_einstellungen()
-        geheim = str(einstellung.get("verification_token") or "")
+        # Der Dienst laeuft als dynamischer Benutzer und darf eine 600er-Datei
+        # von root nicht lesen; systemd reicht den Token deshalb als Umgebung
+        # herein (EnvironmentFile). Die Datei bleibt der Rueckfall fuer Proben.
+        geheim = os.environ.get("ERC_KOFI_TOKEN") or str(einstellung.get("verification_token") or "")
         if not geheim or not secrets.compare_digest(
             str(daten.get("verification_token") or ""), geheim
         ):
