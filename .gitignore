@@ -46,6 +46,7 @@ re/db/*.tmp
 /target
 
 dist-1918/
+dist-1918.vor-*/
 
 # Testaufnahmen und Setup-Bauten
 dist-1918/

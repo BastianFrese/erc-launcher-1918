@@ -1,6 +1,6 @@
 {
-  "version": "0.7.6",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-0.7.6-setup.exe",
-  "sha256": "f82fbd7adf54b6db0cd098270ddf93eccb2af9e2dec58e980c81e23278440d79",
-  "notiz": "Der Reiter Online fuehrt jetzt direkt in die Lobby; die Time-Trial-Bestenlisten sind aus der Navigation genommen."
+  "version": "1.1.0",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.1.0-setup.exe",
+  "sha256": "4ea203a024369eeeacf747483103ec42589588d4c2496e8fe3619684d00ddf05",
+  "notiz": "Neuer Unterbau: mehr Strecken, sauberes Abtrocknen der Strecke, klarere Meldungen beim Beitreten und weniger falsche Warnungen."
 }
