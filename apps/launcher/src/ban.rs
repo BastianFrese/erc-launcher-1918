@@ -43,7 +43,7 @@ impl Shell {
                 div()
                     .text_size(px(18.))
                     .font_weight(FontWeight::SEMIBOLD)
-                    .child(tr("Your account is banned from SwoftyLauncher")),
+                    .child(tr("Your account is banned from ERC Launcher")),
             )
             .child(
                 div()

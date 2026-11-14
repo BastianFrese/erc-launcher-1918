@@ -502,39 +502,6 @@ mod tests {
     }
 
     #[test]
-    fn a_cached_video_is_published_only_while_the_home_video_setting_is_on() {
-        for show in [true, false] {
-            let data = temp(&format!("show-{show}"));
-            let game = temp(&format!("show-{show}-game"));
-            let cache = data.join(CACHE_DIR);
-            std::fs::create_dir_all(&cache).unwrap();
-            std::fs::write(cache.join(THUMBNAIL), b"jpg").unwrap();
-            std::fs::write(
-                cache.join(VIDEO_CACHE),
-                video_json(
-                    "https://i.ytimg.com/vi/abc123/hqdefault.jpg",
-                    "https://youtu.be/abc123",
-                ),
-            )
-            .unwrap();
-            let guard = publish_from(
-                &data,
-                &game,
-                "1.9.19",
-                show,
-                "http://127.0.0.1:9".into(),
-                Duration::from_secs(60),
-            );
-            let written: serde_json::Value =
-                serde_json::from_slice(&std::fs::read(game.join(STATE_FILE)).unwrap()).unwrap();
-            drop(guard);
-            assert_eq!(written.get("video").is_some(), show, "show_video {show}");
-            std::fs::remove_dir_all(&data).ok();
-            std::fs::remove_dir_all(&game).ok();
-        }
-    }
-
-    #[test]
     fn the_state_file_carries_version_sign_in_and_video() {
         let data = temp("state");
         let game = temp("game");

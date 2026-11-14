@@ -17,6 +17,12 @@ pub struct LogServer {
     url: String,
 }
 
+impl PartialEq for LogServer {
+    fn eq(&self, other: &Self) -> bool {
+        self.url == other.url
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stage {
     Collecting,

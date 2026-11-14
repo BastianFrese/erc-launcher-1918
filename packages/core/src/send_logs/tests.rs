@@ -655,20 +655,19 @@ fn reports_server_errors() {
     );
 }
 
+/// Unser Bau hat keinen Schalter fuer den Abnehmer: ohne `SWOFTY_LOGS_URL` geht ein
+/// Bericht an unseren eigenen Sammler, nie an keinen. Das ist Absicht - der Weg ueber
+/// den fremden Sammler ist zu.
 #[test]
-fn disabled_without_a_log_server_at_build_time() {
+fn a_build_without_a_log_server_falls_back_to_our_own_collector() {
     assert!(LogServer::new(None).is_none());
     assert!(LogServer::new(Some("")).is_none());
     assert!(LogServer::new(Some("   ")).is_none());
     assert!(LogServer::new(Some("not a url")).is_none());
     if option_env!("SWOFTY_LOGS_URL").is_none() && std::env::var_os("SWOFTY_LOGS_URL").is_none() {
-        assert!(!available());
-        let (_, progress) = collect_stages();
-        assert_eq!(send(&noisy_bundle(&[1]), &progress), Err(SendError::Unavailable));
-        assert_eq!(
-            SendError::Unavailable.to_string(),
-            "Sending logs isn't available in this build"
-        );
+        assert!(available());
+        let ours = LogServer::new(Some(crate::send_logs::DEFAULT_URL)).expect("our collector");
+        assert_eq!(destination(), Some(ours));
     }
 }
 

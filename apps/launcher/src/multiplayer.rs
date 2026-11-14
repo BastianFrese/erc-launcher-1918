@@ -24,7 +24,7 @@ use swofty_core::multiplayer::session::{
     Local, MemberState, Phase, Relay, RoomContent, Session, SessionState, Setup,
 };
 use swofty_core::store::Store;
-use swofty_i18n::{tr, trn};
+use swofty_i18n::{fill, tr, trf, trn};
 
 use crate::pages::{GUTTER, badge, label, monogram, tag};
 use crate::shell::{Page, Shell};
@@ -356,8 +356,8 @@ pub(crate) struct Multiplayer {
 
 impl Multiplayer {
     pub(crate) fn new(window: &mut Window, cx: &mut Context<Shell>) -> Self {
-        let name = cx.new(|cx| InputState::new(window, cx).placeholder("Room name"));
-        let code = cx.new(|cx| InputState::new(window, cx).placeholder("Invite code"));
+        let name = cx.new(|cx| InputState::new(window, cx).placeholder(tr("Room name")));
+        let code = cx.new(|cx| InputState::new(window, cx).placeholder(tr("Invite code")));
         let changed = |cx: &mut Context<Shell>, input: &Entity<InputState>| {
             cx.subscribe(input, |_, _, e: &InputEvent, cx| {
                 if matches!(e, InputEvent::Change) {
@@ -657,8 +657,10 @@ impl Shell {
         window.open_alert_dialog(cx, move |alert, _, _| {
             let (shell, start) = (shell.clone(), start.clone());
             alert
-                .title("Restart F1 25?")
-                .description("F1 25 is open, so it restarts for this room. Unsaved progress is lost.")
+                .title(tr("Restart F1 25?"))
+                .description(tr(
+                    "F1 25 is open, so it restarts for this room. Unsaved progress is lost.",
+                ))
                 .ok_text(ok)
                 .show_cancel(true)
                 .on_ok(move |_, window, cx| {
@@ -903,7 +905,7 @@ impl Shell {
                         m.session = Some(session);
                         m.form = false;
                     }
-                    Err(e) => m.error = Some(format!("Couldn't read your addons: {e}")),
+                    Err(e) => m.error = Some(trf!("Couldn't read your addons: {e}", e = e)),
                 }
                 cx.notify();
             })
@@ -1029,7 +1031,7 @@ impl Shell {
                 Button::new("mp-create-open")
                     .outline()
                     .icon(IconName::Plus)
-                    .label("Create room")
+                    .label(tr("Create room"))
                     .disabled(self.mp_page.form)
                     .on_click(cx.listener(|this, _, window, cx| this.mp_open_form(window, cx))),
             );
@@ -1037,12 +1039,12 @@ impl Shell {
             div()
                 .text_size(px(13.))
                 .text_color(p.text_muted)
-                .child("Loading rooms\u{2026}")
+                .child(tr("Loading rooms\u{2026}"))
                 .into_any_element()
         } else if self.mp_page.rooms.is_empty() {
             let body = match &self.mp_page.rooms_error {
-                Some(_) => "The room list didn't load. It tries again in a few seconds.",
-                None => "Create one, or join a private room with its invite code.",
+                Some(_) => tr("The room list didn't load. It tries again in a few seconds."),
+                None => tr("Create one, or join a private room with its invite code."),
             };
             v_flex()
                 .py(px(40.))
@@ -1057,7 +1059,7 @@ impl Shell {
                         .pt(px(6.))
                         .text_size(px(15.))
                         .font_weight(FontWeight::SEMIBOLD)
-                        .child("No open rooms"),
+                        .child(tr("No open rooms")),
                 )
                 .child(div().text_size(px(13.)).text_color(p.text_muted).child(body))
                 .into_any_element()
@@ -1094,9 +1096,9 @@ impl Shell {
                             .child(
                                 self.section_head(
                                     if self.mp_page.rooms_loaded {
-                                        format!("OPEN ROOMS \u{00b7} {}", self.mp_page.rooms.len())
+                                        trf!("OPEN ROOMS \u{00b7} {count}", count = self.mp_page.rooms.len())
                                     } else {
-                                        "OPEN ROOMS".to_owned()
+                                        tr("OPEN ROOMS").to_owned()
                                     },
                                     p,
                                 )
@@ -1135,7 +1137,7 @@ impl Shell {
                 Button::new("mp-join-code")
                     .outline()
                     .tap_sm()
-                    .label("Join with code")
+                    .label(tr("Join with code"))
                     .loading(joining && typed)
                     .disabled(!typed || self.mp_page.busy())
                     .on_click(cx.listener(|this, _, window, cx| this.mp_join_code(window, cx))),
@@ -1254,9 +1256,9 @@ impl Shell {
                     .text_size(px(13.))
                     .text_color(p.text_muted)
                     .child(if m.public {
-                        "Listed: anyone can see it and join"
+                        tr("Listed: anyone can see it and join")
                     } else {
-                        "Private: only people with the code can join"
+                        tr("Private: only people with the code can join")
                     }),
             );
         let row = |title: &'static str, control: AnyElement, first: bool| {
@@ -1291,14 +1293,11 @@ impl Shell {
                         div()
                             .text_size(px(14.))
                             .font_weight(FontWeight::SEMIBOLD)
-                            .child("New room"),
+                            .child(tr("New room")),
                     )
-                    .child(
-                        div()
-                            .text_size(px(13.))
-                            .text_color(p.text_muted)
-                            .child("F1 25 opens its LAN lobby, where you pick the tracks and settings."),
-                    ),
+                    .child(div().text_size(px(13.)).text_color(p.text_muted).child(tr(
+                        "F1 25 opens its LAN lobby, where you pick the tracks and settings.",
+                    ))),
             )
             .child(row(
                 "Name",
@@ -1333,7 +1332,7 @@ impl Shell {
                         Button::new("mp-create")
                             .primary()
                             .tap_sm()
-                            .label("Create room")
+                            .label(tr("Create room"))
                             .loading(creating)
                             .disabled(m.busy())
                             .on_click(cx.listener(|this, _, window, cx| this.mp_create(window, cx))),
@@ -1370,18 +1369,21 @@ impl Shell {
             Button::new("mp-view-back")
                 .outline()
                 .icon(IconName::ArrowLeft)
-                .label("Back to rooms")
+                .label(tr("Back to rooms"))
                 .on_click(cx.listener(|this, _, _, cx| this.mp_close_view(cx))),
         );
         let summary = if checks.is_empty() {
-            "The host's launcher hasn't listed its addons.".to_owned()
+            tr("The host's launcher hasn't listed its addons.").to_owned()
         } else if lacking == 0 {
-            "You have every addon the host has on.".to_owned()
+            tr("You have every addon the host has on.").to_owned()
         } else {
-            format!(
-                "You are missing or have off {} of {}.",
-                lacking,
-                trn(checks.len(), "{count} addon", "{count} addons")
+            fill(
+                &trn(
+                    checks.len(),
+                    "You are missing or have off {lacking} of {count} addon.",
+                    "You are missing or have off {lacking} of {count} addons.",
+                ),
+                &[("lacking", lacking.to_string())],
             )
         };
         let rows: Vec<AnyElement> = checks
@@ -1412,9 +1414,9 @@ impl Shell {
                             .text_size(px(13.))
                             .text_color(p.text_muted)
                             .child(if c.have {
-                                "You have it"
+                                tr("You have it")
                             } else {
-                                "You don't have it on"
+                                tr("You don't have it on")
                             }),
                     )
                     .into_any_element()
@@ -1433,9 +1435,9 @@ impl Shell {
                     .pb(px(24.))
                     .gap(px(16.))
                     .child(div().text_size(px(13.)).text_color(p.text_muted).child(summary))
-                    .child(div().text_size(px(13.)).text_color(p.text_muted).child(format!(
-                        "Press Play {}'s Lobby in the bar below to start F1 25 in this room.",
-                        room.host.name
+                    .child(div().text_size(px(13.)).text_color(p.text_muted).child(trf!(
+                        "Press Play {host}'s Lobby in the bar below to start F1 25 in this room.",
+                        host = room.host.name
                     )))
                     .when(!rows.is_empty(), |d| {
                         d.child(
@@ -1530,7 +1532,7 @@ impl Shell {
                 Button::new("mp-restart-game")
                     .primary()
                     .tap_sm()
-                    .label("Restart F1 25")
+                    .label(tr("Restart F1 25"))
                     .on_click(cx.listener(|this, _, window, cx| {
                         this.mp_close_game(window, cx);
                         cx.notify();
@@ -1544,11 +1546,15 @@ impl Shell {
                         .outline()
                         .tap_sm()
                         .icon(IconName::Flag)
-                        .label(if started { "Race over" } else { "Race started" })
-                        .tooltip(if started {
-                            "Show the room in the list again"
+                        .label(if started {
+                            tr("Race over")
                         } else {
-                            "Hide the room from the list while you race"
+                            tr("Race started")
+                        })
+                        .tooltip(if started {
+                            tr("Show the room in the list again")
+                        } else {
+                            tr("Hide the room from the list while you race")
                         })
                         .on_click(cx.listener(move |this, _, _, cx| {
                             if let Some(s) = &this.mp_page.session {
@@ -1590,7 +1596,7 @@ impl Shell {
                                 div()
                                     .text_size(px(13.))
                                     .text_color(p.text_muted)
-                                    .child("F1 25 is open. It restarts for this session.")
+                                    .child(tr("F1 25 is open. It restarts for this session."))
                             })),
                     )
                     .children(race)
@@ -1608,15 +1614,19 @@ impl Shell {
             .as_ref()
             .map_or_else(|| "Multiplayer".to_owned(), |r| r.name.clone());
         let subtitle = room.as_ref().map_or_else(
-            || "Setting up the room\u{2026}".to_owned(),
+            || tr("Setting up the room\u{2026}").to_owned(),
             |r| {
                 let mut parts = vec![
-                    format!("{} in the lobby", joined(state)),
-                    format!("{}/{} players", state.members.len(), r.max_members),
-                    if r.public { "Listed" } else { "Private" }.to_owned(),
+                    trf!("{count} in the lobby", count = joined(state)),
+                    trf!(
+                        "{joined}/{max} players",
+                        joined = state.members.len(),
+                        max = r.max_members
+                    ),
+                    if r.public { tr("Listed") } else { tr("Private") }.to_owned(),
                 ];
                 if state.host {
-                    parts.push("You're the host".into());
+                    parts.push(tr("You're the host").into());
                 }
                 parts.join(" \u{00b7} ")
             },
@@ -1640,7 +1650,7 @@ impl Shell {
                         } else {
                             code
                         })
-                        .tooltip("Copy the invite code")
+                        .tooltip(tr("Copy the invite code"))
                         .on_click(cx.listener(move |this, _, _, cx| this.mp_copy_code(copy.clone(), cx))),
                 )
             })
@@ -1698,7 +1708,7 @@ impl Shell {
                                 .min_w_0()
                                 .truncate()
                                 .text_size(px(14.))
-                                .child("F1 2026 cars"),
+                                .child(tr("F1 2026 cars")),
                         )
                         .child(div().text_size(px(13.)).text_color(p.text_muted).child(text)),
                 )
@@ -1720,12 +1730,15 @@ impl Shell {
                     .child(
                         v_flex()
                             .gap(px(8.))
-                            .child(self.section_head(format!("PLAYERS \u{00b7} {}", state.members.len()), p))
+                            .child(self.section_head(
+                                trf!("PLAYERS \u{00b7} {count}", count = state.members.len()),
+                                p,
+                            ))
                             .child(if players.is_empty() {
                                 div()
                                     .text_size(px(13.))
                                     .text_color(p.text_muted)
-                                    .child("Nobody is here yet.")
+                                    .child(tr("Nobody is here yet."))
                                     .into_any_element()
                             } else {
                                 v_flex()
@@ -1997,11 +2010,10 @@ mod tests {
         let problem = refused.problem.expect("a problem");
         assert_eq!(problem.text, "F1 25 didn't start.");
         assert!(problem.retry);
-        let dead = room_status(&session(Phase::Failed("boom".into()), false));
-        assert!(
-            !dead.problem.expect("a problem").retry,
-            "a failed room only leaves"
-        );
+        let dead = room_status(&session(Phase::Failed("that room is full".into()), false));
+        let dead = dead.problem.expect("a problem");
+        assert_eq!(dead.text, "That room is full.", "a failed room says why");
+        assert!(!dead.retry, "a failed room only leaves");
         let over = room_status(&session(
             Phase::Ended("the host left, so the room closed".into()),
             false,
