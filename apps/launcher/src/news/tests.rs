@@ -1,4 +1,4 @@
-use super::feed::{Post, Trouble, embedded, format_date, image_format, merge, parse, version};
+use super::feed::{Post, Trouble, embedded, format_date, image_format, merge, parse};
 use super::state::{News, NewsScroll, StackedRow};
 
 fn post(id: &str, date: &str) -> Post {
@@ -27,32 +27,52 @@ fn embeds_the_news_in_full() {
     assert!(posts.windows(2).all(|w| w[0].date >= w[1].date));
 }
 
+/// Eine fremde Versionsnotiz ist zweimal durchgerutscht (13.11. die 1.9.19–1.9.42,
+/// 14.11. die 1.9.43–1.9.49): sie sind mit "1.9" groesser als "1.0" und kamen deshalb
+/// an jedem Zahlenvergleich vorbei. Das Kennzeichen ist jetzt der Merker in der
+/// Kopfzeile, nicht die Nummer. Eingebettet wird nur, was ihn traegt (build.rs) —
+/// hier faellt auf, wenn im Baum wieder fremde Notizen liegen.
 #[test]
-fn no_release_notes_before_one_zero() {
-    // Bastians Wort (13.11.): der Changelog bleibt leer, bis der Launcher 1.0.0 ist.
-    // Der Test haengt an der eigenen Fassung, nicht an der Nummer der Notiz: ein
-    // Merge mit dem Unterbau hat am 13.11. 24 fremde Notizen (1.9.19–1.9.42)
-    // wieder hereingetragen — die waren ">= 1.0.0" undrutschten durch.
-    let ours = version(&format!("release/{}", env!("CARGO_PKG_VERSION")));
-    if ours >= vec![1, 0, 0] {
-        // Ab 1.0.0 gehoeren die Notizen wieder ins Programm — dann pruefen wir,
-        // dass keine fremde dabei ist: jede muss unsere Fassungsnummer tragen.
-        let posts = embedded();
-        for note in posts.iter().filter(|p| p.release()) {
-            assert!(
-                version(&note.id) >= vec![1, 0, 0],
-                "fremde Versionsnotiz eingebettet: {}",
-                note.version()
-            );
+fn every_release_note_carries_our_mark() {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/releases");
+    let mut fremde = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for path in entries.flatten().map(|e| e.path()) {
+            if path.extension().and_then(|e| e.to_str()) != Some("md") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let kopf: Vec<&str> = text
+                .lines()
+                .skip(1)
+                .take_while(|l| l.trim() != "---")
+                .collect();
+            if !kopf.iter().any(|l| l.trim() == "product: erc") {
+                fremde.push(
+                    path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or_default()
+                        .to_owned(),
+                );
+            }
         }
-        return;
     }
-    let posts = embedded();
-    let notes: Vec<&Post> = posts.iter().filter(|p| p.release()).collect();
     assert!(
-        notes.is_empty(),
-        "vor 1.0.0 gehoeren keine Versionsnotizen ins Programm, eingebettet sind: {:?}",
-        notes.iter().map(|n| n.version()).collect::<Vec<_>>()
+        fremde.is_empty(),
+        "fremde Versionsnotizen in docs/releases (ohne \"product: erc\"): {fremde:?}"
+    );
+}
+
+#[test]
+fn the_running_version_has_its_note() {
+    // 1.1.0 ging ohne eigene Notiz hinaus, weil sie erst nach dem Bau geschrieben war.
+    let fassung = env!("CARGO_PKG_VERSION");
+    let posts = embedded();
+    assert!(
+        posts
+            .iter()
+            .any(|p| p.release() && p.version() == fassung),
+        "{fassung} hat keine Versionsnotiz im Programm"
     );
 }
 

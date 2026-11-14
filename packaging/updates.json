@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.1.0-setup.exe",
-  "sha256": "4ea203a024369eeeacf747483103ec42589588d4c2496e8fe3619684d00ddf05",
-  "notiz": "Neuer Unterbau: mehr Strecken, sauberes Abtrocknen der Strecke, klarere Meldungen beim Beitreten und weniger falsche Warnungen."
+  "version": "1.1.1",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.1.1-setup.exe",
+  "sha256": "d5e7333c6d66d1d6804099e0e5a1ca6e89b86ed15ea2d0c456bb58bfca2e7623",
+  "notiz": "Die Aenderungsliste zeigt wieder nur unsere Fassungen, und jede Fassung bringt ihre Notiz mit."
 }

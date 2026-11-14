@@ -2,6 +2,11 @@ use std::path::Path;
 
 const SITE: &str = "https://f1.swofty.net";
 
+/// Der Merker in der Kopfzeile einer Versionsnotiz, die zu **unserem** Launcher gehoert.
+/// Notizen des fremden Zweigs (1.9.x) tragen ihn nicht: sie kommen nicht ins Programm,
+/// auch wenn ein Merge sie wieder in `docs/releases/` legt.
+const UNSER_MERKER: &str = "product: erc";
+
 fn front_matter(text: &str) -> Vec<(String, String)> {
     let mut lines = text.lines();
     if lines.next().map(str::trim) != Some("---") {
@@ -57,6 +62,12 @@ fn posts(dir: &Path, kind: &str, out: &mut Vec<serde_json::Value>) {
         let fm = front_matter(&text);
         let get = |key: &str| fm.iter().find(|(k, _)| k == key).map(|(_, v)| v.clone());
         if get("draft").as_deref() == Some("true") {
+            continue;
+        }
+        // Eine Versionsnotiz ohne unseren Merker ist die des fremden Zweigs (1.9.x).
+        // Sie gehoert nicht in unseren Reiter "Aenderungen" — ein Merge hat sie am
+        // 13.11. und noch einmal am 14.11. hereingetragen.
+        if kind == "release" && !fm.iter().any(|(k, v)| format!("{k}: {v}") == UNSER_MERKER) {
             continue;
         }
         let title = get("title").unwrap_or_else(|| slug.to_owned());
@@ -115,6 +126,17 @@ fn main() {
     let mut feed = Vec::new();
     posts(&docs.join("news"), "news", &mut feed);
     posts(&docs.join("releases"), "release", &mut feed);
+    // Eine Fassung ohne eigene Notiz ist am 14.11. veroeffentlicht worden (1.1.0 war
+    // gebaut, bevor die Notiz geschrieben war) — der Reiter "Aenderungen" blieb leer.
+    // Wer die Fassung hebt, schreibt zuerst die Notiz.
+    let fassung = std::env::var("CARGO_PKG_VERSION").expect("cargo sets the version");
+    if !feed.iter().any(|p| p["id"] == format!("release/{fassung}")) {
+        panic!(
+            "docs/releases/{fassung}.md fehlt (mit \"product: erc\" in der Kopfzeile): jede \
+             Fassung braucht ihre Notiz, sonst steht im Reiter \"Aenderungen\" nichts fuer sie. \
+             Erst die Notiz, dann bauen."
+        );
+    }
     let out = std::path::PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"));
     let json = serde_json::json!({ "posts": feed });
     std::fs::write(out.join("news.json"), json.to_string()).expect("failed to write the embedded news feed");
