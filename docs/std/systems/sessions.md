@@ -135,11 +135,16 @@ struct Rules {                                 // a box's session rules (content
     Ref<power::DrsRule> drs;                   // empty: the mode's
     Ref<tyres::Class> tyre_class;              // the box's class; a track entry (tracks::PackageTrack) overrides it
     Ref<RulesProfile> rules_profile;           // empty: the mode's
-    bool refuelling = false;
-    std::optional<float> race_fuel_kg;         // the race fuel load; nullopt: the track's
+    bool refuelling = false;                   // in-race refuelling: every pit stop refills (content.package 1.5 applies it)
+    std::optional<float> race_fuel_kg;         // the race start fuel with refuelling on; nullopt: the game's
     std::optional<bool> tyre_warmers;          // content.package 1.4: tyre warmers on or off; nullopt: the mode's
+    std::optional<float> refuel_stint_kg;      // content.package 1.5: a pit stop fills to this; nullopt: race_fuel_kg, else full
+    std::optional<float> quali_fuel_kg;        // content.package 1.5: qualifying start fuel; nullopt: the game's
+    bool race_start_fuel_from_quali = false;   // content.package 1.5: parc ferme, race start fuel = fuel left after qualifying
+    bool race_tyre_change = true;              // content.package 1.5: false keeps the tyres at race pit stops (damage excepted)
 };
-SWOFTY_RECORD(Rules, mode, points, drs, tyre_class, rules_profile, refuelling, race_fuel_kg, tyre_warmers)
+SWOFTY_RECORD(Rules, mode, points, drs, tyre_class, rules_profile, refuelling, race_fuel_kg, tyre_warmers,
+              refuel_stint_kg, quali_fuel_kg, race_start_fuel_from_quali, race_tyre_change)
 
 enum class PenaltyKind { warning, time, drive_through, stop_go, grid, disqualification };
 
@@ -354,6 +359,47 @@ SWOFTY_REGISTER
 ```
 
 A career freezes each season's championship rules when that season starts. A fix to a year's points reaches a running career at its next season.
+
+### Fuel rules per box
+
+F1 25 has no refuelling rule and its pit stop has no fuel service, so the core plays a box's fuel rules itself (`content.package` 1.5). Pressing the box hands its rules to a per-frame fuel plan; a stock box, or leaving the boxes, hands over none.
+
+| Field | What the core does |
+|---|---|
+| `refuelling: true` | Each car starts the race on `race_fuel_kg` (when set), and every pit stop the game counts refuels it to `refuel_stint_kg`. |
+| `race_fuel_kg` | With `refuelling` on: the race start fuel. Without it the game's own race fuel stays. |
+| `refuel_stint_kg` | The fuel a stop fills to; empty: `race_fuel_kg`, else a full tank. A stop never drains a car that holds more. |
+| `quali_fuel_kg` | The fuel each car starts a qualifying session with. |
+| `race_start_fuel_from_quali` | Parc fermé (2003 to 2009): each car starts the race on the fuel it had left at the end of qualifying, `quali_fuel_kg` when it ran none. |
+| `race_tyre_change: false` | 2005: one tyre set for qualifying and race. A race pit stop keeps the car's compound and wear; the stop still refuels. |
+
+```cpp
+content::packages.layer(content::packages["community.f1-2008/f1_2008"], [](content::Package &p) {
+    p.rules.refuelling = true;
+    p.rules.refuel_stint_kg = 60;
+    p.rules.quali_fuel_kg = 45;
+    p.rules.race_start_fuel_from_quali = true;
+});
+
+content::packages.layer(content::packages["community.f1-2005/f1_2005"], [](content::Package &p) {
+    p.rules.refuelling = true;
+    p.rules.race_tyre_change = false;                 // one set for qualifying and race
+});
+```
+
+```text
+[fuel] box f1_2008 (community.f1-2008/f1_2008): qualifying starts on 45.0 kg, race starts on the fuel left after qualifying, a pit stop refuels to 60.0 kg
+[fuel] car 3: parc ferme: fuel left after qualifying, 110.0 -> 31.5 kg
+[fuel] car 3: pit stop refuel, 6.2 -> 60.0 kg
+```
+
+The core writes the FuelTank's `fuel_mass` (the live car field `fuel_mass`, never above the tank's capacity). A start fuel is written again while the car has burned none of it, since the start sequence may load its own fuel after the session loads. The pit stop is the game's stop counter (`PitLaneCarState.pit_stops`), read from the live snapshot, so the fuel plan needs the live snapshot (the `telemetry` feature) and no hook. `race_tyre_change: false` is a wrap on `Car_Tyre_ChangeToNextCompound` (0x142e94040, the `PITLANE CHANGEOVER` log): its pit stop caller `Game_PitLane_ApplyPitstopTyres` calls it with flag 1 and ignores the result, and the wrap skips that call in a race session, so `pitstopComplete` and the rest of the stop run as before. The garage actor's call (flag 0) and every non-race session keep the game's change. A tyre record with a flag in `+0x208 & 0x1f`, which the function feeds into its per-wheel resets, keeps the change as tyre damage (a hypothesis; each skipped or allowed stop is logged with the flags). `SWOFTY_RACE_TYRE_RULE=0` turns the wrap off.
+
+```text
+[tyres] vehicle 7 pit stop in the race: tyres kept (box rule race_tyre_change false) (tyre record flags 0)
+```
+
+Experimental: tested on the host only. Known limits: the AI does not plan a stop for fuel, so a race fuel too small for the distance can run an AI car dry; the MFD's fuel readout and the garage refuel between qualifying runs are the game's own.
 
 ## Grid rules
 
