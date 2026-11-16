@@ -226,9 +226,13 @@ pub fn run(store: &Store, profile: &str, args: RunArgs) -> Result<ExitCode> {
     let mut follow = Follow::new(&dir, Some((loader, before)), symbols(&game, args.exe.as_deref()));
     install_ctrl_c();
     let mut quiet = false;
+    let mut opened: Option<Instant> = None;
     while !dir.join("exit_code").exists() {
-        if let Some(url) = swofty_core::home_menu::take_open_request(&game) {
+        if let Some(url) = swofty_core::home_menu::take_open_request(&game)
+            && opened.is_none_or(|at: Instant| at.elapsed() >= OPEN_AGAIN)
+        {
             open_in_browser(&url);
+            opened = Some(Instant::now());
         }
         if stop_requested() {
             if wrapper.child.is_none() {
@@ -283,9 +287,16 @@ pub fn run(store: &Store, profile: &str, args: RunArgs) -> Result<ExitCode> {
 const LEFT: &str = "left without waiting; the next swofty run or launcher start rolls the game files back";
 const SETTLE_TIMEOUT: Duration = Duration::from_secs(600);
 
+const OPEN_AGAIN: Duration = Duration::from_secs(3);
+
 fn open_in_browser(url: &str) {
-    let opener = if cfg!(windows) { "explorer" } else { "xdg-open" };
+    let (opener, lead): (&str, &[&str]) = if cfg!(windows) {
+        ("rundll32.exe", &["url.dll,FileProtocolHandler"])
+    } else {
+        ("xdg-open", &[])
+    };
     match Command::new(opener)
+        .args(lead)
         .arg(url)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -607,9 +618,14 @@ struct Session<'a> {
 
 impl Drop for Session<'_> {
     fn drop(&mut self) {
-        match swofty_core::offline::restore_pending(&self.store.root) {
-            Ok(true) => info("offline play: the game folder is back to vanilla"),
-            Ok(false) => {}
+        match swofty_core::offline::restore_pending(&self.store.root, &self.game.dir) {
+            Ok(Some(notes)) => {
+                for note in notes {
+                    info(&format!("offline play: {note}"));
+                }
+                info("offline play: the game folder is back to vanilla");
+            }
+            Ok(None) => {}
             Err(e) => info(&format!(
                 "offline play restore failed{}, run swofty restore: {e:#}",
                 still_running(&self.game.dir)

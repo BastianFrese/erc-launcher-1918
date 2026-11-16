@@ -10,6 +10,7 @@ mod aktualisierung;
 mod blocks;
 mod browser;
 mod career_saves;
+mod chart_demo;
 mod colour;
 mod console;
 mod crash_modal;
@@ -76,6 +77,10 @@ fn schon_offen() -> bool {
 }
 
 fn main() {
+    if std::env::args().any(|a| a == "--chart-demo") {
+        chart_demo::run();
+        return;
+    }
     if schon_offen() {
         return;
     }
