@@ -1,6 +1,6 @@
 {
-  "version": "1.1.1",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.1.1-setup.exe",
-  "sha256": "d5e7333c6d66d1d6804099e0e5a1ca6e89b86ed15ea2d0c456bb58bfca2e7623",
-  "notiz": "Die Aenderungsliste zeigt wieder nur unsere Fassungen, und jede Fassung bringt ihre Notiz mit."
+  "version": "1.2.0",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.2.0-setup.exe",
+  "sha256": "f60e0f454f21a8ad8fe7373652ad25b89e319effd6da6a24644c23ab427b530e",
+  "notiz": "Oberflaechengroesse einstellbar, Zeitfahren rechnet richtig, Karriere-Addons ueberschreiben keine eigenen Werte."
 }

@@ -246,6 +246,10 @@ inline constexpr address<"Game_ActorManager_Initialise"> Game_ActorManager_Initi
 inline constexpr address<"Game_AdaptiveAi_RecordSessionFinished"> Game_AdaptiveAi_RecordSessionFinished{}; // L2 experimental
 inline constexpr address<"Game_AiManager_Initialise"> Game_AiManager_Initialise{}; // L2 experimental
 inline constexpr address<"Game_AiPitDecision_UpdateDroppedPlayerCar"> Game_AiPitDecision_UpdateDroppedPlayerCar{}; // L2 experimental
+using Game_AiRoute_BuildGraph_t = uint64_t(void *ai_manager);
+inline constexpr fn<"Game_AiRoute_BuildGraph", Game_AiRoute_BuildGraph_t> Game_AiRoute_BuildGraph{}; // L2 experimental
+using Game_AiRoute_CompileMarkerChannel_t = void(void *route, uint32_t *out_buf);
+inline constexpr fn<"Game_AiRoute_CompileMarkerChannel", Game_AiRoute_CompileMarkerChannel_t> Game_AiRoute_CompileMarkerChannel{}; // L2 experimental
 inline constexpr address<"Game_Analytics_BakedLiverySponsor_WriteJson"> Game_Analytics_BakedLiverySponsor_WriteJson{}; // L2 experimental
 using Game_Analytics_Json_WriteFloatField_t = void(void *writer, const char *prefix, float value);
 inline constexpr fn<"Game_Analytics_Json_WriteFloatField", Game_Analytics_Json_WriteFloatField_t> Game_Analytics_Json_WriteFloatField{}; // L2 experimental
@@ -254,6 +258,8 @@ inline constexpr fn<"Game_Analytics_Json_WriteStringField", Game_Analytics_Json_
 using Game_Analytics_RecordMyTeamSecondDriverContract_t = bool(void *analytics, void *contract_event);
 inline constexpr fn<"Game_Analytics_RecordMyTeamSecondDriverContract", Game_Analytics_RecordMyTeamSecondDriverContract_t> Game_Analytics_RecordMyTeamSecondDriverContract{}; // L2 experimental
 inline constexpr address<"Game_Analytics_UnregisterMessageHandlers"> Game_Analytics_UnregisterMessageHandlers{}; // L2 experimental
+using Game_Analytics_WriteBaseCtx_t = void(void *base_ctx, void *json_writer);
+inline constexpr fn<"Game_Analytics_WriteBaseCtx", Game_Analytics_WriteBaseCtx_t> Game_Analytics_WriteBaseCtx{}; // L2 experimental
 using Game_Analytics_WriteCommonHeaderFields_t = void(void *record, void *json_writer, void *ctx);
 inline constexpr fn<"Game_Analytics_WriteCommonHeaderFields", Game_Analytics_WriteCommonHeaderFields_t> Game_Analytics_WriteCommonHeaderFields{}; // L2 experimental
 inline constexpr address<"Game_Analytics_WriteRndUpgradeInfo"> Game_Analytics_WriteRndUpgradeInfo{}; // L2 experimental
