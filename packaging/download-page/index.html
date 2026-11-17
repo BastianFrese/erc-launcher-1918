@@ -184,7 +184,7 @@
                 </p>
 
                 <!-- Primary CTA Download Button -->
-                <div class="w-full sm:w-auto flex flex-col items-center">
+                <div class="w-full flex flex-col items-center">
                     <a id="downloadBtn" href="ERC-Launcher-1.2.2-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
                         <!-- Download Icon -->
                         <svg id="downloadIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -219,11 +219,34 @@
                             <span class="text-zinc-300">Windows 10/11</span>
                         </div>
                     </div>
-                    <div class="mt-4 text-xs font-mono text-zinc-500">
-                        <span class="text-f1-red font-semibold">BETA</span>
-                        <a href="ERC-Launcher-1.3.0-beta.1-setup.exe" class="mx-1.5 underline hover:text-zinc-200">1.3.0-beta.1</a>
-                        Testfassung — Ampel für unsere Dienste, eigener Update-Kanal. Ersetzt die feste
-                        Fassung im selben Ordner.
+                    <!-- Beta channel: its own band under the stable download, not a footnote -->
+                    <div class="mt-7 w-full max-w-2xl rounded-xl bg-f1-panel/70 border border-f1-border overflow-hidden">
+                        <div class="flex items-stretch">
+                            <div class="w-1 shrink-0 bg-f1-red"></div>
+                            <div class="flex-1 p-4 sm:p-5 text-left">
+                                <div class="flex flex-wrap items-center gap-2.5 mb-2.5">
+                                    <span class="px-2 py-0.5 rounded bg-f1-red/15 border border-f1-red/40 font-mono text-[10px] font-bold tracking-[0.2em] text-f1-red uppercase">Beta</span>
+                                    <span class="font-display font-bold text-base sm:text-lg text-white tracking-wide">Testfassung ausprobieren</span>
+                                    <span class="font-mono text-xs text-zinc-500">1.3.0-beta.1 · 43,4 MB</span>
+                                </div>
+                                <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed mb-4">
+                                    Die Testfassung: eine <strong class="text-white font-semibold">Ampel für unsere Dienste</strong>
+                                    auf der Startseite — Raum, Relay und Download auf einen Blick — dazu die Zahl
+                                    offener Lobbys. Sie zieht ihre Updates aus einem eigenen Kanal und ersetzt die
+                                    feste Fassung im selben Ordner.
+                                </p>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <a href="ERC-Launcher-1.3.0-beta.1-setup.exe" download
+                                       class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-f1-red/70 text-f1-red hover:bg-f1-red/10 hover:border-f1-red font-display font-bold text-xs sm:text-sm tracking-wider uppercase transition-colors cursor-pointer">
+                                        Beta installieren
+                                    </a>
+                                    <a href="https://github.com/BastianFrese/erc-launcher-1918/releases/tag/erc-1.3.0-beta.1" target="_blank" rel="noopener"
+                                       class="font-mono text-[11px] text-zinc-400 hover:text-zinc-200 underline">
+                                        Was drin ist
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
