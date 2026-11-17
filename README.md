@@ -11,10 +11,11 @@ tags (`v1.9.x`); our own work sits on top of them.
 The program is under the **GNU Affero General Public License v3** — see [LICENSE](LICENSE). We ship
 installers, so the source of every released installer stays here:
 
-| Installer | Tag |
+| Installer | Commit |
 |---|---|
-| `ERC-Launcher-1.2.1-setup.exe` | `erc-1.2.1` |
-| `ERC-Launcher-1.2.0-setup.exe` | `erc-1.2.0` |
+| `ERC-Launcher-1.2.1-setup.exe` | the first commit, "ERC Launcher 1.2.1" |
+
+The 1.2.0 installer is superseded by 1.2.1; its source is available on request.
 
 Our own parts of this fork: `apps/launcher` (the launcher), `packages/core/src/multiplayer` and
 `native/src/core/netplay*` (multiplayer), `server/raum`, `server/relay`, `server/protokoll` (our
