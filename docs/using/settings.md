@@ -25,6 +25,8 @@ description: Settings holds the launcher's own options in five categories, shows
 
 **Home screen video** shows the latest Swofty video in the bottom right of the F1 25 home screen, with **RB** (**V** on a keyboard) to watch it. It is on by default. Turned off, the home screen has no video card from the next time you press **Play**, and the launcher no longer fetches the latest video.
 
+**Ad privacy choices** opens the ad privacy form again, to change how ads in the launcher may use your data. It shows only to players who see ads.
+
 ## Display
 
 **Display mode** switches between **PC mode**, the normal layout, and **TV mode**, which scales the whole launcher up by 30% and widens the scrollbars, for handhelds and couch play. The welcome wizard asks for it, with your language, the first time the launcher opens and once after an update that changes the wizard. Each choice applies as you pick it, Esc or **Skip** closes the wizard, and you can change both here at any time.
