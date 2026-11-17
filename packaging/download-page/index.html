@@ -133,7 +133,7 @@
                     <span>HUD-Vorschau</span>
                 </button>
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-f1-panel border border-f1-border text-xs font-mono text-zinc-300 shadow-inner">
-                    <span class="text-white font-semibold">1.2.1</span>
+                    <span class="text-white font-semibold">1.2.2</span>
                     <span class="text-zinc-600">·</span>
                     <span class="text-zinc-400">Windows</span>
                 </div>
@@ -185,7 +185,7 @@
 
                 <!-- Primary CTA Download Button -->
                 <div class="w-full sm:w-auto flex flex-col items-center">
-                    <a id="downloadBtn" href="ERC-Launcher-1.2.1-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
+                    <a id="downloadBtn" href="ERC-Launcher-1.2.2-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
                         <!-- Download Icon -->
                         <svg id="downloadIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -197,7 +197,7 @@
                     <div class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-zinc-400">
                         <div class="flex items-center gap-1.5">
                             <span class="text-zinc-500">Fassung</span>
-                            <span class="text-zinc-200 font-semibold">1.2.1</span>
+                            <span class="text-zinc-200 font-semibold">1.2.2</span>
                         </div>
                         <span class="text-zinc-700 hidden sm:inline">|</span>
                         <div class="flex items-center gap-1.5">
@@ -208,7 +208,7 @@
                         <!-- Interactive SHA-256 Copy Button -->
                         <button onclick="copySha256()" title="Vollständigen SHA-256 Hash kopieren" class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-f1-panel hover:bg-f1-panelLight border border-f1-border/80 hover:border-zinc-600 transition-colors cursor-pointer group">
                             <span class="text-zinc-500">SHA-256</span>
-                            <span class="text-zinc-200 font-semibold group-hover:text-white">20c93c6d...</span>
+                            <span class="text-zinc-200 font-semibold group-hover:text-white">25a9e6b9...</span>
                             <svg id="copyIcon" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-f1-red transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
@@ -348,7 +348,15 @@
                 </div>
                 <div class="rounded-xl bg-f1-panel/70 border border-f1-border divide-y divide-f1-border">
                     <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
-                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.2.1</div>
+                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.2.2</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Auf der Startseite steht jetzt, wie viele gerade spielen — und die
+                            Liga-Mod sagt den Stand im Renn-HUD an. Der Discord-Banner ist weg,
+                            der Aktualisieren-Knopf kürzer.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.2.1</div>
                         <div class="text-sm text-zinc-300 leading-relaxed">
                             F1 25 Build 1.0.145 läuft auch über die EA App, der Launcher prüft das
                             laufende Spiel erneut gegen die unterstützten Fassungen, und die Telemetrie
@@ -424,6 +432,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <a href="https://ko-fi.com/leutnant_kampfwiener" target="_blank" rel="noopener" class="hover:text-zinc-200">Unterstützen</a>
+                <a href="https://github.com/BastianFrese/erc-launcher-1918/releases" target="_blank" rel="noopener" class="hover:text-zinc-200">Quelltext und Releases</a>
                 <a href="ERC-Launcher-0.3.30-setup.exe" class="hover:text-zinc-200">Vorige Fassung (0.3.30, ohne Lobbys)</a>
                 <span class="text-zinc-600">BUILD #102-REL</span>
             </div>
@@ -552,7 +561,7 @@
     <!-- Interactive Scripts -->
     <script>
         // Full SHA-256 checksum string for clipboard copy
-        const FULL_SHA256 = "20c93c6da969a0e0bd920a111e4d908bd5ab1b7a83aa368964c22564cf2d2ba2";
+        const FULL_SHA256 = "25a9e6b91dd5dc69860d6e46603775b3604749f7e8b33de54fe8a311f410c359";
 
         // Toast Helper Function
         let toastTimeout;
@@ -592,7 +601,7 @@
             tempInput.select();
             try {
                 document.execCommand('copy');
-                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.2.1-setup.exe in Zwischenablage.');
+                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.2.2-setup.exe in Zwischenablage.');
             } catch (err) {
                 showToast('Hinweis', 'SHA-256: ' + FULL_SHA256.slice(0, 16) + '...', true);
             }
@@ -602,7 +611,7 @@
         // Echter Download: der Browser laedt die Datei, kein Fortschritt wird erfunden
         function startDownload() {
             // Der Klick selbst laedt (download-Attribut am Link); hier nur die Meldung.
-            showToast('Download gestartet', 'ERC-Launcher-1.2.1-setup.exe (43,4 MB)');
+            showToast('Download gestartet', 'ERC-Launcher-1.2.2-setup.exe (43,4 MB)');
         }
 
         // Interactive F1 Start Gantry Sequence

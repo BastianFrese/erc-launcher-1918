@@ -102,7 +102,12 @@ and the supported-build table as part of the build.
 
 | Installer | Tag |
 |---|---|
+| `ERC-Launcher-1.2.2-setup.exe` | [`erc-1.2.2`](../../releases/tag/erc-1.2.2) |
 | `ERC-Launcher-1.2.1-setup.exe` | [`erc-1.2.1`](../../releases/tag/erc-1.2.1) |
 
-The 1.2.0 installer is superseded by 1.2.1; its source is available on request. Every commit after
-the first describes one change against that released state.
+The 1.2.0 installer is superseded; its source is available on request. Every commit after the first
+describes one change against the 1.2.1 state.
+
+**Order for a new version:** bump the version, build the installer, commit and push here, create the
+release with the installer attached, and only then update the download page — so the page always
+follows a release that already exists in git.
