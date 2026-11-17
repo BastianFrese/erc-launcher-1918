@@ -7,8 +7,6 @@ Built on [Swofty Launcher](https://github.com/Swofty-Developments/SwoftyLauncher
 (Swofty), under the GNU Affero General Public License v3 — see [LICENSE](LICENSE). Upstream arrives
 as release tags (`v1.9.x`); our own work sits on top of them.
 
-![The launcher's Addons page with SwoftyMod, Team Simplified, Custom Grid Size and an AlphaTauri livery addon](docs/public/screenshots/hero-launcher.png)
-
 ## What the league added
 
 ### Lobby on our own relay
