@@ -1,6 +1,7 @@
 #include "rtas_guard_logic.hpp"
 
 #include <cstdio>
+#include <string>
 
 namespace rg = runtime::rtas_guard;
 
@@ -100,12 +101,105 @@ int main()
     other.add(tri(0x1000, 300, 0x2000, 903));
     expect(one.hash == same_counts.hash, "the shape is the primitive counts, not the buffer addresses");
     expect(one.hash != other.hash, "another index count is another shape");
-    rg::Trace trace(3);
-    expect(trace.want(0xa000, one.hash), "a structure's first build is named");
-    expect(!trace.want(0xa000, one.hash), "a refit of the same shape is not named again");
-    expect(trace.want(0xa000, other.hash), "a new shape in the same structure is named");
-    expect(trace.want(0xb000, one.hash) && trace.full(), "the build that reaches the cap is named");
-    expect(!trace.want(0xc000, one.hash) && trace.named() == 3, "nothing is named past the cap");
+    rg::Trace trace(2);
+    expect(trace.want(one.hash), "a shape is named the first time it is built");
+    expect(!trace.want(one.hash), "the same shape is not named again, in any structure");
+    expect(trace.want(other.hash) && trace.full(), "the shape that reaches the cap is named");
+    rg::Shape third;
+    third.add(tri(0x1000, 4, 0x2000, 6));
+    expect(!trace.want(third.hash) && trace.named() == 2, "nothing is named past the cap");
+
+    rg::Entry car;
+    car.list = 0x78ee;
+    car.dest = 0x92c4;
+    car.flags = 0x14;
+    car.count = 3;
+    car.geo[0] = {rg::kTriangles, 926, 5040, 0, 12, 1, 6, 57, false};
+    car.geo[1] = {rg::kTriangles, 66, 192, 0, 12, 1, 6, 57, false};
+    car.geo[2] = {rg::kTriangles, 40, 60, 0, 16, 1, 6, 42, false};
+    expect(rg::geometry_text(car) == " v926/i5040(vf6 s12 if57 fl1) v66/i192 v40/i60(vf6 s16 if42 fl1)",
+           "each geometry shows its counts, and its formats where they differ from the first");
+    rg::Entry many = car;
+    many.count = rg::kBriefGeos + 3;
+    for (int i = 0; i < rg::kBriefGeos; i++)
+        many.geo[i] = car.geo[0];
+    expect(rg::geometry_text(many).find(" +3 more") != std::string::npos, "geometries past the brief are counted");
+
+    rg::Recent<4> ring;
+    expect(ring.oldest_first().empty(), "an empty ring keeps nothing");
+    for (uint64_t i = 0; i < 6; i++) {
+        rg::Entry e = car;
+        e.seq = i;
+        ring.push(e);
+    }
+    std::vector<rg::Entry> kept = ring.oldest_first();
+    expect(kept.size() == 4 && kept.front().seq == 2 && kept.back().seq == 5 && ring.pushed() == 6,
+           "the ring keeps the newest builds, oldest first");
+
+    std::vector<rg::Entry> frames(4, car);
+    frames[0].frame = frames[1].frame = 10;
+    frames[2].frame = frames[3].frame = 11;
+    frames[1].list = 0x1111;
+    expect(rg::list_ordinals(frames) == std::vector<uint32_t>({1, 1, 1, 2}),
+           "a build's place counts the builds on its list in its frame");
+
+    rg::ByList<3, 2> lists;
+    expect(lists.newest_lists_first().empty() && rg::recent_section(lists.newest_lists_first(), 0).empty(),
+           "no builds give no section");
+    uint64_t seq = 0;
+    auto build = [&](uint64_t list, uint64_t frame) {
+        rg::Entry e = car;
+        e.seq = seq++;
+        e.list = list;
+        e.frame = frame;
+        lists.push(e);
+    };
+    build(0xa, 1);
+    for (int i = 0; i < 5; i++)
+        build(0xb, 1);
+    build(0xa, 2);
+    auto newest = lists.newest_lists_first();
+    expect(newest.size() == 2 && newest[0].list == 0xa && newest[1].list == 0xb,
+           "the list with the newest build comes first");
+    expect(newest[0].builds.size() == 2 && newest[0].builds.front().seq == 0,
+           "a quiet list keeps its builds however many a busy list records");
+    expect(newest[1].builds.size() == 3 && newest[1].total == 5, "each list keeps its own newest builds");
+    build(0xc, 2);
+    newest = lists.newest_lists_first();
+    expect(newest.size() == 2 && newest[0].list == 0xc && newest[1].list == 0xa,
+           "past the list cap the list with the oldest newest build is dropped");
+    std::string section = rg::recent_section(newest, lists.pushed());
+    expect(section.find("2 command list(s)") != std::string::npos && section.find("8 build(s) in all") != std::string::npos,
+           "the section counts lists and builds");
+    expect(section.find("    list 0xa: the newest 2 of 2 build(s)\n      build 0 frame 1 #1 bottom-level into 0x92c4") !=
+               std::string::npos,
+           "each list shows its builds under it");
+    build(0xc, 2);
+    build(0xc, 2);
+    build(0xc, 2);
+    section = rg::recent_section(lists.newest_lists_first(), lists.pushed());
+    expect(section.find("build 8 frame 2 #1+ bottom-level") != std::string::npos && section.find("build 10 frame 2 #3+ bottom-level") != std::string::npos,
+           "a place in a list's oldest kept frame may miss builds it no longer keeps");
+
+    expect(rg::recent_section(lists.newest_lists_first(), lists.pushed(), 1).find("1 more command list(s) not shown") !=
+               std::string::npos,
+           "lists past the shown cap are counted");
+    rg::Entry top;
+    top.top = true;
+    top.count = 40;
+    top.flags = rg::kPerformUpdate;
+    rg::ByList<3, 2> tops;
+    tops.push(top);
+    std::string top_line = rg::recent_section(tops.newest_lists_first(), tops.pushed());
+    expect(top_line.find("top-level update into 0x0 (flags 0x20), 40 instances:\n") != std::string::npos,
+           "a top-level build shows its instance count and no geometries");
+
+    expect(rg::rt_options("<a/>\n\t<rt_pathtrace enabled=\"false\" />\n\t<rt_shadows enabled=\"true\" />\n"
+                          "\t<rt_version version=\"0\" />\n\t<rt_ao enabled=\"maybe\"/>") ==
+               "pathtrace off, shadows on, ao maybe",
+           "the hardware settings' ray tracing options are read by name");
+    expect(rg::rt_options("<graphics/>").empty() && rg::rt_options("<rt_x enabled=\"true\"").empty(),
+           "no options, or a cut tag, give nothing");
 
     expect(rg::mode(nullptr) == rg::Mode::on && rg::mode("1") == rg::Mode::on && rg::mode("ON") == rg::Mode::on,
            "the guard is on by default");
