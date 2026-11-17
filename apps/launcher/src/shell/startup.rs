@@ -121,6 +121,7 @@ impl Shell {
         Self::watch_lobby(window, cx);
         Self::watch_aktualisierung(window, cx);
         Self::watch_anwesend(window, cx);
+        Self::watch_ampel(window, cx);
         let root = store.root.clone();
         let mut shell = Self {
             library,
@@ -219,6 +220,7 @@ impl Shell {
             aktualisierung_laeuft: false,
             aktualisierung_meldung: None,
             anwesend: None,
+            ampel: Default::default(),
             browser,
             shaders,
             _shaders_events: shaders_events,

@@ -104,9 +104,14 @@ and the supported-build table as part of the build.
 |---|---|
 | `ERC-Launcher-1.2.2-setup.exe` | [`erc-1.2.2`](../../releases/tag/erc-1.2.2) |
 | `ERC-Launcher-1.2.1-setup.exe` | [`erc-1.2.1`](../../releases/tag/erc-1.2.1) |
+| `ERC-Launcher-1.3.0-beta.1-setup.exe` (test build) | [`erc-1.3.0-beta.1`](../../releases/tag/erc-1.3.0-beta.1) |
 
 The 1.2.0 installer is superseded; its source is available on request. Every commit after the first
 describes one change against the 1.2.1 state.
+
+A build whose version carries a suffix (`1.3.0-beta.1`) is a test build: it reads
+`updates-beta.json` instead of `updates.json`, so it only moves between test builds, and its
+window title says "Beta". It installs into the same folder and therefore replaces the stable build.
 
 **Order for a new version:** bump the version, build the installer, commit and push here, create the
 release with the installer attached, and only then update the download page — so the page always

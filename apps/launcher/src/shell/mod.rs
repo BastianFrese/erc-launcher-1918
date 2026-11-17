@@ -150,6 +150,8 @@ pub struct Shell {
     pub(crate) aktualisierung_meldung: Option<String>,
     /// Wie viele gerade spielen — zuletzt vom Raum-Server gehoert.
     pub(crate) anwesend: Option<swofty_core::multiplayer::rooms::Presence>,
+    /// Sind unsere Dienste erreichbar?
+    pub(crate) ampel: crate::ampel::Stand,
     pub(crate) browser: crate::browser::Browser,
     pub(crate) shaders: Entity<crate::shaders::ShadersView>,
     _shaders_events: Subscription,

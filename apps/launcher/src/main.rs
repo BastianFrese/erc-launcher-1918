@@ -2,6 +2,7 @@
 
 mod addons;
 mod admin_needed;
+mod ampel;
 mod app_log;
 mod avatar;
 mod ban;
@@ -64,6 +65,16 @@ mod update;
 use gpui_kit::component::{TitleBar, v_flex};
 use gpui_kit::*;
 
+/// Der Fenstertitel. Eine Vorabfassung (etwa `1.3.0-beta.1`) traegt „Beta", damit man
+/// sie neben der festen Fassung aufmachen kann — und damit jeder sieht, was er laufen hat.
+fn titel_text() -> String {
+    if env!("CARGO_PKG_VERSION").contains('-') {
+        "ERC Launcher for F1 25 · Beta".to_owned()
+    } else {
+        "ERC Launcher for F1 25".to_owned()
+    }
+}
+
 /// Laeuft schon einer? Das Fenster traegt seinen Titel, also genuegt eine Suche danach.
 #[cfg(windows)]
 fn schon_offen() -> bool {
@@ -71,7 +82,7 @@ fn schon_offen() -> bool {
     unsafe extern "system" {
         fn FindWindowW(klasse: *const u16, titel: *const u16) -> *mut c_void;
     }
-    let titel: Vec<u16> = "ERC Launcher for F1 25\x00".encode_utf16().collect();
+    let titel: Vec<u16> = format!("{}\0", titel_text()).encode_utf16().collect();
     unsafe { !FindWindowW(std::ptr::null(), titel.as_ptr()).is_null() }
 }
 
@@ -111,7 +122,7 @@ fn main() {
             window_min_size: Some(size(px(1024.), px(680.))),
             app_id: Some("de.erdi-erc.launcher".into()),
             titlebar: Some(TitlebarOptions {
-                title: Some("ERC Launcher for F1 25".into()),
+                title: Some(titel_text().into()),
                 ..TitleBar::title_bar_options()
             }),
             ..TitleBar::window_options()
