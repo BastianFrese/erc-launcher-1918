@@ -320,13 +320,12 @@ impl Shell {
             .on_click(cx.listener(|this, _, _, cx| this.fetch_news(cx)));
         let stacked = self.content_width < STACK_BELOW;
         let side = (self.content_width * 0.32).clamp(260., 380.);
-        let show_banner = !self.is_card_dismissed(crate::discord::BANNER_CARD_ID);
-        self.news_scroll.sync(&self.news, short, stacked, show_banner);
+        self.news_scroll.sync(&self.news, short, stacked);
         if stacked {
             return v_flex()
                 .size_full()
                 .child(self.header(Page::News.label(), self.news.subtitle(), refresh, p))
-                .child(self.stacked_news(short, cx))
+                .child(self.stacked_news(cx))
                 .into_any_element();
         }
         let posts = self.news_posts(p, cx);
@@ -348,14 +347,7 @@ impl Shell {
             .pt(px(4.))
             .pb(px(20.))
             .gap(px(16.))
-            .when(show_banner, |d| {
-                d.child(crate::discord::banner(
-                    short,
-                    cx.listener(|this, _, _, cx| {
-                        this.dismiss_card(crate::discord::BANNER_CARD_ID, cx);
-                    }),
-                ))
-            })
+            .when_some(self.anwesend_zeile(p), |d, zeile| d.child(zeile))
             .child(columns);
         v_flex()
             .size_full()
@@ -551,7 +543,7 @@ impl Shell {
             .into_any_element()
     }
 
-    pub(super) fn stacked_news(&self, short: bool, cx: &mut Context<Self>) -> AnyElement {
+    pub(super) fn stacked_news(&self, cx: &mut Context<Self>) -> AnyElement {
         let scroll = &self.news_scroll.stacked;
         div()
             .relative()
@@ -569,15 +561,6 @@ impl Shell {
                         let releases = this.news_scroll.release_indices.len();
                         let panel = || div().bg(p.surface).border_x_1().border_color(p.border);
                         let row = match this.news_scroll.stacked_rows[i] {
-                            StackedRow::Banner => div()
-                                .pb(px(16.))
-                                .child(crate::discord::banner(
-                                    short,
-                                    cx.listener(|this, _, _, cx| {
-                                        this.dismiss_card(crate::discord::BANNER_CARD_ID, cx);
-                                    }),
-                                ))
-                                .into_any_element(),
                             StackedRow::ArticlesTop => panel()
                                 .rounded_t(px(10.))
                                 .border_t_1()
