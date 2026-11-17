@@ -2,6 +2,24 @@
 
 A launcher and mod loader for F1 25 on Windows and Linux. Addons change the game's data and engine, mods and community tracks drop onto the Mods page, and profiles keep separate setups.
 
+## This fork
+
+This is the **ERC Launcher**: a fork of [Swofty Launcher](https://github.com/Swofty-Developments/SwoftyLauncher)
+by Jacob Nardella (Swofty), maintained for Erdi's Racing Community. Upstream arrives as release
+tags (`v1.9.x`); our own work sits on top of them.
+
+The program is under the **GNU Affero General Public License v3** — see [LICENSE](LICENSE). We ship
+installers, so the source of every released installer stays here:
+
+| Installer | Tag |
+|---|---|
+| `ERC-Launcher-1.2.1-setup.exe` | `erc-1.2.1` |
+| `ERC-Launcher-1.2.0-setup.exe` | `erc-1.2.0` |
+
+Our own parts of this fork: `apps/launcher` (the launcher), `packages/core/src/multiplayer` and
+`native/src/core/netplay*` (multiplayer), `server/raum`, `server/relay`, `server/protokoll` (our
+servers), and `dist-1918/addons/erdi.erc-liga` (our league mod).
+
 ![The launcher's Addons page with SwoftyMod, Team Simplified, Custom Grid Size and an AlphaTauri livery addon](docs/public/screenshots/hero-launcher.png)
 
 ## Features
