@@ -56,6 +56,7 @@ dist-1918/addons/erdi.erc-liga/native/liga_plugin.dll
 dist-1918/addons/erdi.erc-liga/native/liga_plugin.exp
 dist-1918/addons/erdi.erc-liga/native/liga_plugin.lib
 dist-1918.vor-*/
+dist-1918-beta/
 
 # Testaufnahmen und Setup-Bauten
 ERC-Launcher-*-setup.exe

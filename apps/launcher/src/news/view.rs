@@ -348,6 +348,7 @@ impl Shell {
             .pb(px(20.))
             .gap(px(16.))
             .when_some(self.anwesend_zeile(p), |d, zeile| d.child(zeile))
+            .when_some(self.ampel_zeile(p), |d, zeile| d.child(zeile))
             .child(columns);
         v_flex()
             .size_full()
