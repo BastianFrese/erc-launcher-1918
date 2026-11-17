@@ -38,6 +38,7 @@ mod online;
 mod pages;
 mod play_bar;
 mod play_checks;
+mod presence;
 mod profile_panel;
 mod profiles;
 mod reveal;

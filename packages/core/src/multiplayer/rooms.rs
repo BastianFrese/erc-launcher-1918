@@ -351,6 +351,13 @@ impl TurnCredentials {
     }
 }
 
+/// Wie viele gerade den Launcher offen haben und wie viele davon im Spiel sind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
+pub struct Presence {
+    pub launcher: u32,
+    pub ingame: u32,
+}
+
 impl Api {
     /// The launcher's server ([`crate::catalog::base_url`]).
     pub fn new(token: &str) -> Self {
@@ -395,6 +402,14 @@ impl Api {
             rooms: Vec<RoomSummary>,
         }
         Ok(self.call::<Rooms>("GET", "/v1/mp/rooms", None)?.rooms)
+    }
+
+    /// Ein Lebenszeichen an den Raum-Server: er zaehlt diesen Rechner fuer fuenf
+    /// Minuten mit und antwortet mit dem neuen Stand. Kein Konto — die Kennung ist
+    /// der Hash des Tokens, also ein Rechner.
+    pub fn presence(&self, in_game: bool) -> Result<Presence, ApiError> {
+        let body = serde_json::json!({ "in_game": in_game }).to_string();
+        self.call_within("POST", "/v1/presence", Some(body), Duration::from_secs(8))
     }
 
     pub fn create(&self, settings: &RoomSettings) -> Result<Lobby, ApiError> {
