@@ -1,0 +1,4 @@
+native/build/
+*.lib
+*.exp
+*.obj

@@ -45,11 +45,19 @@ re/db/*.tmp
 !packages/sdk/std/fixtures/*.bin
 /target
 
-dist-1918/
+# Das Paket wird zusammengesetzt und ist nicht versioniert — ausser unserer eigenen
+# Mod, deren Quelle sonst nirgends liegt.
+dist-1918/*
+!dist-1918/addons/
+dist-1918/addons/*
+!dist-1918/addons/erdi.erc-liga/
+dist-1918/addons/erdi.erc-liga/native/build/
+dist-1918/addons/erdi.erc-liga/native/liga_plugin.dll
+dist-1918/addons/erdi.erc-liga/native/liga_plugin.exp
+dist-1918/addons/erdi.erc-liga/native/liga_plugin.lib
 dist-1918.vor-*/
 
 # Testaufnahmen und Setup-Bauten
-dist-1918/
 ERC-Launcher-*-setup.exe
 spiel-*.png
 fenster-*.png

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "erdi.erc-liga",
+  "name": "ERC Liga",
+  "version": "0.2.0",
+  "author": "Bastian Frese",
+  "description": "Liga-Brücke: nimmt Befehle der ERC-Rennleitung an und zeigt sie im Renn-HUD. Eigenentwicklung, nicht veröffentlicht.",
+  "license": "MIT",
+  "kind": ["native"],
+  "compat": { "game": "f1_25", "game_builds": [">=25251167"] },
+  "requires": [{ "id": "swofty.core", "version": ">=0.1.0" }],
+  "operations": {
+    "native": [{ "dll": "native/liga_plugin.dll" }]
+  }
+}
