@@ -100,9 +100,9 @@ and the supported-build table as part of the build.
 
 ## Source of the released installers
 
-| Installer | Commit |
+| Installer | Tag |
 |---|---|
-| `ERC-Launcher-1.2.1-setup.exe` | the first commit, "ERC Launcher 1.2.1" |
+| `ERC-Launcher-1.2.1-setup.exe` | [`erc-1.2.1`](../../releases/tag/erc-1.2.1) |
 
 The 1.2.0 installer is superseded by 1.2.1; its source is available on request. Every commit after
 the first describes one change against that released state.
