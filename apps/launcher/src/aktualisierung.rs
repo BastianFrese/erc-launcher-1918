@@ -229,12 +229,14 @@ mod fenster {
             p: Palette,
             cx: &mut Context<Self>,
         ) -> Option<AnyElement> {
-            let angebot = self.aktualisierung.angebot()?.clone();
+            self.aktualisierung.angebot()?;
             let laeuft = self.aktualisierung_laeuft;
+            // Kurz halten: die Fassung steht im Fenster für die Aktualisierung und in
+            // der Änderungsliste — der Knopf soll die Titelzeile nicht aufblähen.
             let text = if laeuft {
-                "Wird geladen …".to_owned()
+                "Wird geladen …"
             } else {
-                format!("Auf {} aktualisieren", angebot.version)
+                "Aktualisieren"
             };
             Some(
                 v_flex()
@@ -243,7 +245,6 @@ mod fenster {
                     .occlude()
                     .flex_shrink_0()
                     .gap(px(4.))
-                    .pb(px(4.))
                     .child(
                         Button::new("aktualisieren")
                             .primary()
@@ -254,11 +255,9 @@ mod fenster {
                             .disabled(laeuft)
                             .on_click(cx.listener(|this, _, _, cx| this.aktualisieren_holen(cx))),
                     )
-                    .when_some(
-                    self.aktualisierung_meldung.clone().or_else(|| {
-                        Some(angebot.notiz.clone()).filter(|n| !n.is_empty())
-                    }),
-                    |d, m| {
+                    // Nur noch Meldungen (Fehler) — die Änderungsliste steht auf der
+                    // Startseite, nicht unter dem Knopf.
+                    .when_some(self.aktualisierung_meldung.clone(), |d, m| {
                         d.child(
                             div()
                                 .px(px(6.))

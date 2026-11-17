@@ -82,7 +82,7 @@ fn leaves_out_the_changelog_while_it_is_empty() {
     news.posts.clear();
     news.blocks.clear();
     let mut scroll = NewsScroll::default();
-    scroll.sync(&news, false, true, false);
+    scroll.sync(&news, false, true);
     assert!(scroll.release_indices.is_empty());
     assert!(
         !scroll.stacked_rows.iter().any(|r| matches!(
@@ -91,7 +91,7 @@ fn leaves_out_the_changelog_while_it_is_empty() {
         )),
         "der Changelog-Abschnitt steht da, obwohl es keine Notizen gibt"
     );
-    scroll.sync(&news, false, false, false);
+    scroll.sync(&news, false, false);
     assert!(scroll.release_indices.is_empty());
 }
 
@@ -157,23 +157,3 @@ fn knows_image_formats() {
     assert!(image_format(b"<svg").is_none());
 }
 
-#[test]
-fn stacked_sync_tracks_banner_visibility() {
-    let news = News::load(std::path::Path::new("/nonexistent"));
-    let mut scroll = NewsScroll::default();
-
-    scroll.sync(&news, false, true, true);
-    let initial = scroll.stacked_rows.len();
-    assert!(matches!(scroll.stacked_rows.first(), Some(StackedRow::Banner)));
-    assert_eq!(scroll.stacked.item_count(), initial);
-
-    scroll.sync(&news, false, true, false);
-    assert_eq!(scroll.stacked_rows.len(), initial - 1);
-    assert!(!matches!(scroll.stacked_rows.first(), Some(StackedRow::Banner)));
-    assert_eq!(scroll.stacked.item_count(), initial - 1);
-
-    scroll.sync(&news, false, true, true);
-    assert_eq!(scroll.stacked_rows.len(), initial);
-    assert!(matches!(scroll.stacked_rows.first(), Some(StackedRow::Banner)));
-    assert_eq!(scroll.stacked.item_count(), initial);
-}

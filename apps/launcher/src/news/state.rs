@@ -34,7 +34,6 @@ pub(super) enum NewsRow {
 
 #[derive(Clone, Copy)]
 pub(super) enum StackedRow {
-    Banner,
     ArticlesTop,
     Article(usize),
     ArticlesBottom,
@@ -60,7 +59,6 @@ pub(crate) struct NewsScroll {
     pub(super) revision: Option<u64>,
     pub(super) short: bool,
     pub(super) stacked_layout: bool,
-    pub(super) show_banner: bool,
     pub(super) motion: [crate::scroll::SmoothScroll; 3],
 }
 
@@ -76,7 +74,6 @@ impl Default for NewsScroll {
             revision: None,
             short: false,
             stacked_layout: false,
-            show_banner: true,
             motion: Default::default(),
         }
     }
@@ -97,28 +94,13 @@ impl NewsScroll {
         }
     }
 
-    pub(super) fn sync(&mut self, news: &News, short: bool, stacked: bool, show_banner: bool) {
+    pub(super) fn sync(&mut self, news: &News, short: bool, stacked: bool) {
         if self.stacked_layout != stacked {
             self.stacked_layout = stacked;
             self.cancel();
         }
-        if self.show_banner != show_banner {
-            self.show_banner = show_banner;
-            if self.revision.is_some() {
-                if show_banner {
-                    self.stacked_rows.insert(0, StackedRow::Banner);
-                    self.stacked.splice(0..0, 1);
-                } else if matches!(self.stacked_rows.first(), Some(StackedRow::Banner)) {
-                    self.stacked_rows.remove(0);
-                    self.stacked.splice(0..1, 0);
-                }
-            }
-        }
         if self.short != short {
             self.short = short;
-            if self.show_banner && self.stacked.item_count() > 0 {
-                self.stacked.remeasure_items(0..1);
-            }
         }
         if self.revision == Some(news.revision) {
             return;
@@ -145,9 +127,6 @@ impl NewsScroll {
             }
         }
         self.stacked_rows.clear();
-        if show_banner {
-            self.stacked_rows.push(StackedRow::Banner);
-        }
         self.stacked_rows.push(StackedRow::ArticlesTop);
         self.stacked_rows
             .extend((0..self.rows.len()).map(StackedRow::Article));

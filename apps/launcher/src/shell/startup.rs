@@ -120,6 +120,7 @@ impl Shell {
         Self::watch_multiplayer(window, cx);
         Self::watch_lobby(window, cx);
         Self::watch_aktualisierung(window, cx);
+        Self::watch_anwesend(window, cx);
         let root = store.root.clone();
         let mut shell = Self {
             library,
@@ -217,6 +218,7 @@ impl Shell {
             aktualisierung: crate::aktualisierung::Stand::Ruhe,
             aktualisierung_laeuft: false,
             aktualisierung_meldung: None,
+            anwesend: None,
             browser,
             shaders,
             _shaders_events: shaders_events,

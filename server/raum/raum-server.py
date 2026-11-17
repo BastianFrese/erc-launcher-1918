@@ -51,6 +51,32 @@ WS_KENNUNG = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 SPERR = threading.RLock()
 RAEUME: dict[str, "Raum"] = {}
 
+# Wer gerade den Launcher offen hat. Kein Konto, keine Historie: nur die Kennung
+# des Tokens und wann sie zuletzt zu sehen war. Nach fuenf Minuten ohne
+# Lebenszeichen faellt der Rechner aus der Zaehlung.
+ANWESEND: dict[str, tuple[float, bool]] = {}
+ANWESEND_FRIST = 300
+
+
+def anwesend_zaehlen() -> dict:
+    jetzt = time.time()
+    frisch = [
+        im_spiel
+        for _, (wann, im_spiel) in list(ANWESEND.items())
+        if jetzt - wann <= ANWESEND_FRIST
+    ]
+    return {"launcher": len(frisch), "ingame": sum(1 for im_spiel in frisch if im_spiel)}
+
+
+def anwesend_melden(mit: str, im_spiel: bool) -> dict:
+    with SPERR:
+        jetzt = time.time()
+        for kennung, (wann, _) in list(ANWESEND.items()):
+            if jetzt - wann > ANWESEND_FRIST:
+                del ANWESEND[kennung]
+        ANWESEND[mit] = (jetzt, im_spiel)
+        return anwesend_zaehlen()
+
 
 def kennung_von(token: str) -> str:
     """Die feste Kennung eines Tokens: niemand meldet sich an, jeder Token gilt."""
@@ -472,6 +498,9 @@ class Abnehmer(BaseHTTPRequestHandler):
                     "donate_url": str(stand.get("donate_url") or ""),
                 },
             )
+        # Wie viele gerade spielen: oeffentlich wie der Spendenstand, ohne Kennung.
+        if pfad == "/v1/presence":
+            return self.antwort(200, anwesend_zaehlen())
         if pfad == "/v1/support/supporters":
             # Felder mit Unterstrich sind Buchhaltung und gehen niemanden etwas an.
             liste = [
@@ -522,6 +551,8 @@ class Abnehmer(BaseHTTPRequestHandler):
             return self.fehler(401, "signed_out", "sign in")
         mit = kennung_von(self.token())
         name = self.name()
+        if pfad == "/v1/presence":
+            return self.antwort(200, anwesend_melden(mit, bool(self.rumpf().get("in_game"))))
         if pfad == "/v1/mp/lobbies":
             return self.aufmachen(mit, name)
         teile = pfad.strip("/").split("/")
