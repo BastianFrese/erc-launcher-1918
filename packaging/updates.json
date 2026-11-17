@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.2.0-setup.exe",
-  "sha256": "f60e0f454f21a8ad8fe7373652ad25b89e319effd6da6a24644c23ab427b530e",
-  "notiz": "Oberflaechengroesse einstellbar, Zeitfahren rechnet richtig, Karriere-Addons ueberschreiben keine eigenen Werte."
+  "version": "1.2.1",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.2.1-setup.exe",
+  "sha256": "20c93c6da969a0e0bd920a111e4d908bd5ab1b7a83aa368964c22564cf2d2ba2",
+  "notiz": "F1 25 Build 1.0.145 laeuft auch ueber die EA App, der Launcher prueft das laufende Spiel erneut, Telemetrie fuer die Saison 2026."
 }
