@@ -1,0 +1,38 @@
+[package]
+name = "erc-launcher"
+# Der Launcher zaehlt eigen: 0.6.0. Der Unterbau bleibt auf seiner Fassung,
+# an der die Addons ihre Mindestfassung messen.
+version = "1.2.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "erc-launcher"
+path = "src/main.rs"
+
+[dependencies]
+gpui-kit = "=0.9.1"
+anyhow.workspace = true
+lsp-types = { version = "0.97", features = ["proposed"] }
+image = { version = "0.25", default-features = false }
+png.workspace = true
+semver.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+swofty-builtins.workspace = true
+swofty-core.workspace = true
+swofty-i18n.workspace = true
+swofty-preview.workspace = true
+swofty-shaders.workspace = true
+sha2.workspace = true
+ureq.workspace = true
+
+[build-dependencies]
+serde_json.workspace = true
+winresource = "0.1"
+
+[lints]
+workspace = true

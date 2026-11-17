@@ -1,0 +1,6 @@
+{
+  "version": "1.2.1",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.2.1-setup.exe",
+  "sha256": "20c93c6da969a0e0bd920a111e4d908bd5ab1b7a83aa368964c22564cf2d2ba2",
+  "notiz": "F1 25 Build 1.0.145 laeuft auch ueber die EA App, der Launcher prueft das laufende Spiel erneut, Telemetrie fuer die Saison 2026."
+}

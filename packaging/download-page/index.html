@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="de" class="dark">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERC Launcher — F1 25 Liga-Client</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Orbitron (Motorsport Display), Inter (Clean UI), JetBrains Mono (Telemetry Data) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Orbitron:wght@600;700;800;900&amp;display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Orbitron', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        f1: {
+                            red: '#E10600',
+                            redHover: '#FF1E17',
+                            dark: '#0B0C0E',
+                            panel: '#131519',
+                            panelLight: '#1A1D24',
+                            border: '#262A34',
+                            green: '#00E676',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Carbon Fiber Background Texture */
+        .bg-carbon {
+            background-color: #0B0C0E;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(225, 6, 0, 0.14) 0%, rgba(11, 12, 14, 0) 60%),
+                linear-gradient(45deg, #101216 25%, transparent 25%), 
+                linear-gradient(-45deg, #101216 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #101216 75%), 
+                linear-gradient(-45deg, transparent 75%, #101216 75%);
+            background-size: 100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px;
+            background-position: 0 0, 0 0, 0 4px, 4px -4px, -4px 0;
+        }
+
+        /* Subtle Pit-Lane Grid Overlay */
+        .bg-telemetry-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        }
+
+        /* Glow effects for F1 Start Lights */
+        .light-red-active {
+            background-color: #E10600;
+            box-shadow: 0 0 12px #E10600, 0 0 24px rgba(225, 6, 0, 0.65);
+        }
+        .light-red-off {
+            background-color: #2A1214;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+        }
+        .light-green-active {
+            background-color: #00E676;
+            box-shadow: 0 0 12px #00E676, 0 0 24px rgba(0, 230, 118, 0.65);
+        }
+        .light-green-off {
+            background-color: #11291D;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* CTA Button Diagonal Motorsport Cut & Glow */
+        .btn-f1-cta {
+            position: relative;
+            background: linear-gradient(135deg, #E10600 0%, #B80500 100%);
+            box-shadow: 0 8px 28px -6px rgba(225, 6, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-f1-cta:hover {
+            background: linear-gradient(135deg, #FF1A14 0%, #D40600 100%);
+            box-shadow: 0 12px 34px -4px rgba(225, 6, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+        .btn-f1-cta:active {
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0C0E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262A34;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #E10600;
+        }
+    </style>
+</head>
+<body class="bg-carbon text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-f1-red selection:text-white">
+
+    <!-- Top Racing Red Stripe -->
+    <div class="h-1 w-full bg-gradient-to-r from-f1-red via-red-500 to-f1-red"></div>
+
+    <!-- Header Navigation -->
+    <header class="w-full border-b border-f1-border/80 bg-f1-dark/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <!-- Left Brand Mark -->
+            <a href="/" class="flex items-center gap-3 group">
+                <div class="w-2 h-6 bg-f1-red rounded-sm transform -skew-x-12 group-hover:scale-y-110 transition-transform"></div>
+                <div class="flex items-baseline gap-2.5">
+                    <span class="font-display font-black text-xl tracking-wider text-white">ERC</span>
+                    <span class="font-mono text-xs font-semibold tracking-[0.28em] text-f1-red uppercase">Launcher</span>
+                </div>
+            </a>
+
+            <!-- Right Status & Version Pill -->
+            <div class="flex items-center gap-3">
+                <button onclick="openPreviewModal()" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-f1-panel hover:bg-f1-panelLight border border-f1-border text-xs font-mono text-zinc-300 hover:text-white transition-colors cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-f1-green animate-pulse"></span>
+                    <span>HUD-Vorschau</span>
+                </button>
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-f1-panel border border-f1-border text-xs font-mono text-zinc-300 shadow-inner">
+                    <span class="text-white font-semibold">1.2.1</span>
+                    <span class="text-zinc-600">·</span>
+                    <span class="text-zinc-400">Windows</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 bg-telemetry-grid">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-12 pb-24 sm:pt-16">
+
+            <!-- HERO SECTION -->
+            <section class="flex flex-col items-center text-center mb-16 sm:mb-20">
+                
+                <!-- Giant ERC Logo + Subtitle -->
+                <div class="mb-5 select-none">
+                    <h1 class="font-display font-black text-6xl sm:text-7xl md:text-8xl tracking-[0.22em] pl-[0.22em] text-white drop-shadow-[0_4px_24px_rgba(255,255,255,0.08)]">
+                        ERC
+                    </h1>
+                    <div class="flex items-center justify-center gap-4 mt-2">
+                        <span class="h-[1px] w-12 sm:w-20 bg-gradient-to-r from-transparent to-f1-red"></span>
+                        <span class="font-mono text-xs sm:text-sm font-bold tracking-[0.45em] pl-[0.45em] text-f1-red uppercase">
+                            Launcher
+                        </span>
+                        <span class="h-[1px] w-12 sm:w-20 bg-gradient-to-l from-transparent to-f1-red"></span>
+                    </div>
+                </div>
+
+                <!-- Interactive F1 Start Gantry Lights (5 Red + 1 Green) -->
+                <div class="mb-8 flex flex-col items-center">
+                    <div id="startGantry" onclick="triggerStartSequence()" title="Klicken für Startampel-Sequenz" class="inline-flex items-center gap-2.5 sm:gap-3 px-4 py-2.5 rounded-xl bg-f1-panel border border-f1-border shadow-lg cursor-pointer hover:border-zinc-600 transition-all group">
+                        <span id="light-1" class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full light-red-active transition-all duration-150"></span>
+                        <span id="light-2" class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full light-red-active transition-all duration-150"></span>
+                        <span id="light-3" class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full light-red-active transition-all duration-150"></span>
+                        <span id="light-4" class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full light-red-active transition-all duration-150"></span>
+                        <span id="light-5" class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full light-red-active transition-all duration-150"></span>
+                        <span class="w-[1px] h-4 bg-zinc-700 mx-0.5"></span>
+                        <span id="light-6" class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full light-green-active transition-all duration-150"></span>
+                    </div>
+                    <span id="gantryStatus" class="mt-2 font-mono text-[11px] text-zinc-500 tracking-wider uppercase">
+                        Telemetry Sync Bereit · Klick für Ampeltest
+                    </span>
+                </div>
+
+                <!-- Core Description Text -->
+                <p class="max-w-xl text-base sm:text-lg text-zinc-300 leading-relaxed font-normal mb-9 px-2">
+                    Startet <span class="text-white font-semibold">F1 25</span> mit den Mods der Liga, gleicht sie vor dem Beitreten ab und öffnet die Lobby über unseren eigenen Server — <span class="text-zinc-200">ohne Konto, ohne offenen Port.</span>
+                </p>
+
+                <!-- Primary CTA Download Button -->
+                <div class="w-full sm:w-auto flex flex-col items-center">
+                    <a id="downloadBtn" href="ERC-Launcher-1.2.1-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
+                        <!-- Download Icon -->
+                        <svg id="downloadIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        <span id="downloadBtnText">LAUNCHER INSTALLIEREN</span>
+                    </a>
+
+                    <!-- Technical Metadata Bar -->
+                    <div class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-zinc-400">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-zinc-500">Fassung</span>
+                            <span class="text-zinc-200 font-semibold">1.2.1</span>
+                        </div>
+                        <span class="text-zinc-700 hidden sm:inline">|</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-zinc-500">Größe</span>
+                            <span class="text-zinc-200 font-semibold">43,4 MB</span>
+                        </div>
+                        <span class="text-zinc-700 hidden sm:inline">|</span>
+                        <!-- Interactive SHA-256 Copy Button -->
+                        <button onclick="copySha256()" title="Vollständigen SHA-256 Hash kopieren" class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-f1-panel hover:bg-f1-panelLight border border-f1-border/80 hover:border-zinc-600 transition-colors cursor-pointer group">
+                            <span class="text-zinc-500">SHA-256</span>
+                            <span class="text-zinc-200 font-semibold group-hover:text-white">20c93c6d...</span>
+                            <svg id="copyIcon" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-f1-red transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                            </svg>
+                        </button>
+                        <span class="text-zinc-700 hidden sm:inline">|</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-zinc-300">Windows 10/11</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: NEU IN DIESER FASSUNG -->
+            <section class="mb-14">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-1.5 h-4 bg-f1-red rounded-xs"></span>
+                        <h2 class="font-mono text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase">
+                            NEU IN DIESER FASSUNG
+                        </h2>
+                    </div>
+                    <span class="font-mono text-[11px] text-zinc-500">BUILD #102-REL</span>
+                </div>
+
+                <!-- Pit-Wall Telemetry Release Card -->
+                <div class="relative rounded-xl bg-f1-panel/95 border border-f1-border border-l-4 border-l-f1-red p-6 sm:p-7 shadow-2xl overflow-hidden">
+                    <!-- Subtle Corner Telemetry Accent -->
+                    <div class="absolute top-0 right-0 px-3 py-1 bg-f1-panelLight border-b border-l border-f1-border rounded-bl-lg font-mono text-[10px] text-zinc-400 tracking-widest uppercase">
+                        Changelog
+                    </div>
+
+                    <ul class="space-y-5 text-sm sm:text-[15px] leading-relaxed text-zinc-300">
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Der Launcher spricht Deutsch.</strong> Alle Texte sind übersetzt und einfach geschrieben — ohne Fachbegriffe.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Zusammen fahren:</strong> einer macht die Lobby auf, die anderen tippen den vierstelligen Code ein. Kein Konto nötig.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Die Mods passen zusammen:</strong> vor dem Beitreten prüft der Launcher, ob beide Seiten dieselben Mods haben.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Neuer Ladebildschirm und Hilfe-Seite</strong> mit dem Weg, uns über Ko-fi zu unterstützen.</div>
+                                </li>
+                            </ul>
+                </div>
+            </section>
+
+            <!-- SECTION: SO GEHT ES -->
+            <section>
+                <div class="flex items-center gap-2.5 mb-5">
+                    <span class="w-1.5 h-4 bg-f1-red rounded-xs"></span>
+                    <h2 class="font-mono text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase">
+                        SO GEHT ES
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3.5">
+                    <!-- Step 01 -->
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">01</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">
+                            <strong class="text-white font-semibold">Herunterladen und ausführen.</strong> Der Installer richtet alles für den angemeldeten Benutzer ein — keine Administratorrechte nötig.
+                        </p>
+                    </div>
+
+                    <!-- Step 02 -->
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">02</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">
+                            <strong class="text-white font-semibold">F1 25 muss installiert sein</strong> (Steam). Sonst wird nichts weiter gebraucht.
+                        </p>
+                    </div>
+
+                    <!-- Step 03 -->
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">03</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">
+                            <strong class="text-white font-semibold">Starten</strong> und beim ersten Mal die Bedingungen für das modifizierte Spiel bestätigen.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mt-12 mb-10">
+                <div class="flex items-center gap-2.5 mb-5">
+                    <span class="w-1.5 h-4 bg-f1-red rounded-xs"></span>
+                    <h2 class="font-mono text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase">
+                        ZUSAMMEN FAHREN
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 gap-3.5">
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">01</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">Beide starten <strong class="text-white font-semibold">F1&nbsp;25</strong> und bleiben im Hauptmenü.</p>
+                    </div>
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">02</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">Einer öffnet im Launcher <strong class="text-white font-semibold">Online → Lobby</strong> und drückt <em>Lobby erstellen</em> — es erscheint ein Raumcode aus vier Zeichen.</p>
+                    </div>
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">03</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">Die anderen tippen den Code unter <em>Einem Raum beitreten</em> ein und warten, bis der Mod-Stand abgeglichen ist.</p>
+                    </div>
+                    <div class="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-xl bg-f1-panel/70 border border-f1-border hover:border-zinc-700 transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-f1-dark border border-f1-red/50 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(225,6,0,0.15)]">
+                            <span class="font-mono text-xs font-bold text-f1-red">04</span>
+                        </div>
+                        <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">Zurück in der Lobby auf <strong class="text-white font-semibold">Play</strong> — das Spiel öffnet die gemeinsame Sitzung.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mt-12">
+                <div class="flex items-center gap-2.5 mb-5">
+                    <span class="w-1.5 h-4 bg-f1-red rounded-xs"></span>
+                    <h2 class="font-mono text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase">
+                        ÄNDERUNGEN
+                    </h2>
+                </div>
+                <div class="rounded-xl bg-f1-panel/70 border border-f1-border divide-y divide-f1-border">
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.2.1</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            F1 25 Build 1.0.145 läuft auch über die EA App, der Launcher prüft das
+                            laufende Spiel erneut gegen die unterstützten Fassungen, und die Telemetrie
+                            liest die Pakete der Saison 2026. Box- und Wochenend-Regeln behalten die
+                            Reihenfolge des Spiels.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.2.0</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Der Launcher lässt sich größer stellen (Einstellungen → Oberflächengröße), das
+                            Zeitfahren rechnet wieder richtig, Grafik-Effekte überstehen eine Pause, und
+                            Karriere-Addons überschreiben keine eigenen Werte mehr. Neu: Brasilianisches Portugiesisch.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.1.1</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Die Änderungsliste zeigt wieder nur unsere Fassungen — fremde Notizen
+                            waren mit hereingekommen. Jede Fassung bringt ihre Notiz jetzt mit.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.1.0</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Neuer Unterbau unter dem Launcher: mehr Strecken passen hinein, die nasse
+                            Strecke trocknet richtig ab, und beim Beitreten steht jetzt der echte Grund,
+                            wenn ein Raum nicht zustande kommt.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.0.2</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Die Änderungen stehen jetzt auch hier auf der Seite, und jede Fassung hat ihre eigene Notiz.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.0.1</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Der Launcher spricht Deutsch, in einfachen Worten und ohne Fachbegriffe.
+                            Deutsch ist die Voreinstellung; umstellen geht in den Einstellungen.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.0.0</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Die erste fertige Fassung: zusammen fahren über unseren Server, Mods werden
+                            vor dem Beitreten abgeglichen, neuer Ladebildschirm, Hilfe-Seite mit Ko-fi.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mt-12 mb-10">
+                <div class="rounded-xl bg-f1-panel/70 border border-f1-border border-l-4 border-l-yellow-500/80 p-5">
+                    <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed">
+                        <strong class="text-yellow-400 font-semibold">Ein eigenes Steam-Konto pro Rechner.</strong>
+                        F1&nbsp;25 erkennt Spieler über die Steam-Kennung. Meldet sich auf zwei Rechnern dasselbe
+                        Konto an, hält das Spiel den Gast für den Host — der Beitritt scheitert.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-f1-border/70 bg-f1-dark py-6">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-f1-green"></span>
+                <span>Erdi's Racing Community · nur für Ligamitglieder</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <a href="https://ko-fi.com/leutnant_kampfwiener" target="_blank" rel="noopener" class="hover:text-zinc-200">Unterstützen</a>
+                <a href="ERC-Launcher-0.3.30-setup.exe" class="hover:text-zinc-200">Vorige Fassung (0.3.30, ohne Lobbys)</a>
+                <span class="text-zinc-600">BUILD #102-REL</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE MODAL: PIT-LANE LOADING SCREEN PREVIEW (4 Instruments + Central Progress) -->
+    <div id="previewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+        <div class="relative w-full max-w-5xl rounded-2xl bg-[#0D0F12] border border-zinc-700 shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden">
+
+            <div class="flex items-center justify-between px-4 py-3 bg-f1-panel border-b border-f1-border">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-f1-red"></span>
+                    <span class="font-mono text-xs text-zinc-300 font-semibold tracking-wider uppercase">
+                        Ladebildschirm &middot; Boxengasse und vier Instrumente
+                    </span>
+                </div>
+                <button onclick="closePreviewModal()" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer" aria-label="Schliessen">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="relative aspect-video overflow-hidden bg-[#0B0C0E]">
+                <img src="ladebildschirm.png" alt="Boxengasse mit dem ERC-Auto" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80"></div>
+
+                <div class="absolute inset-0 p-[3.2%] flex flex-col">
+                    <div class="text-center">
+                        <div class="font-display font-black text-[clamp(13px,1.75vw,24px)] leading-none tracking-[0.34em] pl-[0.34em] text-white">ERC</div>
+                        <div class="mt-[0.6%] flex items-center justify-center gap-[1vw]">
+                            <span class="h-px w-[3vw] bg-f1-red/60"></span>
+                            <span class="font-mono text-[clamp(7px,0.78vw,11px)] tracking-[0.55em] pl-[0.55em] text-zinc-300">LAUNCHER</span>
+                            <span class="h-px w-[3vw] bg-f1-red/60"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-[1.6%] flex items-start justify-between gap-[2%]">
+                        <div class="w-[17%] rounded-[0.35vw] bg-[#101216]/85 px-[0.9%] py-[0.5%]">
+                            <div class="font-mono text-[clamp(6px,0.6vw,9px)] tracking-[0.16em] text-zinc-400">SYSTEM CHECK</div>
+                            <div class="mt-[0.5%] font-mono text-[clamp(7px,0.72vw,10px)] tracking-[0.1em] text-[#00E676]">PASS</div>
+                            <div class="mt-[0.5%] flex gap-[0.3%]">
+                                <span class="h-[0.8%] w-[1.4%] min-h-[6px] min-w-[6px] rounded-[1px] bg-[#00E676]"></span>
+                                <span class="h-[0.8%] w-[1.4%] min-h-[6px] min-w-[6px] rounded-[1px] bg-[#00E676]"></span>
+                                <span class="h-[0.8%] w-[1.4%] min-h-[6px] min-w-[6px] rounded-[1px] bg-[#00E676]"></span>
+                                <span class="h-[0.8%] w-[1.4%] min-h-[6px] min-w-[6px] rounded-[1px] bg-[#00E676]"></span>
+                                <span class="h-[0.8%] w-[1.4%] min-h-[6px] min-w-[6px] rounded-[1px] bg-[#00E676]"></span>
+                            </div>
+                        </div>
+
+                        <div class="w-[17%] rounded-[0.35vw] bg-[#101216]/85 px-[0.9%] py-[0.5%]">
+                            <div class="font-mono text-[clamp(6px,0.6vw,9px)] tracking-[0.16em] text-zinc-400">STRECKE</div>
+                            <div class="mt-[0.5%] font-mono text-[clamp(7px,0.7vw,10px)] text-zinc-200">Grand-Prix-Sitzung</div>
+                            <svg class="mt-[0.4%] w-full h-[2.2vw] text-[#ff2b1f]/75" viewBox="0 0 200 60" fill="none" stroke="currentColor" stroke-width="4">
+                                <path d="M20,40 L62,22 C78,14 96,20 108,32 L124,46 C138,58 160,56 176,44 L186,36" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="relative w-[16%] min-w-[120px] max-w-[210px] aspect-square">
+                            <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="52" fill="none" stroke="#22262D" stroke-width="6"></circle>
+                                <circle cx="60" cy="60" r="52" fill="none" stroke="#00E676" stroke-width="6" stroke-linecap="round"
+                                        stroke-dasharray="326.7" stroke-dashoffset="0" transform="rotate(135 60 60)"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="font-display font-black text-[clamp(15px,2.2vw,32px)] leading-none text-white">100%</span>
+                                <span class="mt-[0.4%] font-mono text-[clamp(7px,0.7vw,10px)] tracking-[0.22em] text-[#00E676]">BEREIT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-end justify-between gap-[2%]">
+                        <div class="w-[17%] rounded-[0.35vw] bg-[#101216]/85 px-[0.9%] py-[0.5%]">
+                            <div class="font-mono text-[clamp(6px,0.6vw,9px)] tracking-[0.16em] text-zinc-400">ANTRIEB</div>
+                            <div class="mt-[0.6%] flex items-end gap-[0.25%] h-[2vw]">
+                                <span class="w-[3.5%] bg-f1-red h-[40%]"></span>
+                                <span class="w-[3.5%] bg-f1-red h-[70%]"></span>
+                                <span class="w-[3.5%] bg-f1-red h-[55%]"></span>
+                                <span class="w-[3.5%] bg-f1-red h-[95%]"></span>
+                                <span class="w-[3.5%] bg-f1-red h-[60%]"></span>
+                                <span class="w-[3.5%] bg-zinc-700 h-[35%]"></span>
+                                <span class="w-[3.5%] bg-zinc-700 h-[50%]"></span>
+                            </div>
+                        </div>
+
+                        <div class="w-[17%] rounded-[0.35vw] bg-[#101216]/85 px-[0.9%] py-[0.5%]">
+                            <div class="font-mono text-[clamp(6px,0.6vw,9px)] tracking-[0.16em] text-zinc-400">FUNK</div>
+                            <div class="mt-[0.3%] font-mono text-[clamp(7px,0.7vw,10px)] tracking-[0.1em] text-[#00E676]">ONLINE</div>
+                            <div class="mt-[0.4%] flex items-end gap-[0.3%] h-[1.6%] min-h-[10px]">
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[35%]"></span>
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[70%]"></span>
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[45%]"></span>
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[90%]"></span>
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[60%]"></span>
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[80%]"></span>
+                                <span class="w-[1.2%] bg-[#00E676]/70 h-[40%]"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-[1.2%] text-center font-mono text-[clamp(6px,0.66vw,9px)] tracking-[0.08em] text-zinc-400">Starting F1 25</div>
+                </div>
+            </div>
+
+            <div class="px-4 py-3 border-t border-f1-border bg-f1-panel font-mono text-[11px] text-zinc-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <span>Hintergrund und Aufbau aus dem Launcher &middot; Werte zur Veranschaulichung</span>
+                <span class="text-zinc-600">BUILD #102-REL</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-f1-panel border border-f1-border border-l-4 border-l-f1-green shadow-2xl">
+            <span class="w-2.5 h-2.5 rounded-full bg-f1-green shrink-0"></span>
+            <div>
+                <p id="toastTitle" class="font-mono text-xs font-bold text-white uppercase tracking-wider">Status</p>
+                <p id="toastMessage" class="text-xs text-zinc-300 mt-0.5">Nachricht</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // Full SHA-256 checksum string for clipboard copy
+        const FULL_SHA256 = "20c93c6da969a0e0bd920a111e4d908bd5ab1b7a83aa368964c22564cf2d2ba2";
+
+        // Toast Helper Function
+        let toastTimeout;
+        function showToast(title, message, isRed = false) {
+            const toast = document.getElementById('toast');
+            const toastCard = toast.firstElementChild;
+            const toastDot = toastCard.querySelector('span');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+
+            if (isRed) {
+                toastCard.classList.remove('border-l-f1-green');
+                toastCard.classList.add('border-l-f1-red');
+                toastDot.classList.remove('bg-f1-green');
+                toastDot.classList.add('bg-f1-red');
+            } else {
+                toastCard.classList.remove('border-l-f1-red');
+                toastCard.classList.add('border-l-f1-green');
+                toastDot.classList.remove('bg-f1-red');
+                toastDot.classList.add('bg-f1-green');
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3500);
+        }
+
+        // Copy SHA-256 Checksum using fallback-safe execCommand
+        function copySha256() {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = FULL_SHA256;
+            tempInput.style.position = 'fixed';
+            tempInput.style.opacity = '0';
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.2.1-setup.exe in Zwischenablage.');
+            } catch (err) {
+                showToast('Hinweis', 'SHA-256: ' + FULL_SHA256.slice(0, 16) + '...', true);
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        // Echter Download: der Browser laedt die Datei, kein Fortschritt wird erfunden
+        function startDownload() {
+            // Der Klick selbst laedt (download-Attribut am Link); hier nur die Meldung.
+            showToast('Download gestartet', 'ERC-Launcher-1.2.1-setup.exe (43,4 MB)');
+        }
+
+        // Interactive F1 Start Gantry Sequence
+        let isSequencing = false;
+        function triggerStartSequence() {
+            if (isSequencing) return;
+            isSequencing = true;
+
+            const statusEl = document.getElementById('gantryStatus');
+            const lights = [1, 2, 3, 4, 5].map(i => document.getElementById('light-' + i));
+            const greenLight = document.getElementById('light-6');
+
+            // Reset all lights off
+            lights.forEach(l => {
+                l.classList.remove('light-red-active');
+                l.classList.add('light-red-off');
+            });
+            greenLight.classList.remove('light-green-active');
+            greenLight.classList.add('light-green-off');
+            statusEl.textContent = 'STARTSEQUENZ LÄUFT...';
+
+            // Light up 1 to 5 sequentially
+            lights.forEach((light, idx) => {
+                setTimeout(() => {
+                    light.classList.remove('light-red-off');
+                    light.classList.add('light-red-active');
+                }, (idx + 1) * 350);
+            });
+
+            // Lights out & Green Go!
+            setTimeout(() => {
+                lights.forEach(l => {
+                    l.classList.remove('light-red-active');
+                    l.classList.add('light-red-off');
+                });
+                greenLight.classList.remove('light-green-off');
+                greenLight.classList.add('light-green-active');
+                statusEl.textContent = 'LIGHTS OUT · LOBBY VERBINDUNG BEREIT';
+            }, 2300);
+
+            // Restore default idle gantry state
+            setTimeout(() => {
+                lights.forEach(l => {
+                    l.classList.remove('light-red-off');
+                    l.classList.add('light-red-active');
+                });
+                statusEl.textContent = 'Telemetry Sync Bereit · Klick für Ampeltest';
+                isSequencing = false;
+            }, 4800);
+        }
+
+        // Modal Controls for Pit-Lane Loading Screen Preview
+        function openPreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Close modal on Escape key or backdrop click
+        document.getElementById('previewModal').addEventListener('click', function(e) {
+            if (e.target === this) closePreviewModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePreviewModal();
+        });
+
+    </script>
+
+</body></html>

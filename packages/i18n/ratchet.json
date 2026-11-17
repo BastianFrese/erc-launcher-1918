@@ -1,0 +1,17 @@
+{
+  "abgleich.rs": 10,
+  "admin_needed.rs": 1,
+  "aktualisierung.rs": 7,
+  "app_log.rs": 8,
+  "browser/jobs.rs": 1,
+  "browser/sync.rs": 2,
+  "game.rs": 3,
+  "game_edited.rs": 10,
+  "lobby.rs": 4,
+  "multiplayer.rs": 6,
+  "onboarding/welcome.rs": 2,
+  "play_bar.rs": 1,
+  "play_checks.rs": 1,
+  "setup.rs": 6,
+  "shaders/preview/worker.rs": 2
+}
