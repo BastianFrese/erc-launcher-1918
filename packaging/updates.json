@@ -1,6 +1,6 @@
 {
-  "version": "1.2.1",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.2.1-setup.exe",
-  "sha256": "20c93c6da969a0e0bd920a111e4d908bd5ab1b7a83aa368964c22564cf2d2ba2",
-  "notiz": "F1 25 Build 1.0.145 laeuft auch ueber die EA App, der Launcher prueft das laufende Spiel erneut, Telemetrie fuer die Saison 2026."
+  "version": "1.2.2",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.2.2-setup.exe",
+  "sha256": "25a9e6b91dd5dc69860d6e46603775b3604749f7e8b33de54fe8a311f410c359",
+  "notiz": "Spielerzaehler auf der Startseite und im Renn-HUD, Discord-Banner weg, kuerzerer Aktualisieren-Knopf."
 }
