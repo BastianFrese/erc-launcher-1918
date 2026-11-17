@@ -336,6 +336,12 @@ using Ai_Gap_ComputeVehicleSpanUpper_t = float(void *ai_car_record, int vehicle)
 inline constexpr fn<"Ai_Gap_ComputeVehicleSpanUpper", Ai_Gap_ComputeVehicleSpanUpper_t> Ai_Gap_ComputeVehicleSpanUpper{}; // L2 experimental
 using Ai_Get_GeneralSettings_t = void **();
 inline constexpr fn<"Ai_Get_GeneralSettings", Ai_Get_GeneralSettings_t> Ai_Get_GeneralSettings{}; // L2 experimental
+using Ai_Get_SegmentTurnRadius_t = float(void *ai, float dist, uint32_t node_idx, float lateral_offset, int route_idx);
+inline constexpr fn<"Ai_Get_SegmentTurnRadius", Ai_Get_SegmentTurnRadius_t> Ai_Get_SegmentTurnRadius{}; // L2 experimental
+using Ai_Get_TurnRadiusAtDistance_t = float(void *ai, float dist, float lateral_offset, int route_idx);
+inline constexpr fn<"Ai_Get_TurnRadiusAtDistance", Ai_Get_TurnRadiusAtDistance_t> Ai_Get_TurnRadiusAtDistance{}; // L2 experimental
+using Ai_Handle_PitStateChanged_Thunk_t = uint64_t(void *ai, void *msg);
+inline constexpr fn<"Ai_Handle_PitStateChanged_Thunk", Ai_Handle_PitStateChanged_Thunk_t> Ai_Handle_PitStateChanged_Thunk{}; // L2 experimental
 using Ai_HashMap_FindIndexU64_t = uint64_t(void *map, const uint64_t *key);
 inline constexpr fn<"Ai_HashMap_FindIndexU64", Ai_HashMap_FindIndexU64_t> Ai_HashMap_FindIndexU64{}; // L2 experimental
 using Ai_Init_TestSpeedLimits_t = void *(void *entry);
@@ -352,6 +358,8 @@ inline constexpr address<"Ai_Job_UpdateCarsParallel"> Ai_Job_UpdateCarsParallel{
 inline constexpr address<"Ai_LineCache_UpdateIfChanged"> Ai_LineCache_UpdateIfChanged{}; // L2 experimental
 using Ai_Lookahead_AdvancePhase_t = void(void *unused, void *ctrl, int step, const float *in4, float *out4);
 inline constexpr fn<"Ai_Lookahead_AdvancePhase", Ai_Lookahead_AdvancePhase_t> Ai_Lookahead_AdvancePhase{}; // L2 experimental
+using Ai_Overtake_EvaluateGap_t = void(void *out, void *a2, void *a3, void *a4, int car);
+inline constexpr fn<"Ai_Overtake_EvaluateGap", Ai_Overtake_EvaluateGap_t> Ai_Overtake_EvaluateGap{}; // L2 experimental
 using Ai_Parse_BlockingConfig_t = void(void **slots, void *db_row);
 inline constexpr fn<"Ai_Parse_BlockingConfig", Ai_Parse_BlockingConfig_t> Ai_Parse_BlockingConfig{}; // L2 experimental
 inline constexpr address<"Ai_Parse_BrakeLineSettings"> Ai_Parse_BrakeLineSettings{}; // L2 experimental
@@ -403,9 +411,17 @@ using Ai_TestGraph_EvalDistanceSpeedC_t = float(void *table, float dist, float s
 inline constexpr fn<"Ai_TestGraph_EvalDistanceSpeedC", Ai_TestGraph_EvalDistanceSpeedC_t> Ai_TestGraph_EvalDistanceSpeedC{}; // L2 experimental
 using Ai_TestGraph_EvalTimeSpeed_t = float(void *table, float time, float speed, float *cursor);
 inline constexpr fn<"Ai_TestGraph_EvalTimeSpeed", Ai_TestGraph_EvalTimeSpeed_t> Ai_TestGraph_EvalTimeSpeed{}; // L2 experimental
+using Ai_TrackLine_FindCornerEndAndStart_t = int(void *result, float car_dist, float query_dist, void *spline_data, int route_idx);
+inline constexpr fn<"Ai_TrackLine_FindCornerEndAndStart", Ai_TrackLine_FindCornerEndAndStart_t> Ai_TrackLine_FindCornerEndAndStart{}; // L2 experimental
+using Ai_TrackLine_FindNextSideMarker_t = void(void *result, float car_dist, float query_dist, void *spline_data, int route_idx);
+inline constexpr fn<"Ai_TrackLine_FindNextSideMarker", Ai_TrackLine_FindNextSideMarker_t> Ai_TrackLine_FindNextSideMarker{}; // L2 experimental
+using Ai_TrackLine_FindSideMarkerInCorner_t = void(void *result, float car_dist, float query_dist, void *spline_data, int route_idx);
+inline constexpr fn<"Ai_TrackLine_FindSideMarkerInCorner", Ai_TrackLine_FindSideMarkerInCorner_t> Ai_TrackLine_FindSideMarkerInCorner{}; // L2 experimental
 inline constexpr address<"Ai_Update_CompoundPaceCurves"> Ai_Update_CompoundPaceCurves{}; // L2 experimental
 using Ai_Update_DriverTick_t = void(void *ai_driver, float dt, void *ai_ctx);
 inline constexpr fn<"Ai_Update_DriverTick", Ai_Update_DriverTick_t> Ai_Update_DriverTick{}; // L2 experimental
+using Ai_Update_VehicleDriver_t = void(uint8_t *ctl, void *ctx);
+inline constexpr fn<"Ai_Update_VehicleDriver", Ai_Update_VehicleDriver_t> Ai_Update_VehicleDriver{}; // L2 experimental
 using Ai_Write_AdaptiveAiSessionRecord_t = void(void *rec, void *json_writer);
 inline constexpr fn<"Ai_Write_AdaptiveAiSessionRecord", Ai_Write_AdaptiveAiSessionRecord_t> Ai_Write_AdaptiveAiSessionRecord{}; // L2 experimental
 using Ai_ZoneMap_Find_t = void *(void *zone, uint64_t vehicle_key, uint8_t flags);

@@ -2876,6 +2876,7 @@ mod tests {
             reads: Vec::new(),
             paths: Vec::new(),
             row_ids: ids.iter().map(|(k, v)| ((*k).to_owned(), *v)).collect(),
+            lines: Vec::new(),
         });
         Fingerprint::new(f.game_build.clone(), f.addons, BTreeMap::new(), None)
     }

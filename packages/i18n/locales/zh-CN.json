@@ -1,24 +1,17 @@
 {
-  "{count} addon": [
-    "{count} 个插件"
-  ],
-  "{count} changed setting": [
-    "{count} 项已更改的设置"
-  ],
-  "{count} minute ago": [
-    "{count} 分钟前"
-  ],
-  "{count} hour ago": [
-    "{count} 小时前"
-  ],
-  "{count} day ago": [
-    "{count} 天前"
-  ],
+  "Also update the addons that are off in your profile when Play updates addons. Turned off, only the addons that are on are updated.": "当“开始游戏”更新插件时，也更新配置中已关闭的插件。关闭后，只更新已开启的插件。",
+  "Update turned-off addons": "更新已关闭的插件",
+  "{count} addon": ["{count} 个插件"],
+  "{count} changed setting": ["{count} 项已更改的设置"],
+  "{count} minute ago": ["{count} 分钟前"],
+  "{count} hour ago": ["{count} 小时前"],
+  "{count} day ago": ["{count} 天前"],
   "just now": "刚刚",
   "{count} s": "{count} 秒",
   "{count} min": "{count} 分钟",
   "{h} h {m} min": "{h} 小时 {m} 分钟",
   "_language": "简体中文",
+  "Advertisement": "广告",
   " and {count} more": " 等另外 {count} 项",
   ", {size} on {drive}": "，{drive} 上有 {size}",
   "ADDONS": "插件",
@@ -944,6 +937,8 @@
   "Stop game": "停止游戏",
   "Support": "支持",
   "Supporters": "支持者",
+  "Supporting a free and open-source launcher": "支持一个免费、开源的启动器",
+  "No ads in the launcher": "启动器内无广告",
   "Switch away from {vanilla} to use addons": "切换到 {vanilla} 以外的配置才能使用插件",
   "Synced stars": "已同步星标",
   "Syncing stars…": "正在同步星标…",
@@ -1190,6 +1185,10 @@
   "{archive}.erp archive": "{archive}.erp 归档",
   "{body} This can't be undone.": "{body} 此操作无法撤销。",
   "{careers} (not in that version)": "{careers}（不在该版本中）",
+  ", newest: {name}": "，最新：{name}",
+  ", {missing} marked missing": "，{missing} 个标记为缺失",
+  "This version lists {careers} as missing, so restoring it does not bring them back.": "该版本将 {careers} 列为缺失，因此恢复它不会找回这些生涯。",
+  "{careers} (that version lists them as missing)": "{careers}（该版本将其列为缺失）",
   "{changes} in {name}": "{name} 中的 {changes}",
   "{changes} in {name} · {k} not saved yet": "{name} 中的 {changes} · {k} 尚未保存",
   "{changes} {verb} an addon, turned on in {profile}.": "{changes}{verb}一个插件，并已在 {profile} 中开启。",
@@ -1374,5 +1373,9 @@
   "{v} is available. Update addons from the play bar.": "{v} 已推出。请在游戏栏中更新插件。",
   "{v} is not a number": "{v} 不是数字",
   "{when}: {downloads}": "{when}：{downloads}",
-  "{wins} wins - {podiums} podiums": "{wins} 胜 - {podiums} 次登上领奖台"
+  "{wins} wins - {podiums} podiums": "{wins} 胜 - {podiums} 次登上领奖台",
+  "Too many tracks": "赛道过多",
+  "Left out: the game holds {room} tracks": "已排除：游戏最多容纳 {room} 条赛道",
+  "{shown} and {more} more": "{shown} 等另外 {more} 条",
+  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": ["游戏最多容纳 {room} 条赛道，因此 {count} 条赛道被排除在此次构建之外：{list}。关闭一些赛道插件即可游玩。"]
 }

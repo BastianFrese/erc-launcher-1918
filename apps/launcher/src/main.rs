@@ -3,6 +3,7 @@
 mod addons;
 mod admin_needed;
 mod ampel;
+mod ads;
 mod app_log;
 mod avatar;
 mod ban;

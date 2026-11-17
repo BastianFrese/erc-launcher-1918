@@ -1,6 +1,7 @@
 //! Multiplayer sessions between launchers.
 
 pub mod bridge;
+pub mod client;
 pub mod diag;
 pub mod direct;
 pub mod fingerprint;
@@ -15,4 +16,5 @@ pub mod stun;
 mod testserver;
 pub mod transport;
 pub mod turn;
+pub mod types;
 pub mod ws;

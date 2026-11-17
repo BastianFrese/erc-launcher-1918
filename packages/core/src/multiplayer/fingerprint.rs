@@ -92,6 +92,9 @@ pub struct Detail {
     /// The stat id the build gave each row it added, by `<table>.<row>/<label>`.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub row_ids: BTreeMap<String, i64>,
+    /// What the addon's build step said it made, as the build log shows it. The digest leaves these out.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lines: Vec<String>,
 }
 
 /// What the installed copy of an addon is, as a SHA-256 in hex.
@@ -323,6 +326,9 @@ pub struct Output {
     /// The stat id the build gave each row the addon added, by `<table>.<row>/<label>`.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub row_ids: BTreeMap<String, i64>,
+    /// What the addon's build step said it made, as [`Detail::lines`] carries them.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lines: Vec<String>,
 }
 
 /// A file or folder an [`Output`] reads, as the operation names it.
@@ -341,6 +347,7 @@ impl Output {
             parts: self.parts.iter().map(|(k, v)| (k.clone(), short(v))).collect(),
             read_count: self.reads.len(),
             row_ids: self.row_ids.clone(),
+            lines: self.lines.clone(),
             ..Detail::default()
         };
         h.update(&self.made);
@@ -393,7 +400,12 @@ pub struct OutputBuilder {
     made: Sha256,
     parts: BTreeMap<String, Sha256>,
     reads: BTreeMap<(String, String), OpSource>,
+    lines: Vec<String>,
 }
+
+/// How many build step lines, and how many characters of each, an [`Output`] keeps.
+const LINES: usize = 6;
+const LINE_CHARS: usize = 160;
 
 impl OutputBuilder {
     pub fn made(&mut self, what: &str, value: &impl Serialize) {
@@ -410,6 +422,12 @@ impl OutputBuilder {
         self.reads.insert((addon.to_owned(), key), source.clone());
     }
 
+    pub fn line(&mut self, text: &str) {
+        if self.lines.len() < LINES {
+            self.lines.push(text.chars().take(LINE_CHARS).collect());
+        }
+    }
+
     pub fn finish(self) -> Output {
         Output {
             made: hex(&self.made.finalize()),
@@ -424,6 +442,7 @@ impl OutputBuilder {
                 .map(|(label, h)| (label, hex(&h.finalize())))
                 .collect(),
             row_ids: BTreeMap::new(),
+            lines: self.lines,
         }
     }
 }
@@ -525,6 +544,841 @@ fn settled(v: Value, counters: bool) -> Option<Value> {
         v => v,
     };
     Some(sorted(v))
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    fn store(name: &str) -> Store {
+        let root = std::env::temp_dir().join(format!("swofty-fingerprint-{name}-{}", std::process::id()));
+        std::fs::remove_dir_all(&root).ok();
+        Store::new(root)
+    }
+
+    fn put(store: &Store, manifest: Value, files: &[(&str, &str)]) {
+        let dir = store.addons_dir().join(manifest["id"].as_str().unwrap());
+        write(&dir, manifest, files);
+    }
+
+    fn write(dir: &Path, manifest: Value, files: &[(&str, &str)]) {
+        std::fs::create_dir_all(dir).unwrap();
+        let mut m = json!({
+            "schema_version": 1,
+            "name": manifest["id"],
+            "version": "1.0.0",
+            "author": "a",
+            "compat": { "game": "f1_25" },
+        });
+        m.as_object_mut()
+            .unwrap()
+            .extend(manifest.as_object().unwrap().clone());
+        std::fs::write(dir.join("swofty.json"), m.to_string()).unwrap();
+        for (rel, text) in files {
+            let path = dir.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, text).unwrap();
+        }
+    }
+
+    fn data(id: &str) -> Value {
+        json!({ "id": id, "kind": ["database"], "operations": { "database": ["db/ops.json"] } })
+    }
+
+    fn code(id: &str) -> Value {
+        json!({ "id": id, "kind": ["native"], "operations": { "native": [{ "dll": "native/x.dll" }] } })
+    }
+
+    fn profile(ids: &[&str]) -> Profile {
+        let mut p = Profile::new("mp");
+        for id in ids {
+            p.set_enabled(id, true).unwrap();
+        }
+        p
+    }
+
+    fn game() -> Identity {
+        Identity {
+            build_id: "25251167".into(),
+            exe_sha256: "a".repeat(64),
+        }
+    }
+
+    fn ids(f: &Fingerprint) -> Vec<&str> {
+        f.addons.iter().map(|a| a.id.as_str()).collect()
+    }
+
+    fn print(id: &str, version: &str, source: Source, order: Option<usize>) -> AddonPrint {
+        AddonPrint {
+            id: id.into(),
+            name: format!("{id} name"),
+            version: Version::parse(version).unwrap(),
+            source,
+            registry: None,
+            inputs: None,
+            order,
+            detail: None,
+            stat_ids: BTreeMap::new(),
+        }
+    }
+
+    fn content(sha: &str) -> Source {
+        Source::Content(sha.repeat(64))
+    }
+
+    fn installed_from(mut a: AddonPrint, sha: &str) -> AddonPrint {
+        a.registry = Some(sha.repeat(64));
+        a
+    }
+
+    fn options(entries: &[(&str, &str, Value)]) -> BTreeMap<String, BTreeMap<String, Value>> {
+        let mut out: BTreeMap<String, BTreeMap<String, Value>> = BTreeMap::new();
+        for (addon, option, v) in entries {
+            out.entry((*addon).into())
+                .or_default()
+                .insert((*option).into(), v.clone());
+        }
+        out
+    }
+
+    fn host() -> Fingerprint {
+        Fingerprint::new(
+            game(),
+            vec![
+                installed_from(print("t.a", "1.0.0", content("a"), Some(0)), "1"),
+                installed_from(print("t.b", "2.0.0", content("b"), Some(1)), "2"),
+                print("t.code", "1.0.0", content("c"), None),
+            ],
+            options(&[("t.a", "laps", json!(5)), ("t.a", "mode", json!("full"))]),
+            None,
+        )
+    }
+
+    #[test]
+    fn digest_is_stable_and_ignores_names_and_listing_order() {
+        let f = host();
+        assert_eq!(
+            f.digest,
+            "9547802c5a3ed7f1f2ea3d12b22a21b6f96dbf61fe0f29b65f61fb860a96bbd9"
+        );
+        let mut shuffled = f.addons.clone();
+        shuffled.reverse();
+        shuffled[0].name = "Another name".into();
+        let again = Fingerprint::new(game(), shuffled, f.options.clone(), None);
+        assert_eq!(again.digest, f.digest);
+        assert_eq!(ids(&again), ["t.a", "t.b", "t.code"]);
+
+        let text = serde_json::to_string(&f).unwrap();
+        let read: Fingerprint = serde_json::from_str(&text).unwrap();
+        assert_eq!(read, f);
+        assert_eq!(read.canonical_digest(), f.digest);
+
+        let changed = |edit: &dyn Fn(&mut Fingerprint)| {
+            let mut c = host();
+            edit(&mut c);
+            c.canonical_digest()
+        };
+        for d in [
+            changed(&|c| c.addons[0].version = Version::new(1, 0, 1)),
+            changed(&|c| c.addons[1].source = content("d")),
+            changed(&|c| c.addons[1].inputs = Some("d".repeat(64))),
+            changed(&|c| c.addons[0].order = Some(2)),
+            changed(&|c| {
+                c.options.get_mut("t.a").unwrap().insert("laps".into(), json!(6));
+            }),
+            changed(&|c| c.game_build.exe_sha256 = "b".repeat(64)),
+            changed(&|c| c.dlc = Some(true)),
+        ] {
+            assert_ne!(d, f.digest);
+        }
+        assert_eq!(changed(&|c| c.addons[0].registry = None), f.digest);
+    }
+
+    #[test]
+    fn fingerprints_a_profile_the_same_way_twice() {
+        let store = store("stable");
+        put(&store, data("t.data1"), &[("db/ops.json", "1")]);
+        put(&store, data("t.data2"), &[("db/ops.json", "2")]);
+        put(&store, code("t.code1"), &[("native/x.dll", "c1")]);
+        put(&store, code("t.code2"), &[("native/x.dll", "c2")]);
+        let p = profile(&["t.data1", "t.code1", "t.data2", "t.code2"]);
+        let first = fingerprint(&store, &p, &game()).unwrap();
+        assert_eq!(
+            ids(&first),
+            ["swofty.core", "t.code1", "t.code2", "t.data1", "t.data2"]
+        );
+        let order: Vec<(&str, Option<usize>)> =
+            first.addons.iter().map(|a| (a.id.as_str(), a.order)).collect();
+        assert_eq!(
+            order,
+            [
+                ("swofty.core", Some(0)),
+                ("t.code1", None),
+                ("t.code2", None),
+                ("t.data1", Some(1)),
+                ("t.data2", Some(2)),
+            ]
+        );
+        assert!(store.root.join(HASHES_FILE).is_file());
+        assert_eq!(fingerprint(&store, &p, &game()).unwrap(), first);
+
+        let code_swapped = profile(&["t.data1", "t.code2", "t.data2", "t.code1"]);
+        assert_eq!(
+            fingerprint(&store, &code_swapped, &game()).unwrap().digest,
+            first.digest
+        );
+        let data_swapped = profile(&["t.data2", "t.code1", "t.data1", "t.code2"]);
+        assert_ne!(
+            fingerprint(&store, &data_swapped, &game()).unwrap().digest,
+            first.digest
+        );
+
+        std::fs::write(store.addons_dir().join("t.code1/native/x.dll"), "c1 changed").unwrap();
+        let edited = fingerprint(&store, &p, &game()).unwrap();
+        assert_ne!(edited.addons[1].source, first.addons[1].source);
+        assert_eq!(edited.addons[2].source, first.addons[2].source);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn leaves_out_cosmetic_addons_and_options() {
+        let store = store("cosmetic");
+        let look = json!({
+            "id": "t.look", "experimental_features": ["shaders"], "shader": { "lut": "look.cube" },
+        });
+        let passes = json!({
+            "id": "t.passes", "experimental_features": ["postfx"], "postfx": [{ "shader": "fx/a.hlsl" }],
+        });
+        let mut helmets = data("t.helmets");
+        helmets["category"] = json!("helmets");
+        let mut shaders = data("t.shaders");
+        shaders["category"] = json!("shaders");
+        let mut kept_helmets = data("t.kept-helmets");
+        kept_helmets["category"] = json!("helmets");
+        kept_helmets["multiplayer"] = json!("gameplay");
+        let mut quiet = data("t.quiet");
+        quiet["multiplayer"] = json!("cosmetic");
+        let mut cars = data("t.cars");
+        cars["category"] = json!("cars");
+        cars["options"] = json!([
+            { "id": "laps", "type": "slider", "min": 1, "max": 10, "step": 1, "default": 5, "binds": "db" },
+            { "id": "hud", "type": "toggle", "default": true, "binds": "native", "multiplayer": "cosmetic" },
+        ]);
+        for m in [look, passes, helmets, shaders, kept_helmets, quiet, cars] {
+            put(&store, m, &[]);
+        }
+        let all = [
+            "t.look",
+            "t.passes",
+            "t.helmets",
+            "t.shaders",
+            "t.kept-helmets",
+            "t.quiet",
+            "t.cars",
+        ];
+        let mut p = profile(&all);
+        let installed = store.addons().unwrap();
+        p.set_option(&installed["t.cars"], "laps", json!(7)).unwrap();
+        let f = fingerprint(&store, &p, &game()).unwrap();
+        assert_eq!(ids(&f), ["swofty.core", "t.cars", "t.kept-helmets"]);
+        assert_eq!(f.options, options(&[("t.cars", "laps", json!(7))]));
+
+        let without = fingerprint(&store, &profile(&["t.kept-helmets", "t.cars"]), &game()).unwrap();
+        let mut seven = profile(&["t.kept-helmets", "t.cars"]);
+        seven.set_option(&installed["t.cars"], "laps", json!(7)).unwrap();
+        assert_ne!(without.digest, f.digest);
+        assert_eq!(fingerprint(&store, &seven, &game()).unwrap().digest, f.digest);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn manifest_multiplayer_defaults() {
+        let m = |extra: Value| {
+            let mut doc = json!({
+                "schema_version": 1, "id": "t.m", "name": "m", "version": "1.0.0", "author": "a",
+                "compat": { "game": "f1_25" },
+            });
+            doc.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            AddonManifest::parse(&doc.to_string()).unwrap().multiplayer()
+        };
+        use Multiplayer::{Cosmetic, Gameplay};
+        assert_eq!(m(json!({})), Gameplay);
+        assert_eq!(m(json!({ "category": "helmets" })), Cosmetic);
+        assert_eq!(m(json!({ "category": "shaders" })), Cosmetic);
+        assert_eq!(m(json!({ "category": "performance" })), Cosmetic);
+        let declared = r#"{
+            "schema_version": 1,
+            "id": "xanpavle.re-optimization",
+            "name": "F1 25 RE-Optimization",
+            "author": "xanpavle",
+            "version": "0.2.5",
+            "kind": ["native"],
+            "compat": { "game": "f1_25", "game_builds": ["=25251167"], "seasons": [] },
+            "multiplayer": "cosmetic"
+        }"#;
+        assert_eq!(AddonManifest::parse(declared).unwrap().multiplayer(), Cosmetic);
+        assert_eq!(m(json!({ "category": "cars" })), Gameplay);
+        assert_eq!(
+            m(json!({ "category": "helmets", "multiplayer": "gameplay" })),
+            Gameplay
+        );
+        assert_eq!(m(json!({ "multiplayer": "cosmetic" })), Cosmetic);
+        let look = json!({ "experimental_features": ["shaders"], "shader": { "lut": "l.cube" } });
+        assert_eq!(m(look.clone()), Cosmetic);
+        let mut with_data = look;
+        with_data["operations"] = json!({ "database": ["db/x.json"] });
+        assert_eq!(m(with_data), Gameplay);
+        assert!(AddonManifest::parse(r#"{"schema_version":1,"id":"t.m","name":"m","version":"1.0.0","author":"a","compat":{"game":"f1_25"},"multiplayer":"sometimes"}"#).is_err());
+    }
+
+    #[test]
+    fn a_registry_install_is_recorded_beside_the_content_hash() {
+        let store = store("registry");
+        put(&store, data("t.a"), &[("db/ops.json", "1")]);
+        let p = profile(&["t.a"]);
+        let print = |store: &Store| fingerprint(store, &p, &game()).unwrap().addons[1].clone();
+        let before = print(&store);
+        assert!(matches!(before.source, Source::Content(_)));
+        assert_eq!(before.registry, None);
+
+        let mut v: catalog::Version = serde_json::from_value(json!({
+            "version": "1.0.0", "size": 1, "sha256": "AB".repeat(32), "url": "u",
+        }))
+        .unwrap();
+        catalog::record_install(&store, "t.a", &v).unwrap();
+        let recorded = print(&store);
+        assert_eq!(recorded.registry, Some("ab".repeat(32)));
+        assert_eq!(recorded.source, before.source);
+
+        v.version = Version::new(0, 9, 0);
+        catalog::record_install(&store, "t.a", &v).unwrap();
+        assert_eq!(print(&store).registry, None);
+
+        v.version = Version::new(1, 0, 0);
+        catalog::record_install(&store, "t.a", &v).unwrap();
+        let copy = store.root.join("copy");
+        write(&copy, data("t.a"), &[("db/ops.json", "1")]);
+        store.install_addon(&copy).unwrap();
+        assert!(!store.registry_install_path("t.a").exists());
+        assert_eq!(print(&store), before);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn the_same_files_match_however_they_were_installed() {
+        let (dropped, downloaded) = (store("dropped"), store("downloaded"));
+        for s in [&dropped, &downloaded] {
+            put(s, data("t.a"), &[("db/ops.json", "1")]);
+        }
+        let v: catalog::Version = serde_json::from_value(json!({
+            "version": "1.0.0", "size": 1, "sha256": "ab".repeat(32), "url": "u",
+        }))
+        .unwrap();
+        catalog::record_install(&downloaded, "t.a", &v).unwrap();
+        let p = profile(&["t.a"]);
+        let (local, host) = (
+            fingerprint(&dropped, &p, &game()).unwrap(),
+            fingerprint(&downloaded, &p, &game()).unwrap(),
+        );
+        assert_eq!(local.addons[1].registry, None);
+        assert_eq!(host.addons[1].registry, Some("ab".repeat(32)));
+        assert_eq!(local.addons[1].source, host.addons[1].source);
+        assert_eq!(local.digest, host.digest);
+        for s in [dropped, downloaded] {
+            std::fs::remove_dir_all(&s.root).ok();
+        }
+    }
+
+    #[test]
+    fn a_build_hook_prints_its_addon_data_and_profile_state() {
+        let store = store("hook");
+        let hook = json!({
+            "id": "t.hook", "kind": ["database"],
+            "launcher": { "program": { "linux": "bin/hook", "windows": "bin/hook.exe" }, "build": true },
+        });
+        put(&store, hook, &[]);
+        put(&store, data("t.plain"), &[("db/ops.json", "1")]);
+        let data_dir = store.addon_data_dir("t.hook");
+        std::fs::create_dir_all(data_dir.join("logs")).unwrap();
+        std::fs::write(data_dir.join("drivers.json"), r#"{"drivers":["a"]}"#).unwrap();
+        let mut p = profile(&["t.hook", "t.plain"]);
+        let inputs = |p: &Profile| {
+            let f = fingerprint(&store, p, &game()).unwrap();
+            assert_eq!(f.addons[2].inputs, None);
+            f.addons[1].inputs.clone().unwrap()
+        };
+        let first = inputs(&p);
+
+        std::fs::write(data_dir.join("logs/build.log"), "noise").unwrap();
+        std::fs::write(data_dir.join("run.log"), "noise").unwrap();
+        std::fs::create_dir_all(data_dir.join(".cache")).unwrap();
+        std::fs::write(data_dir.join(".cache/view.json"), "noise").unwrap();
+        assert_eq!(inputs(&p), first);
+
+        std::fs::write(data_dir.join("drivers.json"), r#"{"drivers":["b"]}"#).unwrap();
+        let other_drivers = inputs(&p);
+        assert_ne!(other_drivers, first);
+
+        std::fs::write(data_dir.join("drivers.json"), r#"{"drivers":["a"]}"#).unwrap();
+        p.set_state("t.hook", json!({ "mods": ["x"] })).unwrap();
+        let other_state = inputs(&p);
+        assert_ne!(other_state, first);
+        p.set_state("t.hook", json!({ "mods": ["y"] })).unwrap();
+        assert_ne!(inputs(&p), other_state);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn import_records_that_differ_only_in_their_hidden_sidecar_print_the_same() {
+        let hook = json!({
+            "id": "t.importer", "kind": ["database"],
+            "launcher": { "program": { "linux": "bin/hook", "windows": "bin/hook.exe" }, "build": true },
+        });
+        let record = r#"{"mods":{"one":{"name":"One","converter":3,"made":{"id":"mod.one","name":"One"}}}}"#;
+        let p = profile(&["t.importer"]);
+        let prints: Vec<Fingerprint> = [(1792000000, "C:/Mods/one.zip"), (1795000000, "/home/b/one.zip")]
+            .into_iter()
+            .enumerate()
+            .map(|(i, (at, file))| {
+                let store = store(&format!("importer{i}"));
+                put(&store, hook.clone(), &[]);
+                let data = store.addon_data_dir("t.importer");
+                std::fs::create_dir_all(&data).unwrap();
+                std::fs::write(data.join("importer.json"), record).unwrap();
+                let local = json!({ "mods": { "one": { "at": at } }, "last": { "at": at, "files": [file], "mods": ["one"] } });
+                std::fs::write(data.join(".importer-local.json"), local.to_string()).unwrap();
+                let f = fingerprint(&store, &p, &game()).unwrap();
+                std::fs::remove_dir_all(&store.root).ok();
+                f
+            })
+            .collect();
+        assert!(prints[0].addons[1].inputs.is_some());
+        assert_eq!(prints[0].digest, prints[1].digest);
+    }
+
+    #[test]
+    fn the_core_print_covers_the_launcher_and_its_database_operations() {
+        let store = store("core");
+        let f = fingerprint(&store, &profile(&[]), &game()).unwrap();
+        let Source::Builtin(sha) = &f.addons[0].source else {
+            panic!("{:?}", f.addons[0].source);
+        };
+        let mut h = Sha256::new();
+        h.update(format!("launcher {}\0", env!("CARGO_PKG_VERSION")));
+        let dll = loader_dir().map(|d| d.join(CORE_DLL)).filter(|p| p.is_file());
+        let dll = dll.map(|p| crate::baseline::sha256_file(&p).unwrap());
+        h.update(format!("dll {}\0", dll.as_deref().unwrap_or("none")));
+        h.update(CORE_MANIFEST);
+        h.update(CORE_DB);
+        assert_eq!(*sha, hex(&h.finalize()));
+        assert_eq!(f.launcher, env!("CARGO_PKG_VERSION"));
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    const PACKAGE: &str = "content.package:t.a/season";
+    const SCENARIO: &str = "content.package.scenario:t.a/season";
+
+    #[test]
+    fn the_core_registry_ids_an_addon_holds_are_read_from_ids_json() {
+        let doc = json!({
+            "ids": {
+                "content.package": {
+                    "t.a/season": { "id": 116, "since": "2026-11-08" },
+                    "t.ab/other": 9,
+                    "game/stock": { "id": 1 }
+                },
+                "content.package.scenario": { "t.a/season": { "id": 26 } }
+            }
+        });
+        assert_eq!(
+            stat_ids_of(&doc, "t.a"),
+            BTreeMap::from([(PACKAGE.to_owned(), 116), (SCENARIO.to_owned(), 26)])
+        );
+        assert!(stat_ids_of(&Value::Null, "t.a").is_empty());
+    }
+
+    #[test]
+    fn driver_manager_inputs_ignore_id_counters_and_empty_files() {
+        use crate::dbedit::driver_manager::ID as DM;
+        let store = store("settled");
+        let hook = json!({
+            "id": DM, "kind": ["database"],
+            "launcher": { "program": { "linux": "bin/hook", "windows": "bin/hook.exe" }, "build": true },
+        });
+        put(&store, hook, &[]);
+        let mut p = profile(&[DM]);
+        let inputs = |p: &Profile| {
+            fingerprint(&store, p, &game()).unwrap().addons[1]
+                .inputs
+                .clone()
+                .unwrap()
+        };
+        let none = inputs(&p);
+        let data_dir = store.addon_data_dir(DM);
+        std::fs::create_dir_all(&data_dir).unwrap();
+        let roster = |next: u32, drivers: Value| {
+            json!({ "schema": 1, "next_driver": next, "next_preset": next + 158, "drivers": drivers })
+                .to_string()
+        };
+        std::fs::write(data_dir.join("drivers.json"), roster(209, json!([]))).unwrap();
+        std::fs::write(data_dir.join("stock.json"), r#"{"schema":1,"drivers":{}}"#).unwrap();
+        p.set_state(DM, json!({ "mods": [] })).unwrap();
+        assert_eq!(inputs(&p), none);
+
+        std::fs::write(
+            data_dir.join("drivers.json"),
+            roster(210, json!([{ "stat_id": 209 }])),
+        )
+        .unwrap();
+        let one = inputs(&p);
+        assert_ne!(one, none);
+        std::fs::write(
+            data_dir.join("drivers.json"),
+            roster(300, json!([{ "stat_id": 209 }])),
+        )
+        .unwrap();
+        assert_eq!(inputs(&p), one);
+        std::fs::write(
+            data_dir.join("stock.json"),
+            r#"{"schema":1,"drivers":{"max":{"head":"h"}}}"#,
+        )
+        .unwrap();
+        assert_ne!(inputs(&p), one);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn other_build_hooks_keep_false_zero_empty_text_and_counters() {
+        let store = store("generic-hook");
+        let hook = json!({
+            "id": "t.hook", "kind": ["database"],
+            "launcher": { "program": { "linux": "bin/hook", "windows": "bin/hook.exe" }, "build": true },
+        });
+        put(&store, hook, &[]);
+        let p = profile(&["t.hook"]);
+        let data_dir = store.addon_data_dir("t.hook");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        let inputs = || {
+            fingerprint(&store, &p, &game()).unwrap().addons[1]
+                .inputs
+                .clone()
+                .unwrap()
+        };
+        let none = inputs();
+        std::fs::write(
+            data_dir.join("items.json"),
+            r#"{"schema":1,"items":[],"groups":{"a":[]}}"#,
+        )
+        .unwrap();
+        assert_eq!(inputs(), none);
+        for text in [
+            r#"{"enabled":false}"#,
+            r#"{"count":0}"#,
+            r#"{"name":""}"#,
+            r#"{"next_id":4}"#,
+            r#"{"value":null}"#,
+        ] {
+            std::fs::write(data_dir.join("items.json"), text).unwrap();
+            assert_ne!(inputs(), none, "{text}");
+        }
+        std::fs::write(data_dir.join("items.json"), r#"{"next_id":4}"#).unwrap();
+        let four = inputs();
+        std::fs::write(data_dir.join("items.json"), r#"{"next_id":5}"#).unwrap();
+        assert_ne!(inputs(), four);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    fn detailed(id: &str, digest: &str, parts: &[(&str, &str)], reads: &[(&str, &str)]) -> AddonPrint {
+        let mut a = print(id, "1.0.0", Source::Built(digest.repeat(32)), Some(0));
+        let list: String = reads.iter().map(|(p, _)| *p).collect::<Vec<_>>().join("\n");
+        a.detail = Some(Detail {
+            parts: parts.iter().map(|(k, v)| ((*k).into(), (*v).into())).collect(),
+            read_list: short(&sha256_bytes(list.as_bytes())),
+            read_count: reads.len(),
+            reads: reads.iter().map(|(_, h)| (*h).into()).collect(),
+            paths: reads.iter().map(|(p, _)| (*p).into()).collect(),
+            row_ids: BTreeMap::new(),
+            lines: Vec::new(),
+        });
+        a
+    }
+
+    fn with(addons: Vec<AddonPrint>) -> Fingerprint {
+        Fingerprint::new(game(), addons, BTreeMap::new(), None)
+    }
+
+    fn cars(a: i64, b: i64) -> Output {
+        Output {
+            made: "m".into(),
+            row_ids: BTreeMap::from([
+                ("entrants.vehicles.vehicle/car_a".to_owned(), a),
+                ("entrants.vehicles.vehicle/car_b".to_owned(), b),
+            ]),
+            ..Output::default()
+        }
+    }
+
+    fn built(store: &Store, hashes: &mut Hashes, output: Output) -> AddonPrint {
+        let (digest, detail) = output.digest(store, "t.cars", hashes).unwrap();
+        let mut a = detailed("t.cars", "aa", &[("Database", "d1")], &[]);
+        a.source = Source::Built(digest);
+        a.detail.as_mut().unwrap().row_ids = detail.row_ids;
+        a
+    }
+
+    fn row_ids(a: &AddonPrint) -> &BTreeMap<String, i64> {
+        &a.detail.as_ref().unwrap().row_ids
+    }
+
+    #[test]
+    fn a_row_with_another_stat_id_counts_and_is_named() {
+        let store = store("rows");
+        let mut hashes = Hashes::open(store.root.join(HASHES_FILE));
+        let mine = built(&store, &mut hashes, cars(512, 513));
+        let theirs = built(&store, &mut hashes, cars(512, 600));
+        assert_ne!(mine.source, theirs.source);
+        assert_ne!(with(vec![mine.clone()]).digest, with(vec![theirs.clone()]).digest);
+        let differ: Vec<(&str, i64, i64)> = row_ids(&mine)
+            .iter()
+            .filter(|(row, id)| row_ids(&theirs).get(*row) != Some(id))
+            .map(|(row, id)| (row.as_str(), *id, row_ids(&theirs)[row]))
+            .collect();
+        assert_eq!(differ, [("entrants.vehicles.vehicle/car_b", 513, 600)]);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn building_with_the_hosts_ids_makes_the_fingerprints_match() {
+        let store = store("lent");
+        let mut hashes = Hashes::open(store.root.join(HASHES_FILE));
+        let host = with(vec![built(&store, &mut hashes, cars(512, 513))]);
+        let local = with(vec![built(&store, &mut hashes, cars(513, 512))]);
+        assert_ne!(local.digest, host.digest);
+        assert_eq!(
+            local.addons[0].detail.as_ref().unwrap().parts,
+            host.addons[0].detail.as_ref().unwrap().parts
+        );
+        let ids = row_ids(&host.addons[0]).clone();
+        assert_eq!(ids["entrants.vehicles.vehicle/car_a"], 512);
+        let rebuilt = Output {
+            row_ids: ids.clone(),
+            ..cars(0, 0)
+        };
+        let lent = with(vec![built(&store, &mut hashes, rebuilt)]);
+        assert_eq!(lent.digest, host.digest);
+        assert_eq!(*row_ids(&lent.addons[0]), ids);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn build_step_lines_ride_in_the_detail_and_leave_the_digest_alone() {
+        let store = store("lines");
+        let mut hashes = Hashes::open(store.root.join(HASHES_FILE));
+        let mut out = OutputBuilder::default();
+        out.made("hook", &"op");
+        for n in 0..LINES + 2 {
+            out.line(&format!("Grid Editor: {n} change(s) {}", "x".repeat(LINE_CHARS)));
+        }
+        let said = out.finish();
+        let silent = Output {
+            lines: Vec::new(),
+            ..said.clone()
+        };
+        let (digest, detail) = said.digest(&store, "t.cars", &mut hashes).unwrap();
+        assert_eq!(silent.digest(&store, "t.cars", &mut hashes).unwrap().0, digest);
+        assert_eq!(detail.lines.len(), LINES);
+        assert!(detail.lines[0].starts_with("Grid Editor: 0 change(s)"));
+        assert_eq!(detail.lines[0].chars().count(), LINE_CHARS);
+        std::fs::remove_dir_all(&store.root).ok();
+    }
+
+    #[test]
+    fn a_copys_read_paths_stay_local_and_its_digest_survives_the_trip() {
+        let reads = [("a.erp", "aaaa"), ("b.erp", "bbbb")];
+        let f = with(vec![detailed("t.cars", "aa", &[("Database", "d1")], &reads)]);
+        let blob = serde_json::to_value(&f).unwrap();
+        assert!(
+            blob.pointer("/addons/0/detail/paths").is_none(),
+            "paths stay local"
+        );
+        assert_eq!(
+            blob.pointer("/addons/0/detail/reads"),
+            Some(&json!(["aaaa", "bbbb"]))
+        );
+        assert_eq!(
+            serde_json::from_value::<Fingerprint>(blob).unwrap().digest,
+            f.digest
+        );
+    }
+
+    #[test]
+    fn different_build_hook_inputs_change_the_digest() {
+        let inputs = |sha: &str| {
+            let mut f = host();
+            f.addons[1].inputs = Some(sha.repeat(64));
+            f.digest = f.canonical_digest();
+            f
+        };
+        let (local, h) = (inputs("1"), inputs("2"));
+        assert_ne!(local.digest, h.digest);
+        assert_ne!(local.digest, host().digest);
+        assert_eq!(local.addons[1].source, h.addons[1].source);
+        assert_eq!(inputs("1").digest, local.digest);
+    }
+
+    fn with_ids(mut f: Fingerprint, addon: &str, ids: &[(&str, i64)]) -> Fingerprint {
+        for a in &mut f.addons {
+            if a.id == addon {
+                a.stat_ids = ids.iter().map(|(k, v)| ((*k).to_owned(), *v)).collect();
+            }
+        }
+        Fingerprint::new(f.game_build.clone(), f.addons, f.options, None)
+    }
+
+    #[test]
+    fn registry_ids_are_part_of_the_digest_and_name_the_record_that_differs() {
+        let hosted = with_ids(host(), "t.a", &[(PACKAGE, 116), (SCENARIO, 26)]);
+        let local = with_ids(host(), "t.a", &[(PACKAGE, 115), (SCENARIO, 25)]);
+        assert_ne!(hosted.digest, local.digest);
+        assert_ne!(hosted.digest, host().digest);
+        let theirs = &hosted.addons[0].stat_ids;
+        let differ: Vec<(&str, i64, i64)> = local.addons[0]
+            .stat_ids
+            .iter()
+            .filter(|(record, id)| theirs.get(*record) != Some(id))
+            .map(|(record, id)| (record.as_str(), *id, theirs[record]))
+            .collect();
+        assert_eq!(differ, [(SCENARIO, 25, 26), (PACKAGE, 115, 116)]);
+        assert_eq!(
+            with_ids(host(), "t.a", &[(SCENARIO, 26), (PACKAGE, 116)]).digest,
+            hosted.digest
+        );
+    }
+
+    #[test]
+    fn db_editor_addons_print_the_operations_their_edits_build() {
+        let package = |name: &str, tool: &str, edit: Value| {
+            let s = store(name);
+            let mut m = data("dbedit.grid");
+            m["origin"] = json!({ "tool": "db-editor", "tool_version": tool });
+            let marker = json!({
+                "format": "swofty-db-package", "format_version": 1, "game_build": "25251167", "edits": [edit],
+            })
+            .to_string();
+            let readme = format!("made with {tool}");
+            put(
+                &s,
+                m,
+                &[
+                    ("dbedit.json", &marker),
+                    ("database.json", tool),
+                    ("README.txt", &readme),
+                ],
+            );
+            let f = fingerprint(&s, &profile(&["dbedit.grid"]), &game()).unwrap();
+            std::fs::remove_dir_all(&s.root).ok();
+            f
+        };
+        let edit = |value: &str, stock: &str, path: &str| json!({ "key": "0x0000000000000001", "type": 0, "value": value, "stock": stock, "path": path });
+        let older = package(
+            "dbedit-older",
+            "1.5.10",
+            edit("33", "1", "entrants.drivers.driver_1.car_number"),
+        );
+        let newer = package("dbedit-newer", "1.5.12", edit("33", "2", "Car number"));
+        assert_eq!(older.addons[0].id, "dbedit.grid");
+        assert!(matches!(older.addons[0].source, Source::Edits(_)));
+        assert_eq!(older.addons[0].source, newer.addons[0].source);
+        assert_eq!(older.digest, newer.digest);
+        let other = package("dbedit-other", "1.5.12", edit("34", "1", "Car number"));
+        assert_ne!(older.digest, other.digest);
+        assert_ne!(older.addons[0].source, other.addons[0].source);
+        assert_eq!(older.addons[0].version, other.addons[0].version);
+        assert_eq!(older.addons[1..], other.addons[1..]);
+
+        let copied = "entrants.drivers.driver[driver=x].car_number";
+        let key = format!("0x{:016x}", swofty_formats::hash::fnv1a64(copied));
+        let in_row = json!({ "key": key, "type": 0, "value": "33", "stock": null, "path": copied });
+        let mut loose = in_row.clone();
+        loose["path"] = Value::Null;
+        let in_row = package("dbedit-in-row", "1.5.12", in_row);
+        let loose = package("dbedit-loose", "1.5.12", loose);
+        assert_ne!(in_row.digest, loose.digest);
+    }
+
+    #[test]
+    fn the_digest_changes_with_gameplay_content_and_nothing_else() {
+        type Edit = Box<dyn Fn(&mut Fingerprint)>;
+        let core = |sha: &'static str| -> Edit {
+            Box::new(move |c| {
+                c.addons
+                    .push(print(CORE_ID, "0.2.13", Source::Builtin(sha.repeat(64)), None))
+            })
+        };
+        let digest = |edit: &Edit| {
+            let mut f = host();
+            edit(&mut f);
+            f.canonical_digest()
+        };
+        let same: Vec<Edit> = vec![
+            Box::new(|c| c.addons[0].name = "Renamed".into()),
+            Box::new(|c| c.addons[0].registry = None),
+            Box::new(|c| c.launcher = "0.0.1".into()),
+            Box::new(|c| c.game_build.build_id = format!("exe-{}", "a".repeat(12))),
+            Box::new(|c| c.game_build.exe_sha256 = "A".repeat(64)),
+            Box::new(|c| {
+                c.addons[0].order = Some(5);
+                c.addons[1].order = Some(9);
+            }),
+        ];
+        for (i, edit) in same.iter().enumerate() {
+            assert_eq!(digest(edit), host().digest, "edit {i} counted");
+        }
+        let different: Vec<Edit> = vec![
+            Box::new(|c| c.game_build.exe_sha256 = "b".repeat(64)),
+            Box::new(|c| c.dlc = Some(true)),
+            Box::new(|c| c.dlc = Some(false)),
+            Box::new(|c| c.addons[0].version = Version::new(1, 0, 1)),
+            Box::new(|c| c.addons[1].source = content("d")),
+            Box::new(|c| c.addons[1].source = Source::Edits("b".repeat(64))),
+            Box::new(|c| c.addons[1].inputs = Some("d".repeat(64))),
+            Box::new(|c| {
+                c.addons[0].order = Some(1);
+                c.addons[1].order = Some(0);
+            }),
+            Box::new(|c| c.addons[2].order = Some(2)),
+            Box::new(|c| c.addons.retain(|a| a.id != "t.b")),
+            Box::new(|c| c.addons.push(print("t.extra", "1.0.0", content("e"), None))),
+            Box::new(|c| {
+                c.options.get_mut("t.a").unwrap().insert("laps".into(), json!(6));
+            }),
+            Box::new(|c| {
+                c.options
+                    .get_mut("t.a")
+                    .unwrap()
+                    .insert("extra".into(), json!(true));
+            }),
+            Box::new(|c| {
+                c.options.remove("t.a");
+            }),
+            core("1"),
+            core("2"),
+        ];
+        let digests: Vec<String> = different.iter().map(digest).collect();
+        for (i, d) in digests.iter().enumerate() {
+            assert_ne!(*d, host().digest, "edit {i} not counted");
+            assert!(!digests[..i].contains(d), "edit {i} matches an earlier one");
+        }
+        let core_of_another_launcher: Edit = Box::new(move |c| {
+            core("1")(c);
+            c.launcher = "1.5.13".into();
+        });
+        assert_eq!(digest(&core_of_another_launcher), digest(&core("1")));
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -1168,7 +2022,7 @@ pub fn compare(local: &Fingerprint, host: &Fingerprint, catalog: &[Addon]) -> Ve
 }
 
 #[cfg(test)]
-mod tests {
+mod mismatch_tests {
     use serde_json::json;
 
     use super::*;
@@ -1608,6 +2462,7 @@ mod tests {
             reads: reads.iter().map(|(_, h)| (*h).into()).collect(),
             paths: reads.iter().map(|(p, _)| (*p).into()).collect(),
             row_ids: BTreeMap::new(),
+            lines: Vec::new(),
         });
         a
     }

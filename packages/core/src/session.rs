@@ -137,6 +137,9 @@ pub struct Config {
     pub home_video: bool,
     #[serde(default = "on", skip_serializing_if = "is_on")]
     pub use_profiles: bool,
+    /// Offer Addon Browser updates for installed addons that are off as well; off unless turned on.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub update_off_addons: bool,
 }
 
 fn on() -> bool {
@@ -181,7 +184,7 @@ pub fn clamp_ui_scale(percent: u16) -> u16 {
 }
 
 /// The version of the welcome wizard. Raise it to show the wizard once more to everyone.
-pub const ONBOARDING_VERSION: u32 = 1;
+pub const ONBOARDING_VERSION: u32 = 2;
 
 impl Config {
     /// Whether the welcome wizard is due: never seen, or an older version.
@@ -490,10 +493,21 @@ const HOST_LIB_DIRS: &[&str] = &[
     "/usr/local/lib",
 ];
 
+const SDL3_SONAME: &str = "libSDL3.so.0";
+
 const STEAM_RUNTIME_LIB_DIRS: &[&str] = &[
     "ubuntu12_32/steam-runtime/usr/lib/x86_64-linux-gnu",
     "ubuntu12_32/steam-runtime/amd64/usr/lib/x86_64-linux-gnu",
 ];
+
+/// The 64-bit Steam client's own SDL3, which loads X11, Wayland, udev and
+/// audio at run time and links nothing past libc.
+const STEAM_CLIENT_SDL3: &str = "steamrt64/libSDL3.so.0";
+
+/// The client runtime's platform folders, one per runtime version. Their SDL2
+/// is sdl2-compat, which forwards to whichever `libSDL3.so.0` loads.
+const STEAM_CLIENT_PLATFORMS: &str = "steamrt64/pv-runtime/steam-runtime-steamrt";
+const PLATFORM_LIB_DIR: &str = "files/lib/x86_64-linux-gnu";
 
 /// Proton's HID bus reads wheels and pads through SDL2, which it loads by
 /// soname. Under Steam it comes from Steam's runtime; a direct launch (from
@@ -501,9 +515,10 @@ const STEAM_RUNTIME_LIB_DIRS: &[&str] = &[
 /// joystick Proton does not drive over hidraw (a G920, most wheels) is then
 /// left unclaimed: the evdev side defers it to an SDL side that never
 /// started, so the game sees no wheel. When the host has no 64-bit SDL2,
-/// this links Steam's runtime copy, alone, into `link_dir` and returns
-/// `library_path` with that directory appended; `None` leaves the launch as
-/// it was.
+/// this links Steam's copy into `link_dir` and returns `library_path` with
+/// that directory appended; `None` leaves the launch as it was. Steam's copy
+/// is the old runtime's SDL2 where the client still has it, else the 64-bit
+/// client's SDL3 under its runtime's sdl2-compat.
 pub fn sdl_library_path(library_path: Option<&str>, steam_root: &Path, link_dir: &Path) -> Option<String> {
     sdl_library_path_in(library_path, HOST_LIB_DIRS, steam_root, link_dir)
 }
@@ -522,17 +537,55 @@ fn sdl_library_path_in(
     if searched.any(|d| is_elf64(&Path::new(d).join(SDL2_SONAME))) {
         return None;
     }
-    let source = STEAM_RUNTIME_LIB_DIRS
-        .iter()
-        .map(|d| steam_root.join(d).join(SDL2_SONAME))
-        .find(|p| is_elf64(p))?;
-    link_library(&source, link_dir).ok()?;
+    for (source, soname) in steam_sdl(steam_root)? {
+        link_library(&source, &link_dir.join(soname)).ok()?;
+    }
     let dir = link_dir.display().to_string();
     Some(if current.is_empty() {
         dir
     } else {
         format!("{current}:{dir}")
     })
+}
+
+fn steam_sdl(steam_root: &Path) -> Option<Vec<(PathBuf, &'static str)>> {
+    if let Some(sdl2) = STEAM_RUNTIME_LIB_DIRS
+        .iter()
+        .map(|d| steam_root.join(d).join(SDL2_SONAME))
+        .find(|p| is_elf64(p))
+    {
+        return Some(vec![(sdl2, SDL2_SONAME)]);
+    }
+    let sdl3 = steam_root.join(STEAM_CLIENT_SDL3);
+    if !is_elf64(&sdl3) {
+        return None;
+    }
+    let mut platforms: Vec<PathBuf> = std::fs::read_dir(steam_root.join(STEAM_CLIENT_PLATFORMS))
+        .ok()?
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| {
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.contains("_platform_"))
+        })
+        .collect();
+    platforms.sort();
+    let sdl2 = platforms.iter().rev().find_map(|p| {
+        let mut libs: Vec<PathBuf> = std::fs::read_dir(p.join(PLATFORM_LIB_DIR))
+            .ok()?
+            .flatten()
+            .map(|e| e.path())
+            .filter(|f| {
+                f.file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| n.starts_with(SDL2_SONAME))
+            })
+            .collect();
+        libs.sort();
+        libs.into_iter().find(|f| is_elf64(f))
+    })?;
+    Some(vec![(sdl2, SDL2_SONAME), (sdl3, SDL3_SONAME)])
 }
 
 fn is_elf64(path: &Path) -> bool {
@@ -544,17 +597,18 @@ fn is_elf64(path: &Path) -> bool {
 }
 
 #[cfg(unix)]
-fn link_library(source: &Path, dir: &Path) -> std::io::Result<()> {
-    let link = dir.join(source.file_name().unwrap_or_default());
-    if std::fs::read_link(&link).ok().as_deref() == Some(source) {
+fn link_library(source: &Path, link: &Path) -> std::io::Result<()> {
+    if std::fs::read_link(link).ok().as_deref() == Some(source) {
         return Ok(());
     }
-    std::fs::create_dir_all(dir)?;
-    match std::fs::remove_file(&link) {
+    if let Some(dir) = link.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    match std::fs::remove_file(link) {
         Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e),
         _ => {}
     }
-    std::os::unix::fs::symlink(source, &link)
+    std::os::unix::fs::symlink(source, link)
 }
 
 #[cfg(not(unix))]
@@ -1060,6 +1114,24 @@ mod tests {
     }
 
     #[test]
+    fn off_addons_are_left_out_of_updates_unless_turned_on() {
+        assert!(!Config::default().update_off_addons);
+        assert!(!serde_json::from_str::<Config>("{}").unwrap().update_off_addons);
+        assert!(
+            !serde_json::to_string(&Config::default())
+                .unwrap()
+                .contains("update_off_addons")
+        );
+        let on = Config {
+            update_off_addons: true,
+            ..Config::default()
+        };
+        let json = serde_json::to_string(&on).unwrap();
+        assert!(json.contains(r#""update_off_addons":true"#));
+        assert!(serde_json::from_str::<Config>(&json).unwrap().update_off_addons);
+    }
+
+    #[test]
     fn time_trial_boards_is_on_unless_turned_off() {
         assert!(Config::default().time_trial_boards);
         assert!(serde_json::from_str::<Config>("{}").unwrap().time_trial_boards);
@@ -1339,6 +1411,50 @@ mod tests {
         assert_eq!(
             sdl_library_path_in(None, &[], &root.join("no-steam"), &links),
             None
+        );
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn sdl_comes_from_the_64_bit_clients_sdl3_when_the_old_runtime_is_gone() {
+        let root = std::env::temp_dir().join(format!("swofty-sdl3-{}", std::process::id()));
+        std::fs::remove_dir_all(&root).ok();
+        let steam = root.join("steam");
+        let links = root.join("data").join(RUNTIME_LIBS_DIR);
+        let elf64 = b"\x7fELF\x02\x01\x01\0".as_slice();
+        let platform = |version: &str| {
+            steam
+                .join(STEAM_CLIENT_PLATFORMS)
+                .join(format!("steamrt3c_platform_3c.0.{version}"))
+                .join(PLATFORM_LIB_DIR)
+        };
+        for (version, file) in [
+            ("20260119.1", "libSDL2-2.0.so.0.3200.10"),
+            ("20261103.2", "libSDL2-2.0.so.0.3200.74"),
+        ] {
+            std::fs::create_dir_all(platform(version)).unwrap();
+            std::fs::write(platform(version).join(file), elf64).unwrap();
+        }
+        std::fs::create_dir_all(
+            steam
+                .join(STEAM_CLIENT_PLATFORMS)
+                .join("steamrt3c_platform_3c.0.20991231.9"),
+        )
+        .unwrap();
+
+        assert_eq!(sdl_library_path_in(None, &[], &steam, &links), None);
+
+        std::fs::write(steam.join(STEAM_CLIENT_SDL3), elf64).unwrap();
+        let path = sdl_library_path_in(Some("/proton/lib"), &[], &steam, &links);
+        assert_eq!(path, Some(format!("/proton/lib:{}", links.display())));
+        assert_eq!(
+            std::fs::read_link(links.join(SDL2_SONAME)).unwrap(),
+            platform("20261103.2").join("libSDL2-2.0.so.0.3200.74")
+        );
+        assert_eq!(
+            std::fs::read_link(links.join(SDL3_SONAME)).unwrap(),
+            steam.join(STEAM_CLIENT_SDL3)
         );
         std::fs::remove_dir_all(&root).ok();
     }
