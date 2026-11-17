@@ -14,7 +14,7 @@ name = "erc-launcher"
 path = "src/main.rs"
 
 [dependencies]
-gpui-kit = "=0.9.0"
+gpui-kit = "=0.9.1"
 anyhow.workspace = true
 lsp-types = { version = "0.97", features = ["proposed"] }
 image = { version = "0.25", default-features = false }
