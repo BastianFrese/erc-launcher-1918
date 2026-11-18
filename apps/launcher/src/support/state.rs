@@ -1,5 +1,5 @@
 use gpui_kit::*;
-use swofty_core::support::{Goal, Supporter};
+use swofty_core::support::{Goal, Me, Supporter};
 use swofty_core::timetrial::api::Api;
 
 use crate::shell::Shell;
@@ -11,6 +11,8 @@ pub(crate) const SUPPORT_SERVER: &str = "https://raum.erdi-erc.de";
 pub(crate) struct SupportPage {
     pub goal: Load<Goal>,
     pub supporters: Load<Vec<Supporter>>,
+    /// Wer gerade angemeldet ist: entscheidet ueber Werbung und den Spender-Rang.
+    pub me: Load<Me>,
 }
 
 impl Default for SupportPage {
@@ -18,6 +20,7 @@ impl Default for SupportPage {
         Self {
             goal: Load::Idle,
             supporters: Load::Idle,
+            me: Load::Idle,
         }
     }
 }
@@ -31,6 +34,25 @@ impl Shell {
         if matches!(self.support.goal, Load::Idle | Load::Failed(_)) {
             self.support_reload(cx);
         }
+    }
+
+    pub(crate) fn support_fetch_me(&mut self, cx: &mut Context<Self>) {
+        let api = self.support_api();
+        self.support.me = Load::Loading;
+        cx.spawn(async move |this, cx| {
+            let me = cx
+                .background_executor()
+                .spawn(async move { api.support_me() })
+                .await;
+            this.update(cx, |s, cx| {
+                if s.mp.is_some() {
+                    s.support.me = load(me);
+                }
+                cx.notify();
+            })
+            .ok();
+        })
+        .detach();
     }
 
     pub(super) fn support_reload(&mut self, cx: &mut Context<Self>) {

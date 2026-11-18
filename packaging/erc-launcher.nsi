@@ -10,7 +10,7 @@ Unicode true
 SetCompressor /SOLID lzma
 
 !define NAME "ERC Launcher"
-!define VERSION "1.3.0-beta.1"
+!define VERSION "1.3.0"
 !define HERSTELLER "Erdi's Racing Community"
 ; Ueberschreibbar fuer eine Vorabfassung: makensis //DQUELLE=<ordner> ...
 !ifndef QUELLE

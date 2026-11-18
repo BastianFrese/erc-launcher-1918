@@ -1,34 +1,17 @@
 {
-  "{count} addon": [
-    "{count} аддон",
-    "{count} аддона",
-    "{count} аддонов"
-  ],
-  "{count} changed setting": [
-    "{count} изменённая настройка",
-    "{count} изменённые настройки",
-    "{count} изменённых настроек"
-  ],
-  "{count} minute ago": [
-    "{count} минуту назад",
-    "{count} минуты назад",
-    "{count} минут назад"
-  ],
-  "{count} hour ago": [
-    "{count} час назад",
-    "{count} часа назад",
-    "{count} часов назад"
-  ],
-  "{count} day ago": [
-    "{count} день назад",
-    "{count} дня назад",
-    "{count} дней назад"
-  ],
+  "Also update the addons that are off in your profile when Play updates addons. Turned off, only the addons that are on are updated.": "Обновлять и аддоны, выключенные в профиле, когда «Играть» обновляет аддоны. Если выключено, обновляются только включённые аддоны.",
+  "Update turned-off addons": "Обновлять выключенные аддоны",
+  "{count} addon": ["{count} аддон", "{count} аддона", "{count} аддонов"],
+  "{count} changed setting": ["{count} изменённая настройка", "{count} изменённые настройки", "{count} изменённых настроек"],
+  "{count} minute ago": ["{count} минуту назад", "{count} минуты назад", "{count} минут назад"],
+  "{count} hour ago": ["{count} час назад", "{count} часа назад", "{count} часов назад"],
+  "{count} day ago": ["{count} день назад", "{count} дня назад", "{count} дней назад"],
   "just now": "только что",
   "{count} s": "{count} с",
   "{count} min": "{count} мин",
   "{h} h {m} min": "{h} ч {m} мин",
   "_language": "Русский",
+  "Advertisement": "Реклама",
   " and {count} more": " и ещё {count}",
   ", {size} on {drive}": ", {size} на {drive}",
   "ADDONS": "АДДОНЫ",
@@ -966,6 +949,8 @@
   "Stop game": "Остановить игру",
   "Support": "Поддержка",
   "Supporters": "Поддержавшие",
+  "Supporting a free and open-source launcher": "Поддержка бесплатного лаунчера с открытым исходным кодом",
+  "No ads in the launcher": "Без рекламы в лаунчере",
   "Switch away from {vanilla} to use addons": "Переключитесь с {vanilla}, чтобы использовать аддоны",
   "Synced stars": "Звёзды синхронизированы",
   "Syncing stars…": "Синхронизация звёзд…",
@@ -1218,6 +1203,10 @@
   "{archive}.erp archive": "архив {archive}.erp",
   "{body} This can't be undone.": "{body} Это действие нельзя отменить.",
   "{careers} (not in that version)": "{careers} (нет в той версии)",
+  ", newest: {name}": ", новейшая: {name}",
+  ", {missing} marked missing": ", отмечено пропавшими: {missing}",
+  "This version lists {careers} as missing, so restoring it does not bring them back.": "В этой версии {careers} отмечены как пропавшие, поэтому восстановление их не вернёт.",
+  "{careers} (that version lists them as missing)": "{careers} (эта версия отмечает их как пропавшие)",
   "{changes} in {name}": "{changes} в {name}",
   "{changes} in {name} · {k} not saved yet": "{changes} в {name} · ещё не сохранено: {k}",
   "{changes} {verb} an addon, turned on in {profile}.": "{changes} {verb} аддоном, включённым в {profile}.",
@@ -1476,5 +1465,9 @@
   "{v} is available. Update addons from the play bar.": "Доступна версия {v}. Обновите аддоны с панели запуска.",
   "{v} is not a number": "{v} — не число",
   "{when}: {downloads}": "{when}: {downloads}",
-  "{wins} wins - {podiums} podiums": "Победы: {wins} - подиумы: {podiums}"
+  "{wins} wins - {podiums} podiums": "Победы: {wins} - подиумы: {podiums}",
+  "Too many tracks": "Слишком много трасс",
+  "Left out: the game holds {room} tracks": "Исключено: в игре помещается {room} трасс",
+  "{shown} and {more} more": "{shown} и ещё {more}",
+  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": ["В игре помещается {room} трасс, поэтому {count} трасса не попадает в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на ней.", "В игре помещается {room} трасс, поэтому {count} трассы не попадают в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на них.", "В игре помещается {room} трасс, поэтому {count} трасс не попадают в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на них."]
 }

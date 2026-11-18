@@ -100,7 +100,7 @@ swofty: this copy of F1 25 wasn't installed by Steam or the EA app, so it can't 
 
 ## Game files changed outside Swofty
 
-Before a modded session builds anything, the launcher checks the Steam copy against Steam's list of the files it installed. When files were changed outside Swofty, usually by a mod copied into the game folder by hand, F1 25 is not started and nothing in the game folder is changed. [Checking against Steam](/reference/restore#checking-against-steam) lists what the check compares.
+Before a modded session builds anything, the launcher checks the Steam copy against Steam's list of the files it installed. When files were changed outside Swofty, usually by a mod copied into the game folder by hand, F1 25 is not started and nothing in the game folder is changed. A DLL other than `steam_api64.dll` that differs from Steam's copy is logged and doesn't stop the launch; a missing one does. [Checking against Steam](/reference/restore#checking-against-steam) lists what the check compares.
 
 The launcher opens **Your game files have been edited**. It says how many files changed, names the first six, and shows the fix:
 
@@ -121,8 +121,8 @@ A game file the profile replaces that is missing from the game folder is put bac
 
 | `F1_25.exe` version | Fix |
 | --- | --- |
-| Older than 1.0.141.7865 | Update F1 25 in Steam or the EA app |
-| 1.0.141.7865 or newer | Verify the game files in Steam, or repair them in the EA app |
+| Older than 1.0.145.2472 | Update F1 25 in Steam or the EA app |
+| 1.0.145.2472 or newer | Verify the game files in Steam, or repair them in the EA app |
 | Unknown | Update F1 25, then verify the game files |
 
 `swofty run` and `swofty apply` stop with the same fix:
@@ -143,7 +143,7 @@ A game file that is shorter than it should be is named with the fix to verify th
 
 ## An older F1 25
 
-Before a modded session, `swofty run` and the launcher's **Play** compare `F1_25.exe`'s version with 1.0.141.7865, the latest update. On an older copy the launcher shows **F1 25 needs the latest update** and the session goes on; `swofty run` prints the same on a `[warning]` line. Mods may not load on an older copy.
+Before a modded session, `swofty run` and the launcher's **Play** compare `F1_25.exe`'s version with 1.0.145.2472, the latest update. On an older copy the launcher shows **F1 25 needs the latest update** and the session goes on; `swofty run` prints the same on a `[warning]` line. Mods may not load on an older copy.
 
 ## Linux: the Steam wrapper
 
@@ -151,7 +151,7 @@ Set Steam's launch option to `swofty run -- %command%` so its Play button starts
 
 To go back to Steam's normal launch, clear the option.
 
-Without the wrapper in the launch option, the launcher's **Play** and `swofty run --direct` start Proton themselves. Proton reads wheels and controllers through SDL2. When the system has no 64-bit SDL2, as under NixOS `steam-run`, the launcher links the copy from Steam's runtime into `$DATA/state/runtime-libs` and adds it to the game's library path. `swofty run` then prints `controllers: this system has no SDL2`.
+Without the wrapper in the launch option, the launcher's **Play** and `swofty run --direct` start Proton themselves. Proton reads wheels and controllers through SDL2. When the system has no 64-bit SDL2, as under NixOS `steam-run`, the launcher links Steam's own copy into `$DATA/state/runtime-libs` and adds it to the game's library path: the 64-bit client's SDL3 (`steamrt64/libSDL3.so.0`) with the SDL2 layer from its runtime, or the old `ubuntu12_32/steam-runtime` SDL2 on clients that still have it. `swofty run` then prints `controllers: this system has no SDL2`.
 
 ## Windows
 

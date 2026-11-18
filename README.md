@@ -4,8 +4,9 @@ The launcher of **Erdi's Racing Community**: it starts F1 25 with the league's m
 mods before anyone joins, and opens lobbies on our own server instead of a third-party one.
 
 Built on [Swofty Launcher](https://github.com/Swofty-Developments/SwoftyLauncher) by Jacob Nardella
-(Swofty), under the GNU Affero General Public License v3 — see [LICENSE](LICENSE). Upstream arrives
-as release tags (`v1.9.x`); our own work sits on top of them.
+(Swofty). Upstream arrives as release tags (`v1.9.x`); our own work sits on top of them. The upstream
+parts up to v1.9.61 are under the GNU Affero General Public License v3 — see [LICENSE-AGPL](LICENSE-AGPL);
+from v1.9.62 upstream is under the PolyForm Noncommercial License 1.0.0 — see [LICENSE](LICENSE).
 
 ## What the league added
 
@@ -102,6 +103,7 @@ and the supported-build table as part of the build.
 
 | Installer | Tag |
 |---|---|
+| `ERC-Launcher-1.3.0-setup.exe` | [`erc-1.3.0`](../../releases/tag/erc-1.3.0) |
 | `ERC-Launcher-1.2.2-setup.exe` | [`erc-1.2.2`](../../releases/tag/erc-1.2.2) |
 | `ERC-Launcher-1.2.1-setup.exe` | [`erc-1.2.1`](../../releases/tag/erc-1.2.1) |
 | `ERC-Launcher-1.3.0-beta.1-setup.exe` (test build) | [`erc-1.3.0-beta.1`](../../releases/tag/erc-1.3.0-beta.1) |

@@ -178,6 +178,16 @@ pub struct RnDDepartmentConfig {
 }
 
 #[repr(C)]
+pub struct StandingsPointsLevel {
+    _opaque: [u8; 0],
+}
+
+#[repr(C)]
+pub struct StandingsPreset {
+    _opaque: [u8; 0],
+}
+
+#[repr(C)]
 pub struct UiLayoutStep {
     _opaque: [u8; 0],
 }
@@ -214,6 +224,16 @@ pub struct VehicleIdentity {
 
 #[repr(C)]
 pub struct VehiclePackageRow {
+    _opaque: [u8; 0],
+}
+
+#[repr(C)]
+pub struct WeekendSession {
+    _opaque: [u8; 0],
+}
+
+#[repr(C)]
+pub struct WeekendStructure {
     _opaque: [u8; 0],
 }
 
@@ -2726,10 +2746,13 @@ const _: () = assert!(core::mem::size_of::<Session>() == 0xa0);
 pub struct SessionEntrantView {
     _pad_0x0: [u8; 0x58],
     pub team_stat_id: u32,
-    _pad_0x5c: [u8; 0x26],
+    _pad_0x5c: [u8; 0xc],
+    pub badge_stat_id: u32,
+    _pad_0x6c: [u8; 0x16],
     pub vehicle_id: u8,
 }
 const _: () = assert!(core::mem::offset_of!(SessionEntrantView, team_stat_id) == 0x58);
+const _: () = assert!(core::mem::offset_of!(SessionEntrantView, badge_stat_id) == 0x68);
 const _: () = assert!(core::mem::offset_of!(SessionEntrantView, vehicle_id) == 0x82);
 
 #[repr(C)]
@@ -3630,6 +3653,16 @@ pub type Ai_Gap_ComputeVehicleSpanLower_t = unsafe extern "C" fn(ctrl: *mut c_vo
 pub type Ai_Gap_ComputeVehicleSpanUpper_t =
     unsafe extern "C" fn(ai_car_record: *mut c_void, vehicle: c_int) -> f32;
 pub type Ai_Get_GeneralSettings_t = unsafe extern "C" fn() -> *mut *mut c_void;
+pub type Ai_Get_SegmentTurnRadius_t = unsafe extern "C" fn(
+    ai: *mut c_void,
+    dist: f32,
+    node_idx: u32,
+    lateral_offset: f32,
+    route_idx: c_int,
+) -> f32;
+pub type Ai_Get_TurnRadiusAtDistance_t =
+    unsafe extern "C" fn(ai: *mut c_void, dist: f32, lateral_offset: f32, route_idx: c_int) -> f32;
+pub type Ai_Handle_PitStateChanged_Thunk_t = unsafe extern "C" fn(ai: *mut c_void, msg: *mut c_void) -> u64;
 pub type Ai_HashMap_FindIndexU64_t = unsafe extern "C" fn(map: *mut c_void, key: *const u64) -> u64;
 pub type Ai_Init_TestSpeedLimits_t = unsafe extern "C" fn(entry: *mut c_void) -> *mut c_void;
 pub type Ai_IntervalProfile_AddRamps_t =
@@ -3646,6 +3679,8 @@ pub type Ai_Lookahead_AdvancePhase_t = unsafe extern "C" fn(
     in4: *const f32,
     out4: *mut f32,
 );
+pub type Ai_Overtake_EvaluateGap_t =
+    unsafe extern "C" fn(out: *mut c_void, a2: *mut c_void, a3: *mut c_void, a4: *mut c_void, car: c_int);
 pub type Ai_Parse_BlockingConfig_t = unsafe extern "C" fn(slots: *mut *mut c_void, db_row: *mut c_void);
 pub type Ai_Parse_DriverConfig_t = unsafe extern "C" fn(cfg: *mut AiDriverConfig, row: *mut c_void);
 pub type Ai_Parse_OvertakeConfig_t = unsafe extern "C" fn(slots: *mut *mut c_void, driver_row: *mut c_void);
@@ -3684,7 +3719,29 @@ pub type Ai_TestGraph_EvalDistanceSpeedC_t =
     unsafe extern "C" fn(table: *mut c_void, dist: f32, speed: f32, cursor: *mut c_void) -> f32;
 pub type Ai_TestGraph_EvalTimeSpeed_t =
     unsafe extern "C" fn(table: *mut c_void, time: f32, speed: f32, cursor: *mut f32) -> f32;
+pub type Ai_TrackLine_FindCornerEndAndStart_t = unsafe extern "C" fn(
+    result: *mut c_void,
+    car_dist: f32,
+    query_dist: f32,
+    spline_data: *mut c_void,
+    route_idx: c_int,
+) -> c_int;
+pub type Ai_TrackLine_FindNextSideMarker_t = unsafe extern "C" fn(
+    result: *mut c_void,
+    car_dist: f32,
+    query_dist: f32,
+    spline_data: *mut c_void,
+    route_idx: c_int,
+);
+pub type Ai_TrackLine_FindSideMarkerInCorner_t = unsafe extern "C" fn(
+    result: *mut c_void,
+    car_dist: f32,
+    query_dist: f32,
+    spline_data: *mut c_void,
+    route_idx: c_int,
+);
 pub type Ai_Update_DriverTick_t = unsafe extern "C" fn(ai_driver: *mut c_void, dt: f32, ai_ctx: *mut c_void);
+pub type Ai_Update_VehicleDriver_t = unsafe extern "C" fn(ctl: *mut u8, ctx: *mut c_void);
 pub type Ai_Write_AdaptiveAiSessionRecord_t =
     unsafe extern "C" fn(rec: *mut c_void, json_writer: *mut c_void);
 pub type Ai_ZoneMap_Find_t =
@@ -4188,9 +4245,6 @@ pub type Game_CareerWizard_StartsInF1_t = unsafe extern "C" fn(
 pub type Game_Career_IsDriverCareerMode_t = unsafe extern "C" fn(championship: *const c_void) -> bool;
 pub type Game_ChallengeCareer_BuildTrackTiles_t = unsafe extern "C" fn(vm: *mut c_void);
 pub type Game_Championship_VirtualisePendingSessions_t = unsafe extern "C" fn(self_: *mut c_void) -> u64;
-pub type Game_CheckPrivilegeTask_OnUpdate_t = unsafe extern "C" fn(task: *mut c_void);
-pub type Game_CheckPrivilegeTask_PrivilegeCheckTaskCallback_t =
-    unsafe extern "C" fn(task: *mut c_void, privilege: u32, success: bool, continuation: *const c_void);
 pub type Game_Check_ReturnToGarageTimeLimit_t = unsafe extern "C" fn(self_: *mut c_void) -> bool;
 pub type Game_ContractTeamSelect_OnEnter_t = unsafe extern "C" fn(state: *mut c_void) -> u64;
 pub type Game_ContractTeamSelect_OnExit_t = unsafe extern "C" fn(state: *mut c_void) -> u64;
@@ -4208,9 +4262,13 @@ pub type Game_CreateSessionDlcSelectTab_HandleCommand_t =
     unsafe extern "C" fn(view_model: *mut c_void, command: *mut c_void) -> *mut c_char;
 pub type Game_Currency_ShowReceivedPopup_t =
     unsafe extern "C" fn(self_: *mut c_void, newBalance: i32) -> bool;
+pub type Game_DRLSystem_OnMessagePlayerDroppedIn_t =
+    unsafe extern "C" fn(drl_system: *mut c_void, msg: *mut c_void) -> c_int;
 pub type Game_DRLSystem_ResolveDependencies_t =
     unsafe extern "C" fn(self_: *mut c_void, registry: *mut c_void, systemMap: *mut c_void) -> u32;
 pub type Game_DRS_OnSessionLoad_t = unsafe extern "C" fn(drs: *mut c_void);
+pub type Game_DifficultySystem_ApplySettingsToUi_t =
+    unsafe extern "C" fn(self_: *mut c_void, settings: *mut c_int, flag: c_int);
 pub type Game_DriverCareerTeamSelect_OnMessage_t =
     unsafe extern "C" fn(vm: *mut c_void, name: *mut *const u32);
 pub type Game_DriverContractsMyTeamComponent_OpenContractWindow_t =
@@ -4313,8 +4371,6 @@ pub type Game_MyTeamCustomisation_ResolveVideoTypeByHash_t =
     unsafe extern "C" fn(out: *mut u8, name_hash: i32, ctx: *mut c_void) -> *mut u8;
 pub type Game_MyTeamIntro_InitMaterialSlotStatics_t =
     unsafe extern "C" fn(obj: *mut c_void, arg: *mut c_void);
-pub type Game_NetworkSubsystem_UpdateKeyMaterial_t =
-    unsafe extern "C" fn(closure: *mut c_void, success: *const bool, key_material: *const c_void);
 pub type Game_Network_CategoryOptionUsing_t = unsafe extern "C" fn(self_: *mut c_void);
 pub type Game_Network_SendingRedFlagVehicleStatusUpdate_t =
     unsafe extern "C" fn(red_flag_state: *mut c_void, dt: *const f64);
@@ -4327,8 +4383,6 @@ pub type Game_OnlineLogInTask_Init_t = unsafe extern "C" fn(
 ) -> c_int;
 pub type Game_OptionsStore_FindOption_t =
     unsafe extern "C" fn(map: *mut c_void, name: *mut *const c_char) -> u64;
-pub type Game_OsService_SubmitRequest_t =
-    unsafe extern "C" fn(os_service: *mut c_void, request: *const c_void, callback: *mut c_void);
 pub type Game_PauseAvailabilityVM_OnActivate_t = unsafe extern "C" fn(vm: *mut c_void);
 pub type Game_PhotoMode_InitDependencies_t =
     unsafe extern "C" fn(self_: *mut c_void, serviceProvider: *mut c_void) -> c_int;
@@ -4410,6 +4464,8 @@ pub type Game_SceneManagerSpawn_SpawnScene_t = unsafe extern "C" fn(
     ov_b: *mut c_void,
     p7: u64,
 ) -> *mut c_void;
+pub type Game_Scene_UpdateInstanceTransformsBatch_t =
+    unsafe extern "C" fn(scene: *mut c_void, actor_update_flag: u8);
 pub type Game_SeasonLength_ApplyPreset_t = unsafe extern "C" fn(component: *mut c_void, preset: u8);
 pub type Game_SeasonLength_PushCalendarEntry_t =
     unsafe extern "C" fn(calendar: *mut c_void, entry: *const c_void) -> u64;
@@ -4511,8 +4567,6 @@ pub type Ne_Play_FullscreenVideo_t = unsafe extern "C" fn(
     layer: i32,
 );
 pub type Ne_Post_BusMessage_t = unsafe extern "C" fn(bus: *mut c_void, msg: *mut c_void) -> u64;
-pub type Ne_PresenceNameResolverFixed_AddName_t =
-    unsafe extern "C" fn(resolver: *mut c_void, user: *const c_void, name: *const c_char);
 pub type Ne_Ref_AssignIntrusiveRc16_t =
     unsafe extern "C" fn(dst: *mut *mut c_void, src: *mut *mut c_void) -> *mut *mut c_void;
 pub type Ne_Rng_Mt19937_Refill_t = unsafe extern "C" fn(state: *mut u32) -> u32;
@@ -4560,6 +4614,14 @@ pub type Sess_Build_SelectableDriverList_t = unsafe extern "C" fn(
     alloc: *mut c_void,
     flag: u8,
 ) -> *mut NeVecU32;
+pub type Sess_Build_VehicleTyreInfo_t = unsafe extern "C" fn(
+    out: *mut c_void,
+    system: *mut c_void,
+    vehicle: u8,
+    flags: u32,
+    ctx: *const c_void,
+    scale: f32,
+) -> *mut c_void;
 pub type Sess_ChampionshipWonDecision_Update_t =
     unsafe extern "C" fn(state: *mut c_void, route: *mut u32) -> *mut u32;
 pub type Sess_Collect_AvailableTracks_t = unsafe extern "C" fn(
@@ -5021,6 +5083,21 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Ai_Get_SegmentTurnRadius: Binding = Binding {
+        id: "Ai_Get_SegmentTurnRadius",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ai_Get_TurnRadiusAtDistance: Binding = Binding {
+        id: "Ai_Get_TurnRadiusAtDistance",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ai_Handle_PitStateChanged_Thunk: Binding = Binding {
+        id: "Ai_Handle_PitStateChanged_Thunk",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Ai_HashMap_FindIndexU64: Binding = Binding {
         id: "Ai_HashMap_FindIndexU64",
         kind: "func",
@@ -5063,6 +5140,11 @@ pub mod bindings {
     };
     pub const Ai_Lookahead_AdvancePhase: Binding = Binding {
         id: "Ai_Lookahead_AdvancePhase",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ai_Overtake_EvaluateGap: Binding = Binding {
+        id: "Ai_Overtake_EvaluateGap",
         kind: "func",
         status: Status::Experimental,
     };
@@ -5221,6 +5303,21 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Ai_TrackLine_FindCornerEndAndStart: Binding = Binding {
+        id: "Ai_TrackLine_FindCornerEndAndStart",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ai_TrackLine_FindNextSideMarker: Binding = Binding {
+        id: "Ai_TrackLine_FindNextSideMarker",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ai_TrackLine_FindSideMarkerInCorner: Binding = Binding {
+        id: "Ai_TrackLine_FindSideMarkerInCorner",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Ai_Update_CompoundPaceCurves: Binding = Binding {
         id: "Ai_Update_CompoundPaceCurves",
         kind: "func",
@@ -5228,6 +5325,11 @@ pub mod bindings {
     };
     pub const Ai_Update_DriverTick: Binding = Binding {
         id: "Ai_Update_DriverTick",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ai_Update_VehicleDriver: Binding = Binding {
+        id: "Ai_Update_VehicleDriver",
         kind: "func",
         status: Status::Experimental,
     };
@@ -8751,16 +8853,6 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
-    pub const Game_CheckPrivilegeTask_OnUpdate: Binding = Binding {
-        id: "Game_CheckPrivilegeTask_OnUpdate",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_CheckPrivilegeTask_PrivilegeCheckTaskCallback: Binding = Binding {
-        id: "Game_CheckPrivilegeTask_PrivilegeCheckTaskCallback",
-        kind: "func",
-        status: Status::Experimental,
-    };
     pub const Game_Check_ReturnToGarageTimeLimit: Binding = Binding {
         id: "Game_Check_ReturnToGarageTimeLimit",
         kind: "func",
@@ -9091,6 +9183,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_DRLSystem_OnMessagePlayerDroppedIn: Binding = Binding {
+        id: "Game_DRLSystem_OnMessagePlayerDroppedIn",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_DRLSystem_ResolveDependencies: Binding = Binding {
         id: "Game_DRLSystem_ResolveDependencies",
         kind: "func",
@@ -9178,6 +9275,11 @@ pub mod bindings {
     };
     pub const Game_DeptEventViewModel_Update: Binding = Binding {
         id: "Game_DeptEventViewModel_Update",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_DifficultySystem_ApplySettingsToUi: Binding = Binding {
+        id: "Game_DifficultySystem_ApplySettingsToUi",
         kind: "func",
         status: Status::Experimental,
     };
@@ -10656,21 +10758,6 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
-    pub const Game_GhostLapHandler_StartLeaderboardEntryWrite: Binding = Binding {
-        id: "Game_GhostLapHandler_StartLeaderboardEntryWrite",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_GhostLapHandler_StartRemoteStorageDownload: Binding = Binding {
-        id: "Game_GhostLapHandler_StartRemoteStorageDownload",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_GhostLapHandler_StartRemoteStorageUpload: Binding = Binding {
-        id: "Game_GhostLapHandler_StartRemoteStorageUpload",
-        kind: "func",
-        status: Status::Experimental,
-    };
     pub const Game_GhostLapHandler_Update: Binding = Binding {
         id: "Game_GhostLapHandler_Update",
         kind: "func",
@@ -10683,11 +10770,6 @@ pub mod bindings {
     };
     pub const Game_GhostLapsStorageSystem_Dtor: Binding = Binding {
         id: "Game_GhostLapsStorageSystem_Dtor",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_GhostLapsStorageSystem_OnSessionEnter: Binding = Binding {
-        id: "Game_GhostLapsStorageSystem_OnSessionEnter",
         kind: "func",
         status: Status::Experimental,
     };
@@ -10863,11 +10945,6 @@ pub mod bindings {
     };
     pub const Game_InstantRace_SetupTrackList: Binding = Binding {
         id: "Game_InstantRace_SetupTrackList",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_InviteManager_Cancel: Binding = Binding {
-        id: "Game_InviteManager_Cancel",
         kind: "func",
         status: Status::Experimental,
     };
@@ -11286,18 +11363,8 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
-    pub const Game_NetworkSubsystem_ChangeMPMode: Binding = Binding {
-        id: "Game_NetworkSubsystem_ChangeMPMode",
-        kind: "func",
-        status: Status::Experimental,
-    };
     pub const Game_NetworkSubsystem_SelectTitleConfig: Binding = Binding {
         id: "Game_NetworkSubsystem_SelectTitleConfig",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_NetworkSubsystem_UpdateKeyMaterial: Binding = Binding {
-        id: "Game_NetworkSubsystem_UpdateKeyMaterial",
         kind: "func",
         status: Status::Experimental,
     };
@@ -11473,11 +11540,6 @@ pub mod bindings {
     };
     pub const Game_OptionsUI_ApplyFilterLevelCollectChanges: Binding = Binding {
         id: "Game_OptionsUI_ApplyFilterLevelCollectChanges",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Game_OsService_SubmitRequest: Binding = Binding {
-        id: "Game_OsService_SubmitRequest",
         kind: "func",
         status: Status::Experimental,
     };
@@ -12021,6 +12083,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_Read_PhysicsWorldConfig: Binding = Binding {
+        id: "Game_Read_PhysicsWorldConfig",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_Read_QualifyingConfig: Binding = Binding {
         id: "Game_Read_QualifyingConfig",
         kind: "func",
@@ -12238,6 +12305,11 @@ pub mod bindings {
     };
     pub const Game_SceneManager_DestroyScene: Binding = Binding {
         id: "Game_SceneManager_DestroyScene",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_Scene_UpdateInstanceTransformsBatch: Binding = Binding {
+        id: "Game_Scene_UpdateInstanceTransformsBatch",
         kind: "func",
         status: Status::Experimental,
     };
@@ -14976,11 +15048,6 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
-    pub const Ne_MoverCollision_CreateResource: Binding = Binding {
-        id: "Ne_MoverCollision_CreateResource",
-        kind: "func",
-        status: Status::Experimental,
-    };
     pub const Ne_NameRegistry_FindId: Binding = Binding {
         id: "Ne_NameRegistry_FindId",
         kind: "func",
@@ -15876,11 +15943,6 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
-    pub const Ne_PresenceNameResolverFixed_AddName: Binding = Binding {
-        id: "Ne_PresenceNameResolverFixed_AddName",
-        kind: "func",
-        status: Status::Experimental,
-    };
     pub const Ne_PresenceNameResolverFixed_InsertName: Binding = Binding {
         id: "Ne_PresenceNameResolverFixed_InsertName",
         kind: "func",
@@ -16018,11 +16080,6 @@ pub mod bindings {
     };
     pub const Ne_ReplaySystem_ForceReset: Binding = Binding {
         id: "Ne_ReplaySystem_ForceReset",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    pub const Ne_ReplaySystem_ResetSlot24: Binding = Binding {
-        id: "Ne_ReplaySystem_ResetSlot24",
         kind: "func",
         status: Status::Experimental,
     };
@@ -17236,6 +17293,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Render_Draw_ComputeInstanceLodScale: Binding = Binding {
+        id: "Render_Draw_ComputeInstanceLodScale",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Render_Gfx2Buffer_Construct: Binding = Binding {
         id: "Render_Gfx2Buffer_Construct",
         kind: "func",
@@ -17263,6 +17325,11 @@ pub mod bindings {
     };
     pub const Render_LightListResource_Create: Binding = Binding {
         id: "Render_LightListResource_Create",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Render_Material_CountResourceSlots: Binding = Binding {
+        id: "Render_Material_CountResourceSlots",
         kind: "func",
         status: Status::Experimental,
     };
@@ -17368,6 +17435,11 @@ pub mod bindings {
     };
     pub const Sess_Build_SelectableDriverList: Binding = Binding {
         id: "Sess_Build_SelectableDriverList",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Sess_Build_VehicleTyreInfo: Binding = Binding {
+        id: "Sess_Build_VehicleTyreInfo",
         kind: "func",
         status: Status::Experimental,
     };
