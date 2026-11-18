@@ -865,7 +865,15 @@ impl Shell {
             return;
         };
         let (store, profile) = (self.store.clone(), self.library.profile.name.clone());
-        let (server, player) = (room_server(), self.library.profile.name.clone());
+        // Der Name, unter dem der Fahrer im Spiel und im Raum steht: der Discord-Name, wenn
+        // angemeldet — sonst der Name des Spielprofils. Das Profil selbst bleibt unangetastet.
+        let player = self
+            .mp
+            .as_ref()
+            .map(|s| s.name.trim().to_owned())
+            .filter(|n| !n.is_empty())
+            .unwrap_or_else(|| self.library.profile.name.clone());
+        let (server, player) = (room_server(), player);
         let m = &mut self.mp_page;
         m.starting = Some(match &start {
             Start::Create(_) => "create".into(),

@@ -20,7 +20,6 @@ use crate::shell::Shell;
 use crate::theme::Palette;
 use crate::ui::form::{Choice, Notice, SettingRow, SettingsSection, ValuePill, segmented, select, usage_bar};
 
-const DOCS: &str = "https://f1.swofty.net";
 
 fn link_button(id: &'static str, url: &'static str) -> Button {
     Button::new(id)
@@ -388,11 +387,6 @@ impl Shell {
             )
             .child(
                 SettingsSection::new(tr("Links"))
-                    .row(
-                        SettingRow::new(tr("Documentation"))
-                            .description(DOCS)
-                            .control(link_button("settings-docs", DOCS)),
-                    )
                     .row(
                         SettingRow::new(tr("Discord server"))
                             .description(crate::discord::INVITE)

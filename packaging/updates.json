@@ -1,6 +1,6 @@
 {
-  "version": "1.4.1",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.1-setup.exe",
-  "sha256": "ff5ad7d04f0cfb1052bec5dd9724251108577d8892ce02c5df4142593b4d824b",
-  "notiz": "Die Liga-Mod ist nicht mehr im Installer, solange sie noch in Entwicklung ist."
+  "version": "1.4.2",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.2-setup.exe",
+  "sha256": "b89cb353be8a379ed483a2303873ad8ad8c3bca55fc89ef0e0f1c7cceea2d10c",
+  "notiz": "Der Name im Spiel kommt aus Discord; der Banner zeigt unser Bild; fremder Doku-Link raus."
 }

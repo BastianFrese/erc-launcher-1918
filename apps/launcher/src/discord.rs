@@ -17,11 +17,12 @@ pub(crate) const LOGO: &[u8] = include_bytes!("../assets/discord.svg");
 pub(crate) const BLURPLE: u32 = 0x5865f2;
 pub(crate) const BLURPLE_HOVER: u32 = 0x4752c4;
 
+/// Das Bild im Banner: unser Fahrer mit den Zielflaggen.
 fn server_icon(size: f32) -> Div {
     static ICON: LazyLock<Arc<Image>> = LazyLock::new(|| {
         Arc::new(Image::from_bytes(
             ImageFormat::Png,
-            include_bytes!("../assets/discord-server.png").to_vec(),
+            include_bytes!("../assets/erc-racer.png").to_vec(),
         ))
     });
     div()
@@ -64,7 +65,7 @@ pub(crate) fn banner(
                 .size(px(150.))
                 .text_color(white(0.08)),
         )
-        .child(server_icon(if compact { 48. } else { 68. }))
+        .child(server_icon(if compact { 56. } else { 84. }))
         .child(
             v_flex()
                 .flex_1()
