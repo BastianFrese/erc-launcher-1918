@@ -1,6 +1,6 @@
 {
-  "version": "1.4.0",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.0-setup.exe",
-  "sha256": "bd56982be11dbac10f3031cb34e8f32dfbf0379b739c41e61b1ee941ecba90e5",
-  "notiz": "Anmeldung mit Discord ueber unseren eigenen Raumserver; der Name steht danach in der Lobby und online."
+  "version": "1.4.1",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.1-setup.exe",
+  "sha256": "ff5ad7d04f0cfb1052bec5dd9724251108577d8892ce02c5df4142593b4d824b",
+  "notiz": "Die Liga-Mod ist nicht mehr im Installer, solange sie noch in Entwicklung ist."
 }
