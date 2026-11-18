@@ -36,6 +36,7 @@ std::string load_stage();
 void on_stage(void (*fn)(int));
 void hud_fatal();
 void session_host_exit();
+void netplay_exit();
 void load_stall_game_line(const char *line);
 }
 
@@ -829,6 +830,7 @@ void on_exit(const char *fn, UINT code)
 {
     perf::flush(fn);
     runtime::session_host_exit();
+    runtime::netplay_exit();
     if (InterlockedExchange(&exited, 1) || !enter())
         return;
     bool early = !window_reached, stack = code || early;
