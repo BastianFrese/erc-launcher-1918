@@ -133,7 +133,7 @@
                     <span>HUD-Vorschau</span>
                 </button>
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-f1-panel border border-f1-border text-xs font-mono text-zinc-300 shadow-inner">
-                    <span class="text-white font-semibold">1.2.2</span>
+                    <span class="text-white font-semibold">1.3.0</span>
                     <span class="text-zinc-600">·</span>
                     <span class="text-zinc-400">Windows</span>
                 </div>
@@ -185,7 +185,7 @@
 
                 <!-- Primary CTA Download Button -->
                 <div class="w-full flex flex-col items-center">
-                    <a id="downloadBtn" href="ERC-Launcher-1.2.2-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
+                    <a id="downloadBtn" href="ERC-Launcher-1.3.0-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
                         <!-- Download Icon -->
                         <svg id="downloadIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -197,18 +197,18 @@
                     <div class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-zinc-400">
                         <div class="flex items-center gap-1.5">
                             <span class="text-zinc-500">Fassung</span>
-                            <span class="text-zinc-200 font-semibold">1.2.2</span>
+                            <span class="text-zinc-200 font-semibold">1.3.0</span>
                         </div>
                         <span class="text-zinc-700 hidden sm:inline">|</span>
                         <div class="flex items-center gap-1.5">
                             <span class="text-zinc-500">Größe</span>
-                            <span class="text-zinc-200 font-semibold">43,4 MB</span>
+                            <span class="text-zinc-200 font-semibold">62,3 MB</span>
                         </div>
                         <span class="text-zinc-700 hidden sm:inline">|</span>
                         <!-- Interactive SHA-256 Copy Button -->
                         <button onclick="copySha256()" title="Vollständigen SHA-256 Hash kopieren" class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-f1-panel hover:bg-f1-panelLight border border-f1-border/80 hover:border-zinc-600 transition-colors cursor-pointer group">
                             <span class="text-zinc-500">SHA-256</span>
-                            <span class="text-zinc-200 font-semibold group-hover:text-white">25a9e6b9...</span>
+                            <span class="text-zinc-200 font-semibold group-hover:text-white">e60c2a18...</span>
                             <svg id="copyIcon" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-f1-red transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
@@ -217,35 +217,6 @@
                         <span class="text-zinc-700 hidden sm:inline">|</span>
                         <div class="flex items-center gap-1.5">
                             <span class="text-zinc-300">Windows 10/11</span>
-                        </div>
-                    </div>
-                    <!-- Beta channel: its own band under the stable download, not a footnote -->
-                    <div class="mt-7 w-full max-w-2xl rounded-xl bg-f1-panel/70 border border-f1-border overflow-hidden">
-                        <div class="flex items-stretch">
-                            <div class="w-1 shrink-0 bg-f1-red"></div>
-                            <div class="flex-1 p-4 sm:p-5 text-left">
-                                <div class="flex flex-wrap items-center gap-2.5 mb-2.5">
-                                    <span class="px-2 py-0.5 rounded bg-f1-red/15 border border-f1-red/40 font-mono text-[10px] font-bold tracking-[0.2em] text-f1-red uppercase">Beta</span>
-                                    <span class="font-display font-bold text-base sm:text-lg text-white tracking-wide">Testfassung ausprobieren</span>
-                                    <span class="font-mono text-xs text-zinc-500">1.3.0-beta.1 · 43,4 MB</span>
-                                </div>
-                                <p class="text-sm sm:text-[15px] text-zinc-300 leading-relaxed mb-4">
-                                    Die Testfassung: eine <strong class="text-white font-semibold">Ampel für unsere Dienste</strong>
-                                    auf der Startseite — Raum, Relay und Download auf einen Blick — dazu die Zahl
-                                    offener Lobbys. Sie zieht ihre Updates aus einem eigenen Kanal und ersetzt die
-                                    feste Fassung im selben Ordner.
-                                </p>
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <a href="ERC-Launcher-1.3.0-beta.1-setup.exe" download
-                                       class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-f1-red/70 text-f1-red hover:bg-f1-red/10 hover:border-f1-red font-display font-bold text-xs sm:text-sm tracking-wider uppercase transition-colors cursor-pointer">
-                                        Beta installieren
-                                    </a>
-                                    <a href="https://github.com/BastianFrese/erc-launcher-1918/releases/tag/erc-1.3.0-beta.1" target="_blank" rel="noopener"
-                                       class="font-mono text-[11px] text-zinc-400 hover:text-zinc-200 underline">
-                                        Was drin ist
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -271,6 +242,14 @@
                     </div>
 
                     <ul class="space-y-5 text-sm sm:text-[15px] leading-relaxed text-zinc-300">
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Ampel auf der Startseite:</strong> Raumserver, Relay und Download auf einen Blick, alle zwei Minuten geprüft.</div>
+                                </li>
+                                <li class="flex items-start gap-3.5">
+                                    <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
+                                    <div><strong class="text-white font-semibold">Neuer Unterbau:</strong> das Spiel wird in jeder unterstützten Fassung erkannt — Steam und EA App, beide auf 1.0.145.</div>
+                                </li>
                                 <li class="flex items-start gap-3.5">
                                     <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-f1-red shrink-0"></span>
                                     <div><strong class="text-white font-semibold">Der Launcher spricht Deutsch.</strong> Alle Texte sind übersetzt und einfach geschrieben — ohne Fachbegriffe.</div>
@@ -377,7 +356,17 @@
                 </div>
                 <div class="rounded-xl bg-f1-panel/70 border border-f1-border divide-y divide-f1-border">
                     <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
-                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.2.2</div>
+                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.3.0</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Eine Ampel auf der Startseite zeigt, ob Raumserver, Relay und Download
+                            erreichbar sind. Der Unterbau ist dreizehn Fassungen weitergezogen und
+                            erkennt das Spiel jetzt über Muster statt fester Adressen — mit eigenen
+                            Bindungen für Steam und die EA App. Passt nicht jede Strecke ins Spiel,
+                            nennt der Launcher die ausgelassene.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.2.2</div>
                         <div class="text-sm text-zinc-300 leading-relaxed">
                             Auf der Startseite steht jetzt, wie viele gerade spielen — und die
                             Liga-Mod sagt den Stand im Renn-HUD an. Der Discord-Banner ist weg,
@@ -590,7 +579,7 @@
     <!-- Interactive Scripts -->
     <script>
         // Full SHA-256 checksum string for clipboard copy
-        const FULL_SHA256 = "25a9e6b91dd5dc69860d6e46603775b3604749f7e8b33de54fe8a311f410c359";
+        const FULL_SHA256 = "e60c2a1817b43a8b8e2b6706777c94acf899936c44a8f993ead6871b28a3bbe2";
 
         // Toast Helper Function
         let toastTimeout;
@@ -630,7 +619,7 @@
             tempInput.select();
             try {
                 document.execCommand('copy');
-                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.2.2-setup.exe in Zwischenablage.');
+                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.3.0-setup.exe in Zwischenablage.');
             } catch (err) {
                 showToast('Hinweis', 'SHA-256: ' + FULL_SHA256.slice(0, 16) + '...', true);
             }
@@ -640,7 +629,7 @@
         // Echter Download: der Browser laedt die Datei, kein Fortschritt wird erfunden
         function startDownload() {
             // Der Klick selbst laedt (download-Attribut am Link); hier nur die Meldung.
-            showToast('Download gestartet', 'ERC-Launcher-1.2.2-setup.exe (43,4 MB)');
+            showToast('Download gestartet', 'ERC-Launcher-1.3.0-setup.exe (62,3 MB)');
         }
 
         // Interactive F1 Start Gantry Sequence
