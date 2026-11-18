@@ -349,6 +349,16 @@ impl Shell {
             .gap(px(16.))
             .when_some(self.anwesend_zeile(p), |d, zeile| d.child(zeile))
             .when_some(self.ampel_zeile(p), |d, zeile| d.child(zeile))
+            // Der Discord-Banner: erster Weg bei Fragen und Problemen. Wegklickbar, damit er
+            // nicht für immer über den Nachrichten steht.
+            .when(!self.is_card_dismissed(crate::discord::BANNER_CARD_ID), |d| {
+                d.child(crate::discord::banner(
+                    stacked,
+                    cx.listener(|this, _, _, cx| {
+                        this.dismiss_card(crate::discord::BANNER_CARD_ID, cx);
+                    }),
+                ))
+            })
             .child(columns);
         v_flex()
             .size_full()
