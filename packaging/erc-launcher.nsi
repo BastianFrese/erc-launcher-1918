@@ -10,7 +10,7 @@ Unicode true
 SetCompressor /SOLID lzma
 
 !define NAME "ERC Launcher"
-!define VERSION "1.4.0"
+!define VERSION "1.4.1"
 !define HERSTELLER "Erdi's Racing Community"
 ; Ueberschreibbar fuer eine Vorabfassung: makensis //DQUELLE=<ordner> ...
 !ifndef QUELLE
@@ -87,6 +87,10 @@ Section "ERC Launcher" SecMain
   frei:
 
   File /r "${QUELLE}\*.*"
+
+  ; Die Liga-Mod wird nicht mehr mitgeliefert (noch nicht fertig). Wer sie aus einer
+  ; frueheren Fassung hat, verliert sie hier — die Dateien liegen nur im Programmordner.
+  RMDir /r "$INSTDIRddons\erdi.erc-liga"
 
   CreateDirectory "$SMPROGRAMS\ERC Launcher"
   CreateShortCut "$SMPROGRAMS\ERC Launcher\ERC Launcher.lnk" "$INSTDIR\erc-launcher.exe"
