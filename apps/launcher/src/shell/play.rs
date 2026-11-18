@@ -195,14 +195,14 @@ impl Shell {
         }
         // Immer arm: unser Netzweg braucht kein Konto. Wer nicht angemeldet ist, bekam sonst
         // ein Spiel, das auf die Lade im Raumordner nicht hoert (ERC 0.4.7).
-        let armed = Some(swofty_core::multiplayer::bridge::ARMED);
+        let armed = swofty_core::multiplayer::bridge::launch_env(swofty_core::multiplayer::bridge::ARMED);
         let _ = &room;
         match Launch::start(
             &self.store,
             &self.library.profile.name,
             &install,
             self.launch_mode(),
-            armed,
+            Some(armed.as_str()),
             room.as_ref().and_then(|r| r.row_ids.as_deref()),
             room.as_ref().map(|r| r.direct_start.as_str()),
             steam_saves_once,
