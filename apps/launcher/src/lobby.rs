@@ -1130,12 +1130,13 @@ mod view {
             let install = self
                 .install_fuer_lobby()
                 .ok_or_else(|| "F1 25 wurde nicht gefunden.".to_owned())?;
+            let armed = swofty_core::multiplayer::bridge::launch_env(swofty_core::multiplayer::bridge::ARMED);
             let launch = crate::game::Launch::start(
                 &self.store,
                 &self.library.profile.name,
                 &install,
                 self.launch_mode(),
-                Some(swofty_core::multiplayer::bridge::ARMED),
+                Some(armed.as_str()),
                 row_ids.as_deref(),
                 None,
                 false,

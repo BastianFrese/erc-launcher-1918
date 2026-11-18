@@ -88,16 +88,19 @@ pub fn armed_env(value: &str) -> Vec<(&'static str, String)> {
     if TRACE_WHEN_ARMED {
         env.extend(TRACE_ENV.iter().map(|(k, v)| (*k, (*v).to_owned())));
     }
-    // Der Starter baut die Umgebung des Spiels inzwischen neu, statt die eigene zu vererben: er
-    // liest `SWOFTY_SESSION_ENV`, eine JSON-Liste von Paaren, und setzt nur die. Ohne diesen
-    // Eintrag sieht das Spiel `SWOFTY_NETPLAY` nie, der Kern bleibt unarmed und der Raum wird
-    // nie aufgebaut (ERC 1.3.3, "no setup is registered for this target").
-    let pairs: Vec<[String; 2]> = env
+    env
+}
+
+/// Was `Launch::start` an den Starter gibt: dieselben Paare wie [`armed_env`], als JSON-Liste —
+/// so liest der Starter `SWOFTY_SESSION_ENV` (`client::parse_launch_env`) und setzt sie in die
+/// Umgebung des Spiels. Mit dem blossen Wert `armed` kam beim Spiel nie `SWOFTY_NETPLAY` an, der
+/// Kern blieb unarmed und kein Raum wurde aufgebaut (ERC 1.3.3/1.3.4).
+pub fn launch_env(value: &str) -> String {
+    let pairs: Vec<[String; 2]> = armed_env(value)
         .iter()
         .map(|(k, v)| [(*k).to_owned(), v.clone()])
         .collect();
-    env.push((SESSION_ENV, serde_json::to_string(&pairs).unwrap_or_default()));
-    env
+    serde_json::to_string(&pairs).unwrap_or_default()
 }
 
 /// Wipes its key when dropped.
@@ -908,13 +911,7 @@ mod tests {
     #[test]
     fn an_armed_game_carries_its_environment_as_json_pairs() {
         // Der Starter setzt nur, was in SWOFTY_SESSION_ENV steht; er liest es mit genau diesem Parser.
-        let env = armed_env(ARMED);
-        let value = env
-            .iter()
-            .find(|(k, _)| *k == SESSION_ENV)
-            .map(|(_, v)| v)
-            .expect("the session environment is carried");
-        let pairs = crate::multiplayer::client::parse_launch_env(value);
+        let pairs = crate::multiplayer::client::parse_launch_env(&launch_env(ARMED));
         assert!(pairs.iter().any(|(k, v)| k == ENV && v == ARMED), "{pairs:?}");
         assert!(pairs.iter().any(|(k, _)| k == "SWOFTY_NET_TRACE") == TRACE_WHEN_ARMED);
     }
