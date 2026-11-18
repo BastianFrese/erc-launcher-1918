@@ -14,9 +14,6 @@ use sha2::{Digest, Sha256};
 
 /// Wo die Fassungsliste liegt. Ueberschreibbar, damit man es testen kann.
 const URL: &str = "https://download.erdi-erc.de/updates.json";
-/// Dieselbe Liste fuer Vorabfassungen. Eine Beta zieht nur Betas nach — sie soll
-/// nicht heimlich zur festen Fassung werden, und die feste nie eine Beta bekommen.
-const URL_BETA: &str = "https://download.erdi-erc.de/updates-beta.json";
 const LISTE_ENV: &str = "ERC_UPDATES_URL";
 const TIMEOUT: Duration = Duration::from_secs(15);
 const SETUP_NAME: &str = "erc-launcher-setup.exe";
@@ -24,22 +21,14 @@ const SETUP_NAME: &str = "erc-launcher-setup.exe";
 /// auftaucht. Die Liste ist ein paar hundert Bytes.
 const NACHSEHEN: Duration = Duration::from_secs(600);
 
-/// Traegt die laufende Fassung eine Vorabendung (`1.3.0-beta.1`)?
-fn ist_vorab() -> bool {
-    env!("CARGO_PKG_VERSION").contains('-')
-}
-
+/// Eine Liste fuer alle. Den Beta-Kanal gibt es seit 18.11.2026 nicht mehr: eine Fassung, die
+/// sich als Vorabfassung ausgibt, zieht trotzdem die feste Liste — sonst bliebe sie auf einem
+/// Stand stehen, den niemand mehr pflegt.
 fn url() -> String {
     std::env::var(LISTE_ENV)
         .ok()
         .filter(|v| !v.trim().is_empty())
-        .unwrap_or_else(|| {
-            if ist_vorab() {
-                URL_BETA.to_owned()
-            } else {
-                URL.to_owned()
-            }
-        })
+        .unwrap_or_else(|| URL.to_owned())
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -182,14 +171,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn eine_vorabfassung_zieht_ihre_eigene_liste() {
-        // Die feste Fassung liest updates.json, die Beta updates-beta.json.
-        assert!(url().ends_with(".json"));
-        if ist_vorab() {
-            assert!(url().ends_with("updates-beta.json"), "{}", url());
-        } else {
-            assert!(url().ends_with("/updates.json"), "{}", url());
-        }
+    fn jede_fassung_zieht_dieselbe_liste() {
+        assert!(url().ends_with("/updates.json"), "{}", url());
     }
 
     #[test]
