@@ -93,6 +93,9 @@ const runtime::Sig S_NS_VTABLE{"game.net_subsystem_vtable",
                                 0x5814050, runtime::Sig::riprel, 0, 3, 7};
 const runtime::Sig S_SET_MODE{"game.game_set_current_game_mode", "41 56 56 57 55 53 48 81 EC 80 00 00 00 48 8B 81 88 00 00 00", 0x7d07a0};
 const runtime::Sig S_NAME_INDEX{"game.game_modes_name_index", "E9 ?? ?? ?? ?? EF 7B F2 64 0F 84 ?? ?? ?? ?? 2B CA", 0x9763b0};
+// Derselbe Thunk auf F1 25 1.0.145 (Steam 26566308, dieselbe Stelle 0x50 Bytes weiter). Die Bytes hinter dem Sprung
+// sind Daten und je Build andere; abgelesen am entpackten Code (loader.log, 18.11.2026). Ziel: base+0x88ad0f0.
+const runtime::Sig S_NAME_INDEX_145{"game.game_modes_name_index", "E9 ?? ?? ?? ?? 8B 8E 46 CC BF 86 E9 16 52 2B 00", 0x976400};
 const runtime::Sig S_STR_VTABLE{"game.ne_inline_str_vtable",
                                 "48 8D 05 ?? ?? ?? ?? 48 89 44 24 28 48 8D 54 24 28 E8 ?? ?? ?? ?? 48 8B 4B 58 48 8B", 0x5612ea8,
                                 runtime::Sig::riprel, 0, 3, 7};
@@ -281,6 +284,8 @@ void resolve_once()
     if (!a_set_mode)
         a_set_mode = runtime::find(S_SET_MODE, "SetCurrentGameMode", "netplay");
     a_name_index = runtime::find(S_NAME_INDEX, "game mode name index", "netplay");
+    if (!a_name_index)
+        a_name_index = runtime::find(S_NAME_INDEX_145, "game mode name index (1.0.145)", "netplay");
     if (!a_name_index)
         dump_around_name_index();
     a_str_vtable = runtime::find(S_STR_VTABLE, "inline string vtable", "netplay");
