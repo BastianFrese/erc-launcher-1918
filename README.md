@@ -103,6 +103,7 @@ and the supported-build table as part of the build.
 
 | Installer | Tag |
 |---|---|
+| `ERC-Launcher-1.3.4-setup.exe` | [`erc-1.3.4`](../../releases/tag/erc-1.3.4) |
 | `ERC-Launcher-1.3.3-setup.exe` | [`erc-1.3.3`](../../releases/tag/erc-1.3.3) |
 | `ERC-Launcher-1.3.2-setup.exe` | [`erc-1.3.2`](../../releases/tag/erc-1.3.2) |
 | `ERC-Launcher-1.3.1-setup.exe` | [`erc-1.3.1`](../../releases/tag/erc-1.3.1) |

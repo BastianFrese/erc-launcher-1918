@@ -39,6 +39,8 @@ pub const ARMED: &str = "armed";
 /// [`ENV`] for a game the launcher starts for a room: armed, and it passes the title and the notice by
 /// itself so it reaches the main menu without input.
 pub const ARMED_ROOM: &str = "armed;room";
+/// The variable the starter reads the game's environment from, as a JSON list of `[name, value]`.
+pub const SESSION_ENV: &str = "SWOFTY_SESSION_ENV";
 /// Whether a game started with [`ENV`] also gets the core's socket trace ([`TRACE_ENV`]).
 pub const TRACE_WHEN_ARMED: bool = true;
 /// The socket trace, capped at 16 MB, written to `<game>/swofty/net-trace.log`, and the game's own
@@ -86,6 +88,15 @@ pub fn armed_env(value: &str) -> Vec<(&'static str, String)> {
     if TRACE_WHEN_ARMED {
         env.extend(TRACE_ENV.iter().map(|(k, v)| (*k, (*v).to_owned())));
     }
+    // Der Starter baut die Umgebung des Spiels inzwischen neu, statt die eigene zu vererben: er
+    // liest `SWOFTY_SESSION_ENV`, eine JSON-Liste von Paaren, und setzt nur die. Ohne diesen
+    // Eintrag sieht das Spiel `SWOFTY_NETPLAY` nie, der Kern bleibt unarmed und der Raum wird
+    // nie aufgebaut (ERC 1.3.3, "no setup is registered for this target").
+    let pairs: Vec<[String; 2]> = env
+        .iter()
+        .map(|(k, v)| [(*k).to_owned(), v.clone()])
+        .collect();
+    env.push((SESSION_ENV, serde_json::to_string(&pairs).unwrap_or_default()));
     env
 }
 
@@ -892,6 +903,20 @@ mod tests {
             env.contains(&("SWOFTY_NET_TRACE_CAP_KB", "16384".to_owned())),
             TRACE_WHEN_ARMED
         );
+    }
+
+    #[test]
+    fn an_armed_game_carries_its_environment_as_json_pairs() {
+        // Der Starter setzt nur, was in SWOFTY_SESSION_ENV steht; er liest es mit genau diesem Parser.
+        let env = armed_env(ARMED);
+        let value = env
+            .iter()
+            .find(|(k, _)| *k == SESSION_ENV)
+            .map(|(_, v)| v)
+            .expect("the session environment is carried");
+        let pairs = crate::multiplayer::client::parse_launch_env(value);
+        assert!(pairs.iter().any(|(k, v)| k == ENV && v == ARMED), "{pairs:?}");
+        assert!(pairs.iter().any(|(k, _)| k == "SWOFTY_NET_TRACE") == TRACE_WHEN_ARMED);
     }
 
     #[test]
