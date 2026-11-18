@@ -20,6 +20,9 @@ const URL_BETA: &str = "https://download.erdi-erc.de/updates-beta.json";
 const LISTE_ENV: &str = "ERC_UPDATES_URL";
 const TIMEOUT: Duration = Duration::from_secs(15);
 const SETUP_NAME: &str = "erc-launcher-setup.exe";
+/// Wie oft im Betrieb nachgesehen wird, damit eine neue Fassung ohne Neustart
+/// auftaucht. Die Liste ist ein paar hundert Bytes.
+const NACHSEHEN: Duration = Duration::from_secs(600);
 
 /// Traegt die laufende Fassung eine Vorabendung (`1.3.0-beta.1`)?
 fn ist_vorab() -> bool {
@@ -228,22 +231,35 @@ mod fenster {
     use crate::theme::Palette;
 
     impl Shell {
-        /// Einmal beim Start nachsehen. Netzverkehr im Hintergrund, die Oberflaeche
-        /// wartet nicht darauf.
+        /// Beim Start und danach alle zehn Minuten nachsehen: eine Fassung, die
+        /// waehrend des Betriebs erscheint, bekommt ihren Knopf ohne Neustart.
+        /// Netzverkehr im Hintergrund, die Oberflaeche wartet nicht darauf.
         pub(crate) fn watch_aktualisierung(window: &mut Window, cx: &mut Context<Self>) {
             cx.spawn_in(window, async move |this, cx| {
                 // Dem Fenster Zeit geben, sich zu zeigen.
                 cx.background_executor()
                     .timer(std::time::Duration::from_secs(3))
                     .await;
-                let stand = cx
-                    .background_executor()
-                    .spawn(async { aktualisierung::pruefen() })
-                    .await;
-                let _ = this.update_in(cx, |s, _, cx| {
-                    s.aktualisierung = stand;
-                    cx.notify();
-                });
+                loop {
+                    let stand = cx
+                        .background_executor()
+                        .spawn(async { aktualisierung::pruefen() })
+                        .await;
+                    // Ein Netzfehler darf ein Angebot, das schon dasteht, nicht wegnehmen.
+                    let behalten = matches!(&stand, Stand::Neu(_));
+                    let offen = this.update_in(cx, |s, _, cx| {
+                        if behalten || !matches!(s.aktualisierung, Stand::Neu(_)) {
+                            s.aktualisierung = stand;
+                            cx.notify();
+                        }
+                    });
+                    if offen.is_err() {
+                        return; // das Fenster ist zu
+                    }
+                    cx.background_executor()
+                        .timer(aktualisierung::NACHSEHEN)
+                        .await;
+                }
             })
             .detach();
         }

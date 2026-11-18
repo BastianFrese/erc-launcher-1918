@@ -1,6 +1,6 @@
 {
-  "version": "1.3.1",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.3.1-setup.exe",
-  "sha256": "1c25da59bc9868591e44d4849a13a5dc8a1faebf4eb733cca1653a218569f9b9",
-  "notiz": "Behebt den haengenden Ladebildschirm beim Raumbeitritt auf F1 25 Build 1.0.145."
+  "version": "1.3.2",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.3.2-setup.exe",
+  "sha256": "8f067045a70012eba0d0aa06287ee83395f2fceb0ac60c6917e9cf2f342100f4",
+  "notiz": "Der Launcher sieht alle zehn Minuten nach neuen Fassungen nach; Pruefung der Spiel-Fassung wieder auf die gemessenen Werte zurueck."
 }
