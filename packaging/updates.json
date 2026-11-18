@@ -1,6 +1,6 @@
 {
-  "version": "1.3.5",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.3.5-setup.exe",
-  "sha256": "29148b1dbada4788ac2464532840e9e71cf47c94f194d539af9c6f85df799a90",
-  "notiz": "Raumbeitritt: der Launcher uebergibt dem Starter die Umgebung als JSON-Liste, so wie er sie liest."
+  "version": "1.3.6",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.3.6-setup.exe",
+  "sha256": "c1d0438876cc6a60215648d675c86f045d59e5a26d2d0e23d775d5875e897cb9",
+  "notiz": "Diagnosefassung: findet der Kern den Spielmodus auf dieser F1-25-Fassung nicht, steht der Code-Ausschnitt im loader.log."
 }

@@ -13,6 +13,7 @@
 #include "netplay_drive_logic.hpp"
 #include "netplay_room.hpp"
 #include "room_cover.hpp"
+#include "title_skip.hpp"
 
 // Room set-up with no LAN tile and no main menu (research/multiplayer/ns-resolve.md, carcat-direct.md).
 //
@@ -231,6 +232,39 @@ int session_role_now()
     return ns ? room::session_role(memory(), reinterpret_cast<uint64_t>(ns)) : -1;
 }
 
+// Diagnose fuer einen Build, auf dem das Muster von game.game_modes_name_index nicht trifft (F1 25
+// 1.0.145, 18.11.2026): das Fenster um die erwartete Stelle in den loader.log schreiben, damit sich das
+// Muster am entpackten Code ablesen laesst. Der Versatz kommt von vm.node_set_bool, das in derselben
+// Codegegend liegt und auf diesem Build aufgeloest wurde (KB 0x973e20).
+void dump_around_name_index()
+{
+    static bool once = false;
+    if (once)
+        return;
+    once = true;
+    uintptr_t base = swofty::api->module_base();
+    uintptr_t anchor = runtime::title::node_set_bool();
+    if (!anchor) {
+        swofty::log("[netplay] name-index dump: node_set_bool is not resolved either, so there is no offset to take");
+        return;
+    }
+    intptr_t delta = intptr_t(anchor) - intptr_t(base + 0x973e20);
+    uintptr_t at = base + 0x9763b0 + uintptr_t(delta);
+    constexpr uintptr_t BACK = 0x400, LEN = 0x800;
+    uintptr_t from = at - BACK;
+    swofty::log("[netplay] name-index dump: node_set_bool base+0x%llx, offset %+lld, window base+0x%llx..0x%llx (16 bytes a line)",
+                (unsigned long long)(anchor - base), (long long)delta, (unsigned long long)(from - base),
+                (unsigned long long)(from + LEN - base));
+    for (uintptr_t p = from; p < from + LEN; p += 16) {
+        if (!runtime::readable(reinterpret_cast<void *>(p), 16))
+            continue;
+        auto *b = reinterpret_cast<const uint8_t *>(p);
+        swofty::log("[netplay]   +0x%llx  %02x %02x %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x %02x %02x",
+                    (unsigned long long)(p - base), b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10],
+                    b[11], b[12], b[13], b[14], b[15]);
+    }
+}
+
 void resolve_once()
 {
     if (resolved)
@@ -247,6 +281,8 @@ void resolve_once()
     if (!a_set_mode)
         a_set_mode = runtime::find(S_SET_MODE, "SetCurrentGameMode", "netplay");
     a_name_index = runtime::find(S_NAME_INDEX, "game mode name index", "netplay");
+    if (!a_name_index)
+        dump_around_name_index();
     a_str_vtable = runtime::find(S_STR_VTABLE, "inline string vtable", "netplay");
     a_mp_mode = runtime::find(S_MP_MODE, "changeMPMode", "netplay");
     a_presence = runtime::find(S_PRESENCE, "declareActivePresence", "netplay");
