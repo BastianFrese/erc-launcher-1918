@@ -91,11 +91,15 @@ pub fn avatar_link(id: Option<&str>, avatar: Option<&str>) -> Option<String> {
     hash_ok.then(|| format!("https://cdn.discordapp.com/avatars/{id}/{avatar}.png?size=128"))
 }
 
+/// Wo die Anmeldung laeuft: unser Raumserver. Ueberschreibbar fuer eine Probe.
+pub const AUTH_URL: &str = "https://raum.erdi-erc.de";
+const AUTH_ENV: &str = "ERC_AUTH_URL";
+
 fn base_url() -> String {
-    std::env::var(crate::catalog::URL_ENV)
+    std::env::var(AUTH_ENV)
         .ok()
         .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| crate::catalog::DEFAULT_URL.to_owned())
+        .unwrap_or_else(|| AUTH_URL.to_owned())
         .trim_end_matches('/')
         .to_owned()
 }
