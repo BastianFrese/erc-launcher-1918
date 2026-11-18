@@ -213,8 +213,16 @@ bool verified_build()
     auto b = reinterpret_cast<const uint8_t *>(swofty::api->module_base());
     auto nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(b + reinterpret_cast<const IMAGE_DOS_HEADER *>(b)->e_lfanew);
     uint32_t stamp = nt->FileHeader.TimeDateStamp, size = nt->OptionalHeader.SizeOfImage;
-    return (stamp == 1789118616u && size > 0x6000000) || (stamp == 1789128892u && size == 0x155dc000) ||
-           (stamp == 1794312636u && size == 0x18434000);
+    // SizeOfImage, not the file size. The KB build reports 0x18434000; the 1.0.145 builds are smaller and
+    // differ from one another (Steam 26566308 ends at 0x158432238), so a stamp and a window decide rather
+    // than an exact constant, which only ever matched the KB build.
+    if (stamp == 1789118616u)
+        return size > 0x6000000u;
+    if (stamp == 1789128892u)
+        return size > 0x14000000u && size < 0x16000000u;
+    if (stamp == 1794312636u || stamp == 1794315435u)
+        return size > 0x14000000u && size < 0x17000000u;
+    return false;
 }
 
 uintptr_t manager_entrants_system()

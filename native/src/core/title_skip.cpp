@@ -212,8 +212,14 @@ void title_setup()
     ga.intro_vt = runtime::find(SIG_INTRO_VT, "title", "title");
     ga.bool_type = runtime::find(SIG_BOOL_TYPE, "title", "title");
     ga.empty_node = runtime::find(SIG_EMPTY_NODE, "title", "title");
+    auto *base = reinterpret_cast<const uint8_t *>(swofty::api->module_base());
+    auto *nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(
+        base + reinterpret_cast<const IMAGE_DOS_HEADER *>(base)->e_lfanew);
+    uint32_t stamp = nt->FileHeader.TimeDateStamp, image_size = nt->OptionalHeader.SizeOfImage;
     if (!runtime::verified_build()) {
         title_why = "StateIntro's state layout (+0xcd0, +0xef3, +0xef4) is not verified on this build";
+        swofty::log("[title] off: %s (stamp %u, image size 0x%x, distribution '%s')", title_why.c_str(),
+                    unsigned(stamp), unsigned(image_size), runtime::build_distribution().c_str());
         return;
     }
     if (!ga.intro_update || !ga.intro_vt || !ga.node_set_bool || !ga.sync_complete || !ga.bool_type || !ga.empty_node) {
