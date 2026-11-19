@@ -44,6 +44,41 @@ const PING: &[u8] = b"ERC-PING";
 /// Antwort des Hosts darauf.
 const PONG: &[u8] = b"ERC-PONG";
 
+/// Wer wissen will, wo die anderen erreichbar sind: `ERC-PEERS` + Raum + eigene
+/// Kennung. Die Antwort kommt unverpackt zurück (nicht mit `ERC-RELAY` davor), damit
+/// alte Launcher sie verwerfen und nie ans Spiel weiterreichen.
+const PEERS: &[u8] = b"ERC-PEERS";
+const PEERS_EVERY: Duration = Duration::from_secs(10);
+/// So lange wird gelocht, dann eine Minute Pause.
+const LOCH_FENSTER: Duration = Duration::from_secs(3);
+const LOCH_PAUSE: Duration = Duration::from_secs(60);
+const LOCH_ABSTAND_MS: u64 = 200;
+const LOCH_VERSUCHE: u32 = 15;
+/// Stille auf einem Direktweg: erst Lebenszeichen, dann zurück über den Relay.
+const DIREKT_LEBEN: Duration = Duration::from_secs(10);
+const DIREKT_TOT: Duration = Duration::from_secs(30);
+
+/// Direktverbindung nur auf Wunsch: `ERC_DIREKT=1`. Ohne den Schalter läuft alles
+/// wie bisher über den Relay. Siehe docs/plan-2026-11-18-direktverbindung.md.
+fn direkt_erlaubt() -> bool {
+    std::env::var("ERC_DIREKT").ok().as_deref() == Some("1")
+}
+
+/// Was der Relay über die anderen sagt und was sich davon bewährt hat.
+#[derive(Default)]
+struct Wege {
+    /// Vom Relay gemeldet: Kennung → öffentliche Adresse.
+    tabelle: HashMap<u8, SocketAddr>,
+    /// Bewährt: dorthin wird direkt gesendet, mit dem Zeitpunkt des letzten Pakets.
+    direkt: HashMap<u8, (SocketAddr, Instant)>,
+    /// Laufender Lochversuch: Start und wie viele Prüfrufe schon raus sind.
+    versuch: HashMap<u8, (Instant, u32)>,
+    /// Wann zuletzt nach der Tabelle gefragt wurde.
+    gefragt: Option<Instant>,
+    /// Wann zuletzt Lebenszeichen auf den Direktwegen rausgingen.
+    gelebt: Option<Instant>,
+}
+
 /// The key every member of a room seals with. The room code is the shared secret
 /// — whoever has the code can read the room, and nobody else can.
 pub fn room_key(code: &str) -> [u8; 32] {
@@ -94,6 +129,9 @@ pub struct RelayUdp {
     heard_at: AtomicU64,
     /// The host's mod fingerprint as compressed JSON, sent to guests that ask.
     abdruck: RwLock<Option<Vec<u8>>>,
+    /// Direktwege (nur mit `ERC_DIREKT=1` benutzt).
+    wege: RwLock<Wege>,
+    erlaubt: bool,
 }
 
 impl RelayUdp {
@@ -125,6 +163,8 @@ impl RelayUdp {
             unknown: AtomicU64::new(0),
             heard_at: AtomicU64::new(0),
             abdruck: RwLock::default(),
+            wege: RwLock::default(),
+            erlaubt: direkt_erlaubt(),
         })
     }
 
@@ -408,6 +448,145 @@ pub fn room_bytes(room: &str) -> io::Result<[u8; ROOM_LEN]> {
     Ok(out)
 }
 
+impl RelayUdp {
+    /// Tabelle erfragen, lochen, Lebenszeichen halten. Tut nichts, solange
+    /// `ERC_DIREKT` nicht gesetzt ist.
+    fn wege_pflegen(&self) {
+        if !self.erlaubt {
+            return;
+        }
+        let jetzt = Instant::now();
+
+        let fragen = {
+            let wege = self.wege.read().unwrap_or_else(|e| e.into_inner());
+            wege.gefragt
+                .map(|w| jetzt.duration_since(w) >= PEERS_EVERY)
+                .unwrap_or(true)
+        };
+        if fragen {
+            let mut ruf = Vec::with_capacity(PEERS.len() + ROOM_LEN + 1);
+            ruf.extend_from_slice(PEERS);
+            ruf.extend_from_slice(&self.room);
+            ruf.push(self.me);
+            let _ = self.socket.send_to(&ruf, self.relay);
+            self.wege
+                .write()
+                .unwrap_or_else(|e| e.into_inner())
+                .gefragt = Some(jetzt);
+        }
+
+        let mut raus: Vec<SocketAddr> = Vec::new();
+        {
+            let mut wege = self.wege.write().unwrap_or_else(|e| e.into_inner());
+
+            // Lochen: was der Relay meldet und sich noch nicht bewährt hat.
+            let offen: Vec<(u8, SocketAddr)> = wege
+                .tabelle
+                .iter()
+                .filter(|(k, _)| !wege.direkt.contains_key(k))
+                .map(|(k, a)| (*k, *a))
+                .collect();
+            for (kennung, adresse) in offen {
+                match wege.versuch.get(&kennung).copied() {
+                    None => {
+                        wege.versuch.insert(kennung, (jetzt, 1));
+                        raus.push(adresse);
+                    }
+                    Some((start, anzahl)) => {
+                        let seit = jetzt.duration_since(start);
+                        if seit < LOCH_FENSTER
+                            && anzahl < LOCH_VERSUCHE
+                            && seit.as_millis() as u64 >= u64::from(anzahl) * LOCH_ABSTAND_MS
+                        {
+                            wege.versuch.insert(kennung, (start, anzahl + 1));
+                            raus.push(adresse);
+                        } else if seit >= LOCH_PAUSE {
+                            wege.versuch.insert(kennung, (jetzt, 1));
+                            raus.push(adresse);
+                        }
+                    }
+                }
+            }
+
+            // Tote Wege zurück auf den Relay, bewährte am Leben halten.
+            let tot: Vec<u8> = wege
+                .direkt
+                .iter()
+                .filter(|(_, (_, zuletzt))| jetzt.duration_since(*zuletzt) >= DIREKT_TOT)
+                .map(|(k, _)| *k)
+                .collect();
+            for kennung in tot {
+                wege.direkt.remove(&kennung);
+                wege.versuch.remove(&kennung);
+            }
+            let leben_faellig = wege
+                .gelebt
+                .map(|w| jetzt.duration_since(w) >= DIREKT_LEBEN)
+                .unwrap_or(true);
+            if leben_faellig && !wege.direkt.is_empty() {
+                wege.gelebt = Some(jetzt);
+                for (adresse, zuletzt) in wege.direkt.values() {
+                    if jetzt.duration_since(*zuletzt) >= DIREKT_LEBEN {
+                        raus.push(*adresse);
+                    }
+                }
+            }
+        }
+
+        for adresse in raus {
+            let _ = self.socket.send_to(&self.frame(PING), adresse);
+        }
+    }
+
+    /// Die Antwort auf `ERC-PEERS`: je Zeile `kennung=adresse:port`.
+    fn tabelle_lesen(&self, packet: &[u8]) {
+        let ab = PEERS.len() + ROOM_LEN;
+        if packet.len() <= ab {
+            return;
+        }
+        let text = String::from_utf8_lossy(&packet[ab..]);
+        let mut wege = self.wege.write().unwrap_or_else(|e| e.into_inner());
+        wege.tabelle.clear();
+        for zeile in text.lines() {
+            let Some((nr, adresse)) = zeile.split_once('=') else {
+                continue;
+            };
+            let (Ok(kennung), Ok(adresse)) = (
+                nr.trim().parse::<u8>(),
+                adresse.trim().parse::<SocketAddr>(),
+            ) else {
+                continue;
+            };
+            if kennung != self.me {
+                wege.tabelle.insert(kennung, adresse);
+            }
+        }
+    }
+
+    /// Kam das von einem Gegenüber, dessen Adresse der Relay genannt hat?
+    fn ist_peer(&self, from: SocketAddr) -> bool {
+        self.erlaubt
+            && self
+                .wege
+                .read()
+                .unwrap_or_else(|e| e.into_inner())
+                .tabelle
+                .values()
+                .any(|a| *a == from)
+    }
+
+    /// Ein Paket von der Tabellenadresse beweist den Direktweg.
+    fn weg_bestaetigen(&self, kennung: u8, from: SocketAddr) {
+        let mut wege = self.wege.write().unwrap_or_else(|e| e.into_inner());
+        if wege.tabelle.get(&kennung) == Some(&from)
+            || wege.direkt.get(&kennung).map(|(a, _)| *a) == Some(from)
+        {
+            wege.direkt.insert(kennung, (from, Instant::now()));
+            wege.versuch.remove(&kennung);
+        }
+    }
+}
+
 impl Transport for RelayUdp {
     fn local_addr(&self) -> SocketAddr {
         self.relay
@@ -443,7 +622,19 @@ impl Transport for RelayUdp {
                 "the datagram does not fit",
             ));
         }
-        self.socket.send_to(&self.frame(payload), self.relay).map(|_| ())
+        // Bewährter Direktweg, sonst der Relay. Der Umschlag bleibt gleich.
+        let ziel = if self.erlaubt {
+            self.wege
+                .read()
+                .unwrap_or_else(|e| e.into_inner())
+                .direkt
+                .get(&to)
+                .map(|(adresse, _)| *adresse)
+                .unwrap_or(self.relay)
+        } else {
+            self.relay
+        };
+        self.socket.send_to(&self.frame(payload), ziel).map(|_| ())
     }
 
     fn recv(&self, buf: &mut [u8], timeout: Duration) -> io::Result<Option<(u8, usize)>> {
@@ -455,18 +646,29 @@ impl Transport for RelayUdp {
                 return Ok(None);
             }
             self.announce_if_due();
+            self.wege_pflegen();
             self.socket
                 .set_read_timeout(Some(left.max(Duration::from_millis(1))))?;
             match self.socket.recv_from(&mut packet) {
                 Ok((n, from)) => {
-                    // Only the relay may talk to us.
-                    if from.ip() != self.relay.ip() {
+                    // Die Adresstabelle des Relays gehört nie ins Spiel.
+                    if packet[..n].starts_with(PEERS) {
+                        self.tabelle_lesen(&packet[..n]);
+                        continue;
+                    }
+                    // Der Relay darf immer reden; ein Gegenüber nur, wenn der Relay
+                    // seine Adresse genannt hat.
+                    let vom_relay = from.ip() == self.relay.ip();
+                    if !vom_relay && !self.ist_peer(from) {
                         self.unknown.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
                     let Some((sender, payload)) = self.unframe(&packet[..n]) else {
                         continue;
                     };
+                    if !vom_relay {
+                        self.weg_bestaetigen(sender, from);
+                    }
                     // Whoever turns up teaches us the room: the launcher polls
                     // `seen` and hands new members to the bridge.
                     self.seen
@@ -477,8 +679,11 @@ impl Transport for RelayUdp {
                         if payload == ABDRUCK_FRAGE {
                             self.sende_abdruck();
                         } else if payload == PING {
-                            // Der Gast will wissen, ob der Weg steht: kurz antworten.
-                            let _ = self.socket.send_to(&self.frame(PONG), self.relay);
+                            // Der Gast will wissen, ob der Weg steht: kurz antworten —
+                            // und zwar dorthin, woher der Ruf kam, sonst erfährt ein
+                            // Lochversuch nie, dass er angekommen ist.
+                            let ziel = if vom_relay { self.relay } else { from };
+                            let _ = self.socket.send_to(&self.frame(PONG), ziel);
                         }
                         continue;
                     }
@@ -659,5 +864,45 @@ mod tests {
         let (n, _) = list.recv_from(&mut antwort).unwrap();
         let text = String::from_utf8_lossy(&antwort[..n]);
         assert!(text.contains("TEST"), "Raum fehlt in der Liste: {text}");
+    }
+
+    #[test]
+    fn liest_die_adresstabelle_des_relays() {
+        let a = RelayUdp::new("127.0.0.1:9", "ABCD", 1).unwrap();
+        a.tabelle_lesen(b"ERC-PEERSABCD\n2=1.2.3.4:5000\n3=[2a02::1]:7000\n1=9.9.9.9:1\n");
+        let wege = a.wege.read().unwrap();
+        assert_eq!(
+            wege.tabelle.get(&2),
+            Some(&SocketAddr::from(([1, 2, 3, 4], 5000)))
+        );
+        assert!(wege.tabelle.get(&3).is_some(), "IPv6 fehlt");
+        assert!(wege.tabelle.get(&1).is_none(), "eigene Kennung gehört nicht hinein");
+
+        // Eine leere Tabelle räumt die alte ab.
+        a.tabelle_lesen(b"ERC-PEERSABCD\n");
+        assert!(a.wege.read().unwrap().tabelle.is_empty());
+    }
+
+    #[test]
+    fn mit_bewaehrtem_weg_geht_es_direkt_am_relay_vorbei() {
+        let horcher = UdpSocket::bind("127.0.0.1:0").unwrap();
+        horcher
+            .set_read_timeout(Some(Duration::from_millis(500)))
+            .unwrap();
+        let ziel = horcher.local_addr().unwrap();
+
+        let mut t = RelayUdp::new("127.0.0.1:9", "ABCD", 1).unwrap();
+        t.erlaubt = true;
+        t.set_peers(&HashMap::from([(2, t.relay_addr())])).unwrap();
+        t.wege
+            .write()
+            .unwrap()
+            .direkt
+            .insert(2, (ziel, Instant::now()));
+
+        t.send(2, b"hallo").unwrap();
+        let mut puffer = [0u8; 64];
+        let (n, _) = horcher.recv_from(&mut puffer).unwrap();
+        assert_eq!(&puffer[HEADER..n], b"hallo");
     }
 }
