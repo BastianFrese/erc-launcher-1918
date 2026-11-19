@@ -15,6 +15,7 @@ impl Shell {
         let forced = std::env::var_os("ERC_ONBOARDING").is_some();
         if !forced && !self.store.config().needs_onboarding() {
             window.focus(&self.root_focus, cx);
+            self.check_ad_consent(window, cx);
             return;
         }
         self.start_onboarding(mode, window, cx);

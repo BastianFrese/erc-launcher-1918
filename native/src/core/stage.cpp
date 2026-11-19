@@ -201,28 +201,24 @@ std::string load_stage()
     return n && n < sizeof buf ? std::string(buf, n) : std::string("window");
 }
 
-bool same_build()
+ImageId image_id()
 {
     auto b = reinterpret_cast<const uint8_t *>(swofty::api->module_base());
     auto nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(b + reinterpret_cast<const IMAGE_DOS_HEADER *>(b)->e_lfanew);
-    return nt->FileHeader.TimeDateStamp == 1789118616u && nt->OptionalHeader.SizeOfImage > 0x6000000;
+    return {nt->FileHeader.TimeDateStamp, nt->OptionalHeader.SizeOfImage};
+}
+
+bool same_build()
+{
+    ImageId id = image_id();
+    return id.stamp == 1789118616u && id.size > 0x6000000;
 }
 
 bool verified_build()
 {
-    auto b = reinterpret_cast<const uint8_t *>(swofty::api->module_base());
-    auto nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(b + reinterpret_cast<const IMAGE_DOS_HEADER *>(b)->e_lfanew);
-    uint32_t stamp = nt->FileHeader.TimeDateStamp, size = nt->OptionalHeader.SizeOfImage;
-    // SizeOfImage, not the file size. Every value here was measured on the build it names: the KB build
-    // and Steam 26566308 both report 0x18434000, the older EA build 0x155dc000. A window looked plausible
-    // on paper and was wrong (it cut Steam 26566308 out), so the exact pair stays.
-    if (stamp == 1789118616u)
-        return size == 0x18434000u;
-    if (stamp == 1789128892u)
-        return size == 0x155dc000u;
-    if (stamp == 1794312636u)
-        return size == 0x18434000u;
-    return false;
+    auto [stamp, size] = image_id();
+    return (stamp == 1789118616u && size > 0x6000000) || (stamp == 1789128892u && size == 0x155dc000) ||
+           (stamp == 1794312636u && size == 0x18434000);
 }
 
 uintptr_t manager_entrants_system()

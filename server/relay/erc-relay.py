@@ -15,14 +15,21 @@ mit der Kennung des Absenders davor wie sie ankommt.
 
 Warum so einfach: Der Launcher setzt die Kennung ohnehin vor jedes Paket, um
 Mitglieder zu unterscheiden. Der Relay muss sie nur weiterreichen.
+
+Auf Anfrage (b"ERC-PEERS" + Raum + eigene Kennung) gibt der Relay ausserdem die
+Adressen der anderen Mitglieder heraus, damit zwei Rechner es direkt versuchen
+koennen. Private und nicht-globale Adressen bleiben draussen. Alte Launcher merken
+von dieser Nachricht nichts; sie verwerfen alles, was nicht mit ERC-RELAY beginnt.
 """
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import signal
 import socket
+import sys
 import time
 
 PORT = 35501
@@ -35,6 +42,12 @@ LISTE = b"ERC-LOBBYS"
 
 # Der Host beschreibt seine Lobby: ERC-RAUM name=…;kat=…
 BESCHREIBUNG = b"ERC-RAUM "
+
+# Wer wissen will, wo die anderen erreichbar sind: ERC-PEERS + Raum(4) + eigene Kennung(1)
+# Antwort (und nur an Mitglieder des Raums):
+#     ERC-PEERS + Raum(4) + "\n" + je Zeile "kennung=adresse:port"
+# Alte Launcher verwerfen alles, was nicht mit ERC-RELAY beginnt — sie merken nichts davon.
+PEERS = b"ERC-PEERS"
 
 
 def zerlegen(paket: bytes):
@@ -97,6 +110,54 @@ def zustand_sichern(raeume, beschreibung) -> None:
         print(f"Stand nicht gesichert: {e}", flush=True)
 
 
+def ist_global(adresse) -> bool:
+    """Nur Adressen ausliefern, die ein Fremder auch erreichen kann.
+
+    Ein Teilnehmer im eigenen Netz erscheint sonst als 192.168.x.x, und jeder Gast
+    locht still ins Leere.
+    """
+    try:
+        return ipaddress.ip_address(adresse[0]).is_global
+    except ValueError:
+        return False
+
+
+def adresstext(adresse) -> str:
+    """`ip:port`, bei IPv6 mit Klammern."""
+    host, port = adresse[0], adresse[1]
+    return f"[{host}]:{port}" if ":" in host else f"{host}:{port}"
+
+
+def peers_anfrage(paket: bytes, raeume, quelle):
+    """Raum, Kennung und Mitglieder aus einer ERC-PEERS-Anfrage.
+
+    Die Mitglieder sind None, wenn der Fragende nicht schon im Raum steht — dann
+    bekommt er keine Adressen. (Schwach: ein einziges Spielpaket macht zum Mitglied.
+    Bewusst so, siehe docs/plan-2026-11-18-direktverbindung.md.)
+    """
+    ab = len(PEERS)
+    if len(paket) < ab + RAUM_LEN + 1:
+        return None, None, None
+    raum = paket[ab : ab + RAUM_LEN].decode("ascii", "ignore")
+    if not raum.isalnum():
+        return None, None, None
+    kennung = paket[ab + RAUM_LEN]
+    mitglieder = raeume.get(raum) or {}
+    if not any(adresse == quelle for adresse, _ in mitglieder.values()):
+        return raum, kennung, None
+    return raum, kennung, mitglieder
+
+
+def adresstabelle(raum: str, kennung: int, mitglieder) -> bytes:
+    """Die Tabelle, die ein Mitglied bekommt — ohne es selbst, ohne unerreichbare Adressen."""
+    zeilen = [
+        f"{k}={adresstext(adresse)}"
+        for k, (adresse, _) in mitglieder.items()
+        if k != kennung and ist_global(adresse)
+    ]
+    return PEERS + raum.encode() + b"\n" + "\n".join(zeilen).encode()
+
+
 def main() -> None:
     raeume, beschreibung = zustand_laden()
     schmutzig = False
@@ -110,8 +171,17 @@ def main() -> None:
     signal.signal(signal.SIGINT, bei_stopp)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Groessere Puffer: ein Schub (Nachladen, Netz-Wackler) soll nicht im
+    # Empfangspuffer verloren gehen. Der Kern kappt die Werte auf
+    # net.core.rmem_max / wmem_max -- im Gast ueber lxc.sysctl gesetzt.
+    for name, wert in (("SO_RCVBUF", 8 * 1024 * 1024), ("SO_SNDBUF", 4 * 1024 * 1024)):
+        try:
+            s.setsockopt(socket.SOL_SOCKET, getattr(socket, name), wert)
+        except OSError as e:
+            print(f"{name} nicht gesetzt: {e}", flush=True)
     s.bind(("0.0.0.0", PORT))
-    print(f"ERC-Relay auf UDP {PORT}", flush=True)
+    echo = s.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
+    print(f"ERC-Relay auf UDP {PORT} (Empfangspuffer {echo} Byte)", flush=True)
 
     while True:
         try:
@@ -138,6 +208,21 @@ def main() -> None:
                 zeilen.append(f"{raum}|{name}|{anzahl}|{kat}")
             s.sendto("\n".join(zeilen).encode(), quelle)
             print(f"[{time.strftime('%H:%M:%S')}] Lobbyliste an {quelle}: {len(zeilen) - 1} Raum/Räume", flush=True)
+            continue
+
+        # Adresstabelle anfragen — nur an Mitglieder des Raums, nur erreichbare Adressen.
+        if paket.startswith(PEERS):
+            raum, kennung, mitglieder = peers_anfrage(paket, raeume, quelle)
+            if raum is None:
+                continue
+            if mitglieder is None:
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] Adresstabelle für Raum {raum} an {quelle} "
+                    f"verweigert — kein Mitglied",
+                    flush=True,
+                )
+                continue
+            s.sendto(adresstabelle(raum, kennung, mitglieder), quelle)
             continue
 
         teile = zerlegen(paket)
@@ -200,5 +285,49 @@ def main() -> None:
             gesichert, schmutzig = jetzt, False
 
 
+def selbsttest() -> None:
+    """Was die Adresstabelle falsch machen kann — ohne Netz pruefbar."""
+    jetzt = time.time()
+    raeume = {
+        "ABCD": {
+            1: (("80.41.86.192", 5000), jetzt),
+            2: (("192.168.100.7", 6000), jetzt),
+            3: (("2a02:8109::1", 7000), jetzt),
+        }
+    }
+    assert ist_global(("80.41.86.192", 5000)) is True
+    assert ist_global(("192.168.100.7", 5000)) is False
+    assert ist_global(("2a02:8109::1", 7000)) is True
+    assert ist_global(("100.64.1.2", 5000)) is False  # CGNAT
+    assert adresstext(("80.41.86.192", 5000)) == "80.41.86.192:5000"
+    assert adresstext(("2a02:8109::1", 7000)) == "[2a02:8109::1]:7000"
+
+    anfrage = PEERS + b"ABCD" + bytes([1])
+    raum, kennung, mitglieder = peers_anfrage(anfrage, raeume, ("80.41.86.192", 5000))
+    assert (raum, kennung) == ("ABCD", 1)
+    assert mitglieder is not None
+
+    # Wer nicht im Raum steht, bekommt keine Adressen.
+    _, _, fremd = peers_anfrage(anfrage, raeume, ("1.2.3.4", 1))
+    assert fremd is None
+    # Kurze oder unsinnige Anfragen werden nicht beantwortet.
+    assert peers_anfrage(PEERS + b"AB", raeume, ("80.41.86.192", 5000)) == (None, None, None)
+    assert peers_anfrage(PEERS + b"AB!D" + bytes([1]), raeume, ("80.41.86.192", 5000)) == (None, None, None)
+
+    # Eigene Kennung faellt raus, private Adressen fallen raus.
+    tabelle = adresstabelle("ABCD", 1, mitglieder).decode()
+    zeilen = tabelle.splitlines()
+    assert zeilen[0] == "ERC-PEERSABCD", zeilen[0]
+    assert zeilen[1:] == ["3=[2a02:8109::1]:7000"], zeilen[1:]
+
+    # Leere Tabelle ist eine leere Tabelle, kein Fehler.
+    leer = adresstabelle("ABCD", 1, {1: (("80.41.86.192", 5000), jetzt)}).decode()
+    assert leer == "ERC-PEERSABCD\n", repr(leer)
+    print("Selbsttest grün")
+
+
 if __name__ == "__main__":
-    main()
+    if "--selbsttest" in sys.argv:
+        selbsttest()
+    else:
+        main()

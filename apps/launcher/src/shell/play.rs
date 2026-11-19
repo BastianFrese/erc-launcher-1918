@@ -134,6 +134,9 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> bool {
         crate::app_log::note(&checked.timings.line());
+        for line in &checked.lines {
+            crate::app_log::note(line);
+        }
         let stale = self.library.profile.name != checked.profile
             || self.install.as_ref().map(|i| &i.dir) != Some(&checked.game);
         let Some(install) = self.install.clone().filter(|_| !stale) else {
