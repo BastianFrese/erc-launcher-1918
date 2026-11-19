@@ -1,6 +1,6 @@
 {
-  "version": "1.4.2",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.2-setup.exe",
-  "sha256": "b89cb353be8a379ed483a2303873ad8ad8c3bca55fc89ef0e0f1c7cceea2d10c",
-  "notiz": "Der Name im Spiel kommt aus Discord; der Banner zeigt unser Bild; fremder Doku-Link raus."
+  "version": "1.4.3",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.3-setup.exe",
+  "sha256": "274bd4ae4b1292bf6ff95c9f6b55a4384e5a10e460a39edf6f9d688b06106c8d",
+  "notiz": "Neuer Unterbau: EA App mit Leerzeichen im Pfad, Steam nach einer Pruefung, Strecken-Addons getrennt."
 }
