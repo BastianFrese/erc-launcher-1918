@@ -107,6 +107,7 @@ impl Shell {
             root_focus: cx.focus_handle(),
             online: crate::features::online::Online::new(&root),
             rooms: crate::features::multiplayer::Multiplayer::new(window, cx),
+            ampel: crate::features::ampel::Stand::default(),
             seen,
             sliders: HashMap::new(),
             requests: None,

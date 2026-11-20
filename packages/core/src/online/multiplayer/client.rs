@@ -495,7 +495,7 @@ fn our_local(local: &Local) -> super::session::Local {
     super::session::Local::new(local.fingerprint.clone(), &local.categories, local.catalog.clone())
 }
 
-fn room_server() -> String {
+pub fn room_server() -> String {
     std::env::var(SERVER_ENV)
         .ok()
         .filter(|v| !v.trim().is_empty())

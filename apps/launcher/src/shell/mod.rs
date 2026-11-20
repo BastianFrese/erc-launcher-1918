@@ -46,6 +46,8 @@ pub struct Shell {
     pub(crate) online: crate::features::online::Online,
     pub(crate) library: Library,
     pub(crate) rooms: crate::features::multiplayer::Multiplayer,
+    /// Unsere Ampel und die Anzeige, wer gerade online ist.
+    pub(crate) ampel: crate::features::ampel::Stand,
     pub(crate) seen: Seen,
     pub(crate) sliders: HashMap<String, SliderSlot>,
     pub(crate) requests: Option<SystemTime>,

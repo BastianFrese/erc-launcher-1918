@@ -1,4 +1,5 @@
 pub(crate) mod addons;
+pub(crate) mod ampel;
 pub(crate) mod ads;
 pub(crate) mod browser;
 pub(crate) mod career_saves;
