@@ -1,4 +1,5 @@
 pub(crate) mod addons;
+pub(crate) mod aktualisierung;
 pub(crate) mod ampel;
 pub(crate) mod ads;
 pub(crate) mod browser;

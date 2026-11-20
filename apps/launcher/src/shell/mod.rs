@@ -49,6 +49,10 @@ pub struct Shell {
     /// Unsere Ampel und die Anzeige, wer gerade online ist.
     pub(crate) ampel: crate::features::ampel::Stand,
     pub(crate) anwesend: Option<swofty_core::online::multiplayer::rooms::Presence>,
+    /// Unser Selbst-Update über download.erdi-erc.de.
+    pub(crate) aktualisierung: crate::features::aktualisierung::Stand,
+    pub(crate) aktualisierung_laeuft: bool,
+    pub(crate) aktualisierung_meldung: Option<String>,
     pub(crate) seen: Seen,
     pub(crate) sliders: HashMap<String, SliderSlot>,
     pub(crate) requests: Option<SystemTime>,

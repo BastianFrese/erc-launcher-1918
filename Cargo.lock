@@ -2053,6 +2053,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "sha2 0.11.1",
  "swofty-ads",
  "swofty-builtins",
  "swofty-core",

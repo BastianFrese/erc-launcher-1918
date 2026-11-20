@@ -584,9 +584,11 @@ impl Updates {
     fn tick<H: Host<Self>>(host: &mut H, cx: &mut Context<H>) {
         let (u, needs) = host.split();
         let now = update::now_secs();
-        let check_launcher = needs.store.config().updates.check;
         let addon_due = u.addon.probe_due(now);
-        let launcher_due = check_launcher && u.launcher.probe_due(now);
+        // Der ERC Launcher aktualisiert sich ueber den eigenen Server
+        // (aktualisierung.rs). Die Selbstaktualisierung des Unterbaus bleibt aus:
+        // sie wuerde die Fassung des Unterbaus als Launcher-Fassung anbieten.
+        let launcher_due = false;
         if u.checking
             || matches!(u.phase, Phase::Installing | Phase::Restarting)
             || !(addon_due || launcher_due)

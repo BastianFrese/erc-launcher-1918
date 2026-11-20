@@ -96,6 +96,7 @@ impl Shell {
         Self::watch_multiplayer(window, cx);
         Self::watch_ampel(window, cx);
         Self::watch_anwesend(window, cx);
+        Self::watch_aktualisierung(window, cx);
         let root = store.root.clone();
         let mut ads = crate::features::ads::Ads::start(window, &root);
         if let Some(note) = ads.take_notice() {
@@ -111,6 +112,9 @@ impl Shell {
             rooms: crate::features::multiplayer::Multiplayer::new(window, cx),
             ampel: crate::features::ampel::Stand::default(),
             anwesend: None,
+            aktualisierung: crate::features::aktualisierung::Stand::Ruhe,
+            aktualisierung_laeuft: false,
+            aktualisierung_meldung: None,
             seen,
             sliders: HashMap::new(),
             requests: None,
