@@ -8,7 +8,8 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use swofty_i18n::tr;
 
-pub const INVITE: &str = "https://discord.gg/STWsgyJKZS";
+/// Unser Server. Hier laeuft die Hilfe, nicht in einem fremden Discord.
+pub const INVITE: &str = "https://discord.gg/Tp2Q4XEc5Q";
 pub const LABEL: &str = "Join the Discord";
 pub(crate) const BANNER_CARD_ID: &str = "discord-banner";
 

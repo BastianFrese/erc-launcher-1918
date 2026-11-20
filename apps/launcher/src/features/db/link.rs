@@ -5,7 +5,8 @@ use swofty_core::view::{Block, Body};
 use crate::shell::{Page, Shell};
 
 const CAREER_EDITOR: &str = "swofty.career-editor";
-const CAREER_EDITOR_URL: &str = "https://f1.swofty.net/using/career-editor";
+/// Die fremde Anleitung gibt es bei uns nicht; der Knopf fuehrt auf unsere Seite.
+const CAREER_EDITOR_URL: &str = "https://erdi-erc.de";
 
 impl Shell {
     pub(crate) fn db_link_state(&self, link: &LinkSpec) -> LinkState {
