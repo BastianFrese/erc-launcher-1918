@@ -476,127 +476,117 @@ struct View {
 
 /// One session in the module. Dropping it leaves the session.
 pub struct Session {
-    library: Arc<Library>,
-    id: u64,
-    refresh: u64,
-    last: Mutex<View>,
+    /// Unser eigener Raum: der Sitzungsablauf liegt in `online::multiplayer::session` und spricht
+    /// unseren Raumserver an, nicht das fremde Servermodul.
+    inner: Box<super::session::Session>,
+}
+
+/// Wo unsere Raeume liegen. Ueberschreibbar fuer eine Probe.
+pub const ROOM_SERVER: &str = "https://raum.erdi-erc.de";
+const SERVER_ENV: &str = "ERC_ROOM_SERVER";
+
+/// Zwei fast gleiche Datentypen ineinander: einmal ueber JSON, damit Feldnamen die Wahrheit sind.
+fn conv<T: serde::Serialize, U: serde::de::DeserializeOwned>(v: &T) -> Option<U> {
+    serde_json::from_value(serde_json::to_value(v).ok()?).ok()
+}
+
+/// Was diese Sitzung an Addons mitbringt, in der Form unseres Sitzungsablaufs.
+fn our_local(local: &Local) -> super::session::Local {
+    super::session::Local::new(local.fingerprint.clone(), &local.categories, local.catalog.clone())
+}
+
+fn room_server() -> String {
+    std::env::var(SERVER_ENV)
+        .ok()
+        .filter(|v| !v.trim().is_empty())
+        .unwrap_or_else(|| ROOM_SERVER.to_owned())
 }
 
 impl Session {
     pub fn create(setup: Setup, settings: &RoomSettings) -> Result<Session, String> {
-        Self::start("session.create", setup, json!({ "settings": settings }))
-    }
-
-    pub fn join(setup: Setup, code: &str) -> Result<Session, String> {
-        Self::start("session.join", setup, json!({ "code": code.trim() }))
-    }
-
-    fn start(op: &str, setup: Setup, mut args: Value) -> Result<Session, String> {
-        let library = loaded()?;
-        know_secret(&setup.token);
-        let refresh = NEXT_REF.fetch_add(1, Ordering::Relaxed);
-        if let Some(f) = setup.refresh {
-            lock(&REFRESHES)
-                .get_or_insert_with(HashMap::new)
-                .insert(refresh, f);
-        }
-        args["token"] = json!(setup.token);
-        args["game_dir"] = json!(setup.game_dir);
-        args["local"] = serde_json::to_value(&setup.local).map_err(|e| e.to_string())?;
-        args["room_launch"] = json!(setup.room_launch);
-        args["ref"] = json!(refresh);
-        let started = library.call(op, args).inspect_err(|_| {
-            if let Some(r) = lock(&REFRESHES).as_mut() {
-                r.remove(&refresh);
-            }
-        })?;
-        let id = started
-            .get("session")
-            .and_then(Value::as_u64)
-            .ok_or("the module named no session")?;
+        let ours = Self::ours_setup(setup);
+        let settings = super::rooms::RoomSettings {
+            name: settings.name.clone(),
+            public: settings.public,
+            max_members: settings.max_members,
+            category: conv(&settings.category).ok_or("the room's category could not be read")?,
+        };
         Ok(Session {
-            library,
-            id,
-            refresh,
-            last: Mutex::new(View {
-                state: SessionState::new(op == "session.create"),
-                fix_plan: Vec::new(),
-                finished: false,
-            }),
+            inner: Box::new(super::session::Session::create(ours, settings)),
         })
     }
 
-    fn send(&self, op: &str, mut args: Value) -> Result<Value, String> {
-        args["session"] = json!(self.id);
-        self.library.call(op, args)
+    pub fn join(setup: Setup, code: &str) -> Result<Session, String> {
+        let ours = Self::ours_setup(setup);
+        Ok(Session {
+            inner: Box::new(super::session::Session::join(ours, code)),
+        })
     }
 
-    fn poll(&self) -> MutexGuard<'_, View> {
-        let mut last = lock(&self.last);
-        if let Ok(mut doc) = self.send("session.state", json!({})) {
-            let take = |doc: &mut Value, key: &str| doc.get_mut(key).map(Value::take).unwrap_or(Value::Null);
-            if let Ok(mut state) = serde_json::from_value::<SessionState>(take(&mut doc, "state")) {
-                state.progress = serde_json::from_value(take(&mut doc, "progress")).ok();
-                state.problem = serde_json::from_value(take(&mut doc, "problem")).ok().flatten();
-                last.state = state;
-                last.fix_plan = serde_json::from_value(take(&mut doc, "fix_plan")).unwrap_or_default();
-                last.finished = doc.get("finished").and_then(Value::as_bool).unwrap_or(false);
-            }
+    fn ours_setup(setup: Setup) -> super::session::Setup {
+        let api = super::rooms::Api::with_server(&room_server(), &setup.token);
+        let mut ours = super::session::Setup::new(api, &setup.game_dir, our_local(&setup.local));
+        ours.room_launch = setup.room_launch;
+        // Ihre Rueckfrage liefert ihre Datenform; wir fragen unser Profil im Ablauf selbst ab,
+        // deshalb wird die Rueckfrage nicht weitergereicht.
+        let _ = &setup.refresh;
+        if let Ok(addr) = super::relay::default_relay_addr() {
+            ours.relay = super::session::Relay::Own(addr);
         }
-        last
+        ours
     }
 
-    /// The session's state now; the last one read when the module doesn't answer.
+    /// Unser Zustand, in der Form, die die Oberflaeche erwartet.
     pub fn state(&self) -> SessionState {
-        self.poll().state.clone()
+        let ours = self.inner.state();
+        let value = serde_json::to_value(&ours).unwrap_or(Value::Null);
+        serde_json::from_value(value).unwrap_or_else(|_| SessionState::new(ours.host))
     }
 
     pub fn fix_plan(&self) -> Vec<FixStep> {
-        self.poll().fix_plan.clone()
+        conv(&self.inner.fix_plan()).unwrap_or_default()
     }
 
     pub fn is_finished(&self) -> bool {
-        self.poll().finished
+        self.inner.is_finished()
     }
 
     pub fn mark_race(&self, started: bool) {
-        self.send("session.mark_race", json!({ "started": started })).ok();
+        self.inner.mark_race(started);
     }
 
     pub fn retry(&self) {
-        self.send("session.retry", json!({})).ok();
+        self.inner.retry();
     }
 
     pub fn reconnect_relay(&self) {
-        self.send("session.reconnect_relay", json!({})).ok();
+        self.inner.reconnect_relay();
     }
 
     pub fn update_local(&self, local: &Local) {
-        self.send("session.update_local", json!({ "local": local })).ok();
+        self.inner.update_local(our_local(local));
     }
 
     pub fn launched(&self) {
-        self.send("session.launched", json!({})).ok();
+        self.inner.launched();
     }
 
     pub fn launch_failed(&self, why: &str) {
-        self.send("session.launch_failed", json!({ "why": why })).ok();
+        self.inner.launch_failed(why);
     }
 
     pub fn leave(&self) {
-        self.send("session.leave", json!({})).ok();
+        self.inner.leave();
     }
 }
 
 impl Drop for Session {
     fn drop(&mut self) {
-        self.leave();
-        self.send("session.close", json!({})).ok();
-        if let Some(r) = lock(&REFRESHES).as_mut() {
-            r.remove(&self.refresh);
-        }
+        // Unser Ablauf raeumt sich beim Verlassen selbst auf.
+        self.inner.leave();
     }
 }
+
 
 #[cfg(test)]
 mod tests {
