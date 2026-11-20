@@ -94,6 +94,7 @@ impl Shell {
         let catalog = Browser::watch(cx);
         let mp = Self::start_account(&store, cx);
         Self::watch_multiplayer(window, cx);
+        Self::watch_ampel(window, cx);
         let root = store.root.clone();
         let mut ads = crate::features::ads::Ads::start(window, &root);
         if let Some(note) = ads.take_notice() {

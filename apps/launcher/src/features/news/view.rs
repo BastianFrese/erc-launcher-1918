@@ -441,6 +441,7 @@ impl Shell {
             .pt(px(4.))
             .pb(px(20.))
             .gap(px(16.))
+            .when_some(self.ampel_zeile(p), |d, zeile| d.child(zeile))
             .when(show_banner, |d| {
                 d.child(crate::ui::discord::banner(
                     short,
