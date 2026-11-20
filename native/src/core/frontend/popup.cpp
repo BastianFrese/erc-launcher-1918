@@ -146,6 +146,10 @@ Handle *MessageSystem::constructed(void *s, Handle *out, FixedId *id, Callback *
         hud::text_entry::state.begin(GetTickCount64());
         swofty::log("[popup] '%.64s' takes typed text; core hotkeys are held back until it closes", name);
     }
+    if (name && out && cb && swofty::mem::readable(cb, sizeof *cb) && runtime::netplay_popup(name, cb->fn, cb->ctx)) {
+        *out = Handle{s, nullptr};
+        return out;
+    }
     if (name && out && cb && swofty::mem::readable(cb, sizeof *cb) && runtime::session_host_message(name, cb->fn, cb->ctx)) {
         *out = Handle{s, nullptr};
         return out;

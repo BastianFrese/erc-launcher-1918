@@ -71,6 +71,7 @@ uint64_t ScreenLoader::opened(void *scene, void *screen, void *a3, void *a4)
     if (readable(screen, 0x70) && readable(*reinterpret_cast<void **>(static_cast<uint8_t *>(screen) + 0x68), 10)) {
         const char *opened = chars(*reinterpret_cast<void **>(static_cast<uint8_t *>(screen) + 0x68));
         runtime::load_stall_screen(opened);
+        runtime::netplay_screen(opened);
         if (perf::live())
             perf::mark("screen", opened);
     }

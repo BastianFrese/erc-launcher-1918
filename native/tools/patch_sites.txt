@@ -254,3 +254,20 @@ core/testing/virtual_pad.cpp: auto g = safetyhook::InlineHook::create(get, reint
 core/testing/virtual_pad.cpp: auto c = safetyhook::InlineHook::create(caps, reinterpret_cast<void *>(x_get_caps)); => outside xinput
 loader/version.c: if (!VirtualProtect(slot, sizeof *slot, PAGE_READWRITE, &old)) => import USER32.dll!RegisterClassExW USER32.dll!CreateWindowExW KERNEL32.dll!CreateMutexW
 loader/version.c: if (!VirtualProtect(at, 1, PAGE_EXECUTE_READWRITE, &old)) => outside kernel32 kernelbase
+
+# -- Unser eigener Mehrspieler-Weg (src/core/netplay) --
+helper core/netplay/netplay.cpp \bpatch\(
+core/netplay/netplay.cpp: bool patch(uintptr_t at, const uint8_t *bytes, size_t n) => via
+core/netplay/netplay.cpp: if (!VirtualProtect(p, n, PAGE_EXECUTE_READWRITE, &old)) => via
+core/netplay/netplay.cpp: bool gate = patch(runtime::find(S_HOST_GATE, "netplay", "netplay"), open_gate, sizeof open_gate); => bytes=6 sig S_HOST_GATE
+core/netplay/netplay.cpp: bool enc = patch(runtime::find(S_ENCRYPT_SELECT, "netplay", "netplay"), force_null_ssl, sizeof force_null_ssl); => bytes=5 sig S_ENCRYPT_SELECT
+core/netplay/netplay.cpp: bool lobby = patch(runtime::find(S_LOBBY_KICK, "netplay", "netplay"), skip_lobby_kick, sizeof skip_lobby_kick); => bytes=1 sig S_LOBBY_KICK
+core/netplay/netplay.cpp: hidden = patch(lan, skip_lan, sizeof skip_lan); => bytes=9 sig S_LAN_TILE S_TILE_TAIL
+core/netplay/netplay.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(at), icon_gate); => mid sigs-in core/netplay/netplay.cpp
+core/netplay/netplay.cpp: auto h = safetyhook::InlineHook::create(reinterpret_cast<void *>(add), reinterpret_cast<void *>(&add_name_hook)); => inline sig S_ADD_NAME
+core/netplay/netplay_bridge.cpp: void install(HMODULE lib, const char *dll, std::initializer_list<Fn> fns) => via
+core/netplay/netplay_bridge.cpp: if (!runtime::write_slot(s.slot, h.detour)) { => import ws2_32.dll!* iphlpapi.dll!*
+core/netplay/netplay_bridge.cpp: install(ws, "ws2_32.dll", {F_SENDTO, F_RECVFROM, F_BIND}); => import ws2_32.dll!*
+core/netplay/netplay_bridge.cpp: install(ip, "iphlpapi.dll", {F_GAA}); => import iphlpapi.dll!*
+core/netplay/netplay_drive.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(loop), populate_mid); => mid sig S_POPULATE_LOOP
+core/netplay/netplay_room.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(tabs), tabs_mid); => mid sig S_ADD_TABS

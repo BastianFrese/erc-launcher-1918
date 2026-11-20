@@ -278,6 +278,27 @@ void session_host_exit();
 int session_host_cover_signal();
 void net_trace_setup();
 void udp_ids_setup();
+// Der eigene Mehrspieler-Weg (native/src/core/netplay/): Bruecke ueber Dateien, Raum-Aufbau und
+// die Anzeige-Namen. Eigener Unterordner, damit ein fremder Umbau ihn nicht mitreisst.
+void netplay_setup();
+void netplay_bridge_setup();
+void netplay_bridge_status_changed();
+void netplay_exit();
+void netplay_drive_setup();
+void netplay_room_setup();
+bool netplay_room_requested();
+void netplay_room_screen(const char *name);
+void netplay_flow(uint32_t hash, uint32_t to);
+void netplay_screen(const char *name);
+bool netplay_popup(const char *id, void *fn, void *ctx);
+void netplay_home_vm(void *vm);
+void netplay_tick();
+std::vector<CoreMixins> netplay_icons_mixins();
+void netplay_icons_commit();
+std::vector<CoreMixins> netplay_keys_mixins();
+void netplay_keys_commit();
+std::vector<CoreMixins> netplay_privilege_mixins();
+void netplay_privilege_commit();
 // Notes an added track's statId for the Swofty Track telemetry packet (udp_ids.cpp).
 void udp_track(int64_t stat_id, const std::string &addon, const std::string &code);
 // The test agent (native/src/core/testing/agent/agent.cpp): armed only by `swofty test`'s run token.

@@ -163,6 +163,7 @@ SWOFTY_WRAP(FeHome_Handle_Command, uint64_t, FEHomeViewModel *vm, NeStr **cmd)
         settings_command(cmd && *cmd ? *reinterpret_cast<const uint32_t *>(*cmd) : 0x1505);
     }
     runtime::session_host_home(vm);
+    runtime::netplay_home_vm(vm);
     runtime::testagent_home_vm(vm);
     return orig(vm, cmd);
 }

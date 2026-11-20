@@ -13,6 +13,7 @@
 namespace runtime {
 void hud_fatal();
 void session_host_exit();
+void netplay_exit();
 }
 
 namespace render::d3d12 {
@@ -255,6 +256,7 @@ void on_exit(const char *fn, UINT code)
 {
     perf::flush(fn);
     runtime::session_host_exit();
+    runtime::netplay_exit();
     if (InterlockedExchange(&capture.exited, 1) || !enter())
         return;
     bool early = !process.window_reached, stack = code || early;

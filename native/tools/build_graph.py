@@ -41,7 +41,8 @@ def sources(root, exts):
         dirnames.sort()
         for name in sorted(filenames):
             if name.endswith(exts):
-                found.append(os.path.relpath(os.path.join(dirpath, name), NATIVE))
+                # Windows liefert Backslashes; die Sonderlisten unten schreiben Schraegstriche.
+                found.append(os.path.relpath(os.path.join(dirpath, name), NATIVE).replace(os.sep, '/'))
     return found
 
 
@@ -55,6 +56,14 @@ def link_order(objects):
 
 
 def q(args):
+    # Windows: ninja ruft ueber cmd.exe auf, dort sind einfache Anfuehrungszeichen von shlex
+    # woertlich und zig nimmt '-I...' als Dateinamen. Ohne Leerzeichen gar nicht quoten.
+    if os.name == 'nt':
+        def win(a):
+            if a.startswith('$') or (' ' not in a and '"' not in a):
+                return a
+            return '"' + a.replace('"', '\\"') + '"'
+        return ' '.join(win(a) for a in args)
     return ' '.join(a if a.startswith('$') else shlex.quote(a) for a in args)
 
 

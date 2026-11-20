@@ -44,6 +44,8 @@ constexpr Subsystem SUBSYSTEMS[] = {
     {"placed record", Start::ready, placed_record_setup},
     {"net trace", Start::ready, net_trace_setup},
     {"udp ids", Start::ready, udp_ids_setup},
+    {"netplay", Start::ready, netplay_setup},
+    {"netplay drive", Start::ready, netplay_drive_setup},
     {"local tiles", Start::ready, local_tiles_setup},
     {"session host", Start::ready, session_host_ready},
     {"test agent", Start::ready, testagent_setup},
