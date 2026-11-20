@@ -95,11 +95,11 @@ mod fenster {
                     .await;
                 loop {
                     let auftrag = this.update(cx, |s, _| {
-                        s.mp.as_ref().map(|m| m.token.clone()).map(|token| {
+                        s.account.session.as_ref().map(|m| m.token.clone()).map(|token| {
                             (
                                 swofty_core::online::multiplayer::client::room_server(),
                                 token,
-                                !s.processes.is_empty(),
+                                !s.game.processes.is_empty(),
                             )
                         })
                     });

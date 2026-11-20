@@ -48,6 +48,7 @@ pub struct Shell {
     pub(crate) rooms: crate::features::multiplayer::Multiplayer,
     /// Unsere Ampel und die Anzeige, wer gerade online ist.
     pub(crate) ampel: crate::features::ampel::Stand,
+    pub(crate) anwesend: Option<swofty_core::online::multiplayer::rooms::Presence>,
     pub(crate) seen: Seen,
     pub(crate) sliders: HashMap<String, SliderSlot>,
     pub(crate) requests: Option<SystemTime>,

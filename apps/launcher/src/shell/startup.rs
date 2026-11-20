@@ -95,6 +95,7 @@ impl Shell {
         let mp = Self::start_account(&store, cx);
         Self::watch_multiplayer(window, cx);
         Self::watch_ampel(window, cx);
+        Self::watch_anwesend(window, cx);
         let root = store.root.clone();
         let mut ads = crate::features::ads::Ads::start(window, &root);
         if let Some(note) = ads.take_notice() {
@@ -109,6 +110,7 @@ impl Shell {
             online: crate::features::online::Online::new(&root),
             rooms: crate::features::multiplayer::Multiplayer::new(window, cx),
             ampel: crate::features::ampel::Stand::default(),
+            anwesend: None,
             seen,
             sliders: HashMap::new(),
             requests: None,
