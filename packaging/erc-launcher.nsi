@@ -90,7 +90,7 @@ Section "ERC Launcher" SecMain
 
   ; Die Liga-Mod wird nicht mehr mitgeliefert (noch nicht fertig). Wer sie aus einer
   ; frueheren Fassung hat, verliert sie hier — die Dateien liegen nur im Programmordner.
-  RMDir /r "$INSTDIRddons\erdi.erc-liga"
+  RMDir /r "$INSTDIR\addons\erdi.erc-liga"
 
   CreateDirectory "$SMPROGRAMS\ERC Launcher"
   CreateShortCut "$SMPROGRAMS\ERC Launcher\ERC Launcher.lnk" "$INSTDIR\erc-launcher.exe"
