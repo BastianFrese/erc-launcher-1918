@@ -23,7 +23,7 @@ const MISSING_TITLE: &str = "Some game files are missing";
 const OURS_TITLE: &str = "An earlier session was not put back";
 
 /// A blocked launch the player can fix: files that aren't Steam's copy, or
-/// files Swofty did not put in the game folder.
+/// files ERC did not put in the game folder.
 #[derive(Clone)]
 pub(crate) enum Edited {
     NotStock(stock::Report),

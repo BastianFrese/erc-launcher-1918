@@ -36,7 +36,7 @@ impl Page {
             Self::Multiplayer => tr("Multiplayer"),
             Self::Online => tr("Online"),
             Self::Moderation => tr("Moderation"),
-            Self::Store => tr("Donate"),
+            Self::Store => tr("Support"),
             Self::Settings => tr("Settings"),
             Self::Section(_) => "",
         }

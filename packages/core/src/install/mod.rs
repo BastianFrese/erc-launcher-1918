@@ -82,8 +82,8 @@ impl Source {
     }
 }
 
-pub const EA_APP_EXPERIMENTAL: &str = "this is the EA app version of F1 25; Swofty's support for it is \
-     experimental, so modded play may have bugs. Report them on the Swofty Developments Discord";
+pub const EA_APP_EXPERIMENTAL: &str = "this is the EA app version of F1 25; ERC's support for it is \
+     experimental, so modded play may have bugs. Report them on the ERC Developments Discord";
 
 /// The `config.news_seen` key for the one-time EA app warning.
 pub const EA_APP_SEEN: &str = "ea-app-experimental";

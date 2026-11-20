@@ -21,7 +21,7 @@ pub(crate) fn text(dir: &Path, source: Source, windows: bool) -> String {
         return format!("{}.", compat::write_blocked_text_for(dir, false));
     }
     trf!(
-        "F1 25 is installed in {folder}, a folder Windows lets only administrators change, so Swofty can't add your mods there.\n\nRestart ERC Launcher as administrator to play with mods, or move F1 25 to a folder outside Program Files{hint}.",
+        "F1 25 is installed in {folder}, a folder Windows lets only administrators change, so ERC can't add your mods there.\n\nRestart ERC Launcher as administrator to play with mods, or move F1 25 to a folder outside Program Files{hint}.",
         folder = dir.display(),
         hint = copies::move_hint(source)
     )
@@ -70,7 +70,7 @@ pub(crate) fn run_as_admin_text(r: &compat::RunAsAdmin) -> String {
         ),
     };
     let note = r.game.then(|| {
-        tr("The EA app starts F1 25 without administrator rights, so running Swofty Launcher as administrator doesn't help.")
+        tr("The EA app starts F1 25 without administrator rights, so running ERC Launcher as administrator doesn't help.")
             .to_owned()
     });
     std::iter::once(what)

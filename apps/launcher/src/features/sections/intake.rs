@@ -293,7 +293,7 @@ impl Shell {
                 .width(px(540.))
                 .title(trn(
                     count,
-                    "That isn't a Swofty addon",
+                    "That isn't an ERC addon",
                     "Those aren't Swofty addons",
                 ))
                 .description(files)
@@ -316,7 +316,7 @@ impl Shell {
                         ))
                         .child(drop_choice(
                             IconName::BookOpen,
-                            tr("Making a Swofty addon?"),
+                            tr("Making an ERC addon?"),
                             tr("An addon is a folder with a swofty.json."),
                             crate::features::tools::web_link(
                                 "not-addon-docs",

@@ -125,8 +125,8 @@ pub(super) fn show_launch_failed(f: &launch::Failure, window: &mut Window, cx: &
 /// carry no seal and do not rank.
 pub(super) fn show_integrity_missing(n: &integrity::Notice, window: &mut Window, cx: &mut App) {
     let cause = match n.kind {
-        integrity::Kind::Unreachable => tr("The launcher couldn't reach Swofty's server in time."),
-        integrity::Kind::Refused => tr("Swofty's server didn't offer it to you."),
+        integrity::Kind::Unreachable => tr("The launcher couldn't reach ERC's server in time."),
+        integrity::Kind::Refused => tr("ERC's server didn't offer it to you."),
         integrity::Kind::Invalid => tr("The download failed its safety check."),
     };
     let text = [

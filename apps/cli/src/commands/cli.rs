@@ -12,7 +12,7 @@ use crate::commands::{
 #[command(
     name = "swofty",
     version,
-    about = "Swofty Launcher for F1 25: addons, mods and tracks"
+    about = "ERC Launcher for F1 25: addons, mods and tracks"
 )]
 pub(crate) struct Cli {
     #[arg(

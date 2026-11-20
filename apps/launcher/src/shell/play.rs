@@ -81,8 +81,8 @@ impl Launching {
                 ),
                 Some(b) => trn(
                     b.files.len(),
-                    "a file Swofty did not put in the game folder is in the way",
-                    "{count} files Swofty did not put in the game folder are in the way",
+                    "a file ERC did not put in the game folder is in the way",
+                    "{count} files ERC did not put in the game folder are in the way",
                 ),
                 None => failed.unwrap_or_else(|| launch.failure()),
             })

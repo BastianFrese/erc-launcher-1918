@@ -95,13 +95,20 @@ mod fenster {
                     .await;
                 loop {
                     let auftrag = this.update(cx, |s, _| {
-                        s.account.session.as_ref().map(|m| m.token.clone()).map(|token| {
-                            (
-                                swofty_core::online::multiplayer::client::room_server(),
-                                token,
-                                !s.game.processes.is_empty(),
-                            )
-                        })
+                        // Auch ohne Anmeldung: der eigene Schluessel dieser Installation.
+                        let token = s
+                            .account
+                            .session
+                            .as_ref()
+                            .map(|m| m.token.clone())
+                            .or_else(|| {
+                                swofty_core::online::multiplayer::guest::token(&s.store.root).ok()
+                            })?;
+                        Some((
+                            swofty_core::online::multiplayer::client::room_server(),
+                            token,
+                            !s.game.processes.is_empty(),
+                        ))
                     });
                     if let Ok(Some((server, token, im_spiel))) = auftrag {
                         let stand = cx

@@ -260,9 +260,11 @@ pub(crate) struct OnlineNeeds<'a> {
     pub(crate) processes: &'a [GameProcess],
     /// A launch, a build or a restore of the game folder is running.
     pub(crate) busy: bool,
-    /// The online page is open and the account may use it.
+    /// The online page is open.
     pub(crate) shown: bool,
-    pub(crate) token: Option<&'a str>,
+    /// The sign-in's token, else this installation's own: the room server takes a
+    /// signed-out player too, so nobody needs an account to race.
+    pub(crate) token: Option<String>,
 }
 
 /// Was der Mod-Abgleich der Shell meldet, damit sie danach alles neu liest.
@@ -277,6 +279,12 @@ impl Hosted for Multiplayer {
 
 impl Host<Multiplayer> for Shell {
     fn split(&mut self) -> (&mut Multiplayer, OnlineNeeds<'_>) {
+        let token = self
+            .account
+            .session
+            .as_ref()
+            .map(|m| m.token.clone())
+            .or_else(|| swofty_core::online::multiplayer::guest::token(&self.store.root).ok());
         (
             &mut self.rooms,
             OnlineNeeds {
@@ -288,8 +296,8 @@ impl Host<Multiplayer> for Shell {
                 busy: self.launching.launch.is_some()
                     || self.game.build.is_some()
                     || self.launching.restoring,
-                shown: self.navigation.page == Page::Multiplayer && self.account.allowed(),
-                token: self.account.session.as_ref().map(|m| m.token.as_str()),
+                shown: self.navigation.page == Page::Multiplayer,
+                token,
             },
         )
     }

@@ -9,7 +9,7 @@ use swofty_core::online::multiplayer::types::{
 use super::model::starting;
 use super::model::{
     GameState, OwnPrint, RoomStatus, Start, Tone, addon_checks, card_addons, content_check, content_word,
-    exit_leaves, exit_notice, extra_addons, joined, member_word, missing, refusal, refusal_text,
+    exit_leaves, exit_notice, extra_addons, joined, member_word, missing, refusal_text,
     restart_ok_text, room_meta,
 };
 use super::state::{Lobby, unasked};
@@ -321,20 +321,7 @@ fn leaves_the_room_when_the_rooms_game_exits() {
 }
 
 #[test]
-fn the_servers_refusal_shows_until_a_load_succeeds() {
-    let beta = || Some("needs the beta role".to_owned());
-    assert_eq!(refusal(None, false, None), None);
-    assert_eq!(refusal(None, false, beta()), beta());
-    assert_eq!(
-        refusal(beta(), false, None),
-        beta(),
-        "kept while another load runs"
-    );
-    assert_eq!(
-        refusal(beta(), false, Some("not signed in".into())),
-        Some("not signed in".into())
-    );
-    assert_eq!(refusal(beta(), true, None), None);
+fn the_refusal_sentence_says_why() {
     assert_eq!(
         refusal_text("needs the beta role"),
         "Online sessions aren't available: needs the beta role"

@@ -502,6 +502,17 @@ pub fn room_server() -> String {
         .unwrap_or_else(|| ROOM_SERVER.to_owned())
 }
 
+/// Die offenen Raeume von unserem Server, in der Form, die die Seite zeigt. Wer nicht
+/// angemeldet ist, steht hier mit dem eigenen Schluessel dieser Installation.
+pub fn our_rooms(token: &str) -> Result<Vec<RoomSummary>, String> {
+    let api = super::rooms::Api::with_server(&room_server(), token);
+    let rooms = api.rooms().map_err(|e| e.to_string())?;
+    rooms
+        .into_iter()
+        .map(|r| conv(&r).ok_or_else(|| "a room in the list is not what the page reads".to_owned()))
+        .collect()
+}
+
 impl Session {
     pub fn create(setup: Setup, settings: &RoomSettings) -> Result<Session, String> {
         let ours = Self::ours_setup(setup);

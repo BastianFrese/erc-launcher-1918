@@ -20,7 +20,7 @@ use crate::ui::tokens::space::GUTTER;
 impl Shell {
     pub(super) fn room_lobby(&mut self, p: Palette, cx: &mut Context<Self>) -> AnyElement {
         let subtitle =
-            "Race with players who use the same addons. The host picks tracks in F1 25's LAN lobby."
+            "Fahre mit Spielern, die dieselben Addons nutzen. Der Host wählt die Strecken in F1 25s LAN-Lobby."
                 .to_owned();
         let actions = h_flex()
             .gap(px(14.))

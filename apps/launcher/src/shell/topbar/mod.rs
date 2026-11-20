@@ -57,8 +57,10 @@ fn filled_icon(icon: IconName, cx: &App) -> Option<Arc<[u8]>> {
 }
 
 impl Shell {
+    /// Online steht jedem offen: der Raumserver nimmt auch einen Spieler ohne Anmeldung,
+    /// unter dem eigenen Schlüssel dieser Installation.
     pub(crate) fn nav_mp(&self) -> bool {
-        self.account.allowed() || (cfg!(debug_assertions) && std::env::var_os("SWOFTY_FAKE_MP").is_some())
+        true
     }
 
     pub(crate) fn sub_nav(&self, layout_width: f32) -> Option<SubNav> {

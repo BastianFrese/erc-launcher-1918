@@ -101,7 +101,6 @@ impl Shell {
 
     pub(crate) fn room_can_play(&self) -> bool {
         self.navigation.page == Page::Multiplayer
-            && self.account.allowed()
             && !self.rooms.busy()
             && self.room_viewed().is_some()
     }
@@ -263,18 +262,14 @@ impl Multiplayer {
 
     pub(super) fn poll_rooms<H: Host<Self>>(host: &mut H, cx: &mut Context<H>) {
         let (m, needs) = host.split();
-        let Some(token) = needs.token.map(str::to_owned) else {
+        let Some(token) = needs.token.clone() else {
             return;
         };
         m.lobby.rooms_polling = true;
-        let data = needs.store.root.clone();
         cx.spawn(async move |this, cx| {
             let result = cx
                 .background_executor()
-                .spawn(async move {
-                    diag::load(&data, Some(&token)).map_err(|e| e.to_string())?;
-                    diag::rooms(&token)
-                })
+                .spawn(async move { diag::our_rooms(&token) })
                 .await;
             this.update(cx, |host, cx| {
                 host.split().0.lobby.took_rooms(result, Instant::now());
@@ -312,7 +307,7 @@ impl Multiplayer {
         if m.busy() {
             return;
         }
-        let Some(token) = needs.token.map(str::to_owned) else {
+        let Some(token) = needs.token.clone() else {
             return;
         };
         let Some(dir) = needs.game_dir.map(Path::to_path_buf) else {
@@ -327,7 +322,6 @@ impl Multiplayer {
             let result = cx
                 .background_executor()
                 .spawn(async move {
-                    diag::load(&store.root, Some(&token)).map_err(|e| e.to_string())?;
                     let local = read_local(&store, &profile, &dir)
                         .inspect_err(|e| {
                             diag::line(format!("session not started: couldn't read the addons: {e}"));
@@ -455,12 +449,9 @@ impl Multiplayer {
             m.visible = true;
             m.lobby.refresh();
         }
-        let refused = refusal(m.refused.clone(), diag::is_loaded(), diag::unavailable());
-        if refused != m.refused {
-            if refused.is_none() {
-                m.lobby.rooms_at = None;
-            }
-            m.refused = refused;
+        // Die Räume kommen von unserem Server; das fremde Servermodul wird dafür nicht
+        // mehr geladen, also gibt es auch keine Zurückweisung mehr zu zeigen.
+        if m.refused.take().is_some() {
             changed = true;
         }
         if let Some(session) = &m.session {

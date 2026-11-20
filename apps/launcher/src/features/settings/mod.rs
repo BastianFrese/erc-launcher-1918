@@ -83,7 +83,7 @@ impl Shell {
             .size_full()
             .child(self.header(
                 Page::Settings.label(),
-                tr("Launcher options, and where Swofty keeps its files").to_owned(),
+                tr("Launcher options, and where ERC keeps its files").to_owned(),
                 div(),
                 p,
             ))

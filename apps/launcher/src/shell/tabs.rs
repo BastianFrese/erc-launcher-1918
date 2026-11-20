@@ -21,7 +21,7 @@ impl Tab {
             Self::Library => tr("Library"),
             Self::Discover => tr("Discover"),
             Self::Online => tr("Online"),
-            Self::Store => tr("Donate"),
+            Self::Store => tr("Support"),
         }
     }
 
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn the_tabs_never_name_the_gated_page() {
         let labels: Vec<&str> = Tab::ALL.iter().map(|t| t.label()).collect();
-        assert_eq!(labels, ["Home", "Library", "Discover", "Online", "Donate"]);
+        assert_eq!(labels, ["Home", "Library", "Discover", "Online", "Support"]);
         assert!(labels.iter().all(|l| !l.to_lowercase().contains("multiplayer")));
     }
 

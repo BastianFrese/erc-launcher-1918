@@ -10,10 +10,10 @@ use swofty_i18n::tr;
 
 /// Unser Server. Hier laeuft die Hilfe, nicht in einem fremden Discord.
 pub const INVITE: &str = "https://discord.gg/Tp2Q4XEc5Q";
-pub const LABEL: &str = "Join the Discord";
+pub const LABEL: &str = "Server öffnen";
 pub(crate) const BANNER_CARD_ID: &str = "discord-banner";
 
-const BODY: &str = "Get help from the developers and hear about new releases and addons first.";
+const BODY: &str = "Fragen zum Launcher, Hilfe bei Problemen, Absprachen fürs Rennen — und die Änderungen zuerst.";
 pub(crate) const LOGO: &[u8] = include_bytes!("../../assets/discord.svg");
 pub(crate) const BLURPLE: u32 = 0x5865f2;
 pub(crate) const BLURPLE_HOVER: u32 = 0x4752c4;
@@ -22,7 +22,7 @@ fn server_icon(size: f32) -> Div {
     static ICON: LazyLock<Arc<Image>> = LazyLock::new(|| {
         Arc::new(Image::from_bytes(
             ImageFormat::Png,
-            include_bytes!("../../assets/discord-server.png").to_vec(),
+            include_bytes!("../../assets/erc-racer.png").to_vec(),
         ))
     });
     div()
@@ -147,7 +147,7 @@ pub(crate) fn banner(
                     div()
                         .text_size(px(if compact { 17. } else { 20. }))
                         .font_weight(FontWeight::BOLD)
-                        .child(tr("Swofty Developments")),
+                        .child(tr("ERC Developments")),
                 )
                 .when(!compact, |d| {
                     d.child(

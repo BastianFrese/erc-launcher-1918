@@ -104,17 +104,17 @@ impl Shell {
             )
             .row(
                 SettingRow::new(tr("Time Trial boards"))
-                    .description(tr("Upload your Time Trial laps to the Swofty leaderboards. Ranked laps load a closed-source integrity module from Swofty's server."))
+                    .description(tr("Upload your Time Trial laps to the ERC leaderboards. Ranked laps load a closed-source integrity module from ERC server."))
                     .control(time_trial),
             )
             .row(
                 SettingRow::new(tr("In-game leaderboards"))
-                    .description(tr("Show the Swofty boards and rival ghosts inside Time Trial for addon seasons. Experimental."))
+                    .description(tr("Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental."))
                     .control(time_trial_ingame),
             )
             .row(
                 SettingRow::new(tr("Home screen video"))
-                    .description(tr("Show the latest Swofty video in the bottom right of the F1 25 home screen. A change shows the next time you press Play."))
+                    .description(tr("Show the latest ERC video in the bottom right of the F1 25 home screen. A change shows the next time you press Play."))
                     .control(home_video),
             );
         match ad_privacy {

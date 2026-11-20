@@ -204,15 +204,6 @@ pub(crate) fn exit_notice(host: bool) -> &'static str {
     }
 }
 
-/// What the page shows in place of its list while the session module isn't loaded: the sentence the last
-/// load failed with, kept while another load runs, gone once one succeeds.
-pub(crate) fn refusal(shown: Option<String>, loaded: bool, failed: Option<String>) -> Option<String> {
-    if loaded {
-        return None;
-    }
-    failed.or(shown)
-}
-
 pub(crate) fn refusal_text(why: &str) -> String {
     trf!("Online sessions aren't available: {why}", why = why)
 }

@@ -134,7 +134,7 @@ impl SetupWizard {
                     }
                     Err(e) => {
                         crate::app::app_log::action("first play setup: put the game folder back").failed(&e);
-                        w.error = Some(trf!("Swofty couldn't put the game folder back: {e}", e = e))
+                        w.error = Some(trf!("ERC couldn't put the game folder back: {e}", e = e))
                     }
                 }
                 cx.notify();
@@ -362,7 +362,7 @@ impl SetupWizard {
                         div()
                             .flex_1()
                             .min_w_0()
-                            .child(tr("Putting back the files Swofty changed…")),
+                            .child(tr("Putting back the files ERC changed…")),
                     ),
             );
         }
