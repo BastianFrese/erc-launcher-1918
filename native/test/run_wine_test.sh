@@ -11,7 +11,7 @@ set -Eeuo pipefail
 trap 'line=$LINENO' ERR
 SELF=$(readlink -f "$0")
 cd "$(dirname "$SELF")"
-CASES=(modes crash close perf_roacclim acclim_penalty ers_mode standings weekends teamhq activity setup_vm pairs fe_tiles ai_corner replay_grid garage_crew pit_slots leaderboard myteam_vehicle myteam_keep myteam_heal track_list ntpage int3 stages packed filled register)
+CASES=(modes crash close perf_ro acclim acclim_penalty ers_mode standings weekends teamhq activity setup_vm pairs fe_tiles ai_corner replay_grid garage_crew pit_slots leaderboard myteam_vehicle myteam_keep myteam_heal track_list ntpage int3 stages packed filled register)
 if [[ ${1:-} == --list ]]; then
     printf '%s\n' "${CASES[@]}"
     exit 0
