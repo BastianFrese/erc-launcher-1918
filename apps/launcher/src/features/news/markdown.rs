@@ -616,7 +616,7 @@ mod tests {
         );
         assert_eq!(
             safe_url("/using/addons.md#order").as_deref(),
-            Some("https://f1.swofty.net/using/addons#order")
+            Some("https://erdi-erc.de/using/addons#order")
         );
         for bad in [
             "http://f1.swofty.net",
@@ -644,7 +644,7 @@ mod tests {
                 (" Drop a ", false, false, None),
                 (".serps", false, true, None),
                 (" on ", false, false, None),
-                ("the docs", false, false, Some("https://f1.swofty.net/using/mods")),
+                ("the docs", false, false, Some("https://erdi-erc.de/using/mods")),
                 (" or x).", false, false, None),
             ]
         );
@@ -741,7 +741,7 @@ mod tests {
             [
                 ("a | b", false, true, None),
                 (" and ", false, false, None),
-                ("docs", false, false, Some("https://f1.swofty.net/using/mods")),
+                ("docs", false, false, Some("https://erdi-erc.de/using/mods")),
             ]
         );
         assert_eq!(plain(&t.rows[1][0]), "x | y");

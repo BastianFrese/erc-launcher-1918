@@ -117,5 +117,5 @@ opt-level = 3
 [profile.dev.package.taffy]
 opt-level = 3
 
-[profile.dev.package.swofty-launcher]
+[profile.dev.package.erc-launcher]
 opt-level = 1
