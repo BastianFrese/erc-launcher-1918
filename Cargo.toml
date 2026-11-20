@@ -36,6 +36,9 @@ semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 sha1 = "0.11"
+tungstenite = { version = "0.30", default-features = false, features = ["handshake"] }
+zeroize = "1"
+webpki-roots = "1"
 sha2 = "0.11"
 tar = { version = "0.4", default-features = false }
 thiserror = "2"
