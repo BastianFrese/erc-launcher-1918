@@ -16,6 +16,7 @@
 #include "netplay_room.hpp"
 #include "../hud/room_cover.hpp"
 #include "../testing/virtual_pad.hpp"
+#include "core/frontend/ui_vm.hpp"
 #include "netplay_session.hpp"
 
 // Launcher commands for LAN netplay, over the same kind of file mailbox the Career Editor uses
@@ -36,8 +37,6 @@
 namespace runtime {
 std::string hook_error(const safetyhook::MidHook::Error &e);
 }
-
-bool ui_vm_set_path(const std::string &path, int type, const void *value);
 
 namespace {
 
@@ -251,7 +250,7 @@ void probe_setup()
 constexpr DWORD POLL_MS = 250;
 constexpr uint64_t HEARTBEAT_MS = 5000;
 
-std::atomic<bool> armed, frontend, lobby, home_screen, room_launched;
+std::atomic<bool> armed, on_frontend, lobby, home_screen, room_launched;
 
 // The core's notice over the front end, for a game the launcher started for a room. The title is the direct
 // start's (title_skip.cpp); the notice is passed with the shared virtual pad (virtual_pad.cpp), which this
@@ -279,7 +278,7 @@ void skip_tick()
     if (!skip_armed.load())
         return;
     drive::SkipFacts f;
-    f.frontend = frontend.load();
+    f.frontend = on_frontend.load();
     f.home = home_screen.load();
     f.transition = transition_screen.load();
     f.lobby = lobby.load();
@@ -321,7 +320,7 @@ drive::State state()
     drive::State s;
     s.armed = armed.load();
     s.configured = runtime::netplay_session::snapshot(s.self, s.base);
-    s.frontend = frontend.load();
+    s.frontend = on_frontend.load();
     s.lobby = lobby.load();
     s.home_screen = home_screen.load();
     s.role = drive::Role(role.load());
@@ -455,7 +454,7 @@ void *registry()
 
 bool on_home()
 {
-    return frontend.load() && home_screen.load();
+    return on_frontend.load() && home_screen.load();
 }
 
 bool in_lobby()
@@ -519,7 +518,7 @@ void netplay_flow(uint32_t hash, uint32_t to)
 {
     bool in = to == 1 || to == 2;
     if (hash == drive::STATE_FRONTEND) {
-        frontend = in;
+        on_frontend = in;
         if (in)
             hud::room_cover::step("Opening the main menu", 0.55f, 0.65f);
         if (!in) {
@@ -641,7 +640,7 @@ void run_job()
     f.local_mp = local_mp && local_mp_opened.load();
     f.lan_mode = lan_mode();
     f.lobby = lobby.load();
-    f.home = frontend.load() && home_screen.load();
+    f.home = on_frontend.load() && home_screen.load();
     if (auto room = runtime::netplay_room::status(); room.phase == runtime::netplay_room::Phase::failed) {
         f.room_failed = true;
         f.room_error = room.detail;
@@ -677,7 +676,7 @@ void run_job()
             err = "the LAN Game dialog had no callback to answer";
         break;
     case drive::Do::answer_ip:
-        if (!ui_vm_set_path("ui_menu_data.lan_ip_address", 0, job_ip.c_str()))
+        if (!::frontend::ui_vm_set_path("ui_menu_data.lan_ip_address", 0, job_ip.c_str()))
             err = "could not set ui_menu_data.lan_ip_address";
         else if (!answer(fn, ctx, "ok"))
             err = "the Join via IP prompt had no callback to answer";

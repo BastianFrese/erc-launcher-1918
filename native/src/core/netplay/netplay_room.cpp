@@ -14,6 +14,7 @@
 #include "netplay_room.hpp"
 #include "../hud/room_cover.hpp"
 #include "../testing/title_skip.hpp"
+#include "core/frontend/ui_vm.hpp"
 
 // Room set-up with no LAN tile and no main menu (research/multiplayer/ns-resolve.md, carcat-direct.md).
 //
@@ -65,8 +66,6 @@ namespace runtime {
 bool car_category_choose(const std::string &value, std::string &why);
 std::string hook_error(const safetyhook::MidHook::Error &e);
 }
-
-bool ui_vm_set_path(const std::string &path, int type, const void *value);
 
 namespace {
 
@@ -470,8 +469,8 @@ const char *ui_step_name(room::UiStep step)
 bool write_ui_state(const char *when)
 {
     int one = 1;
-    bool a = ui_vm_set_path(room::UI_STATE_PATH, 0, room::UI_STATE_VALUE);
-    bool b = ui_vm_set_path(room::UI_LAN_PATH, 1, &one);
+    bool a = ::frontend::ui_vm_set_path(room::UI_STATE_PATH, 0, room::UI_STATE_VALUE);
+    bool b = ::frontend::ui_vm_set_path(room::UI_LAN_PATH, 1, &one);
     if (a && b) {
         swofty::log("[netplay] room host: #%s = %s and #%s = true written%s", room::UI_STATE_PATH, room::UI_STATE_VALUE,
                     room::UI_LAN_PATH, when);

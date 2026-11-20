@@ -226,6 +226,10 @@ src/core/diagnostics/session_job_probe.cpp
 src/core/guards/ai/ai_line_set_guard.cpp
 src/core/weather/setup.cpp
 src/core/hud/room_cover.cpp
+src/core/netplay/netplay.cpp
+src/core/netplay/netplay_bridge.cpp
+src/core/netplay/netplay_drive.cpp
+src/core/netplay/netplay_room.cpp
 src/core/assets/entitlements.cpp
 src/core/live/live_state.cpp
 src/core/loading/game_settings.cpp

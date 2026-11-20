@@ -176,7 +176,9 @@ def report_entries(report):
         diag, decl, macro = (line.rstrip('\n').split('\t') + ['', ''])[:3]
         m = DIAG.match(diag)
         if m:
-            path = os.path.relpath(os.path.normpath(os.path.join(NATIVE, m.group(1))), NATIVE)
+            # Vorwaertsschraegstriche: so schreiben build_graph.py und die Sonderlisten die Pfade,
+            # und so vergleicht dieser Pruefer sie (auf Windows liefert relpath Backslashes).
+            path = os.path.relpath(os.path.normpath(os.path.join(NATIVE, m.group(1))), NATIVE).replace(os.sep, '/')
             entries.append(Entry(path, int(m.group(2)), m.group(3), decl.strip(), macro))
     return entries
 
@@ -222,7 +224,7 @@ def locate(symbol, unit, entries, bodies, taken):
 
 class Unit:
     def __init__(self, report, obj_root, bodies):
-        name = os.path.relpath(report, obj_root)
+        name = os.path.relpath(report, obj_root).replace(os.sep, '/')
         if not name.endswith('.o.init'):
             sys.exit(f'init_check.py: {report} is not a core report under {obj_root}')
         self.name = name[:-len('.o.init')] + '.cpp'

@@ -144,3 +144,10 @@ src/core/render/d3d12/srv_clamp.cpp: SrvReports reports;
 src/core/render/grade.cpp: Grader grader;
 src/core/render/postfx.cpp: Pipeline pipeline;
 src/core/telemetry/udp_ids.cpp: ids::Map map;
+
+# A string that starts empty; the netplay hooks write the signed-in name through set_name before
+# anything reads it, and the default constructor reads no other unit's object.
+src/core/netplay/netplay_session.hpp: inline std::string name_now;
+# An array of empty names, detour pointers and strings; its default constructors read no other
+# unit's object, and netplay_bridge fills them from its own bindings.
+src/core/netplay/netplay_bridge.cpp: Hook hooks[F_COUNT];

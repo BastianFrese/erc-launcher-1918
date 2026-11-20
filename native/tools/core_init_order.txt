@@ -16,6 +16,10 @@ init
   src/core/assets/db_first_read.cpp
   src/core/loading/game_settings.cpp
   src/core/live/live_state.cpp
+  src/core/netplay/netplay_room.cpp
+  src/core/netplay/netplay_drive.cpp
+  src/core/netplay/netplay_bridge.cpp
+  src/core/netplay/netplay.cpp
   src/core/hud/room_cover.cpp
   src/core/weather/setup.cpp
   src/core/guards/ai/ai_line_set_guard.cpp
@@ -154,6 +158,7 @@ init
   src/core/runtime/loader/patch_set.cpp
   src/core/runtime/loader/mixin_manager.cpp
 inline
+  src/core/netplay/netplay.cpp  runtime::netplay_session::name_now
   src/core/registry/core.cpp  swofty::liveries::liveries
   src/core/registry/core.cpp  swofty::power::suppliers
   src/core/registry/core.cpp  swofty::power::drs_rules
@@ -330,6 +335,10 @@ exit
   src/core/diagnostics/session_job_probe.cpp
   src/core/guards/ai/ai_line_set_guard.cpp
   src/core/hud/room_cover.cpp
+  src/core/netplay/netplay.cpp
+  src/core/netplay/netplay_bridge.cpp
+  src/core/netplay/netplay_drive.cpp
+  src/core/netplay/netplay_room.cpp
   src/core/live/live_state.cpp
   src/core/assets/db_first_read.cpp
   src/core/guards/garage/pit_garage_state.cpp
@@ -384,6 +393,7 @@ on-load
   src/core/frontend/home_tiles.cpp  SWOFTY_ON_LOAD
 bindings
   src/core/assets/entitlements.cpp
+  src/core/netplay/netplay_drive.cpp
   src/core/frontend/home_tiles.cpp
 explicit
   pit_garage_state  src/core/guards/garage/pit_garage_state.cpp  SWOFTY_HOOK_GUARD(pit_garage_state), arms pit_garage_state
