@@ -12,6 +12,8 @@ use super::host::{Host, Hosted};
 #[derive(Default)]
 pub(crate) struct Account {
     pub(crate) session: Option<Session>,
+    /// Der eigene Schluessel dieser Installation, wenn niemand angemeldet ist.
+    pub(crate) guest: Option<String>,
     pub(crate) busy: bool,
     pub(crate) ban: Option<Ban>,
     pub(crate) toasts: Vec<Notification>,

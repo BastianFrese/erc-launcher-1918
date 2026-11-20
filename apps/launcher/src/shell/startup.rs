@@ -143,6 +143,7 @@ impl Shell {
             launching: crate::shell::play::Launching::default(),
             account: crate::shell::account::Account {
                 session: mp,
+                guest: None,
                 busy: false,
                 ban: None,
                 toasts: Vec::new(),

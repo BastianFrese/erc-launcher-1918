@@ -279,12 +279,17 @@ impl Hosted for Multiplayer {
 
 impl Host<Multiplayer> for Shell {
     fn split(&mut self) -> (&mut Multiplayer, OnlineNeeds<'_>) {
+        // Einmal je Sitzung von der Platte gelesen, nicht bei jedem Neuzeichen.
+        if self.account.guest.is_none() {
+            self.account.guest =
+                swofty_core::online::multiplayer::guest::token(&self.store.root).ok();
+        }
         let token = self
             .account
             .session
             .as_ref()
             .map(|m| m.token.clone())
-            .or_else(|| swofty_core::online::multiplayer::guest::token(&self.store.root).ok());
+            .or_else(|| self.account.guest.clone());
         (
             &mut self.rooms,
             OnlineNeeds {

@@ -286,7 +286,7 @@ fn a_session_launcher_windows_refuses_with_740_ends_the_wait_at_once() {
     assert_eq!(err.to_string(), refused.text());
     assert!(
         err.to_string()
-            .contains("running Swofty Launcher as administrator doesn't help"),
+            .contains("running ERC Launcher as administrator doesn't help"),
         "{err}"
     );
     assert_eq!(

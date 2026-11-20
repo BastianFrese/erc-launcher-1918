@@ -380,7 +380,7 @@ fn a_handoff_program_set_to_run_as_admin_blocks_an_unelevated_launcher() {
         text.starts_with("These files are set to run as administrator, so Windows won't start them for an EA app session (error 740): C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EALauncher.exe, C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EADesktop.exe. For each one, right-click it, open Properties > Compatibility"),
         "{text}"
     );
-    assert!(!text.contains("Swofty Launcher as administrator"), "{text}");
+    assert!(!text.contains("ERC Launcher as administrator"), "{text}");
     assert_eq!(
         ea_blocker_in(&listings, game, Some(launcher), false, at(true, false)),
         None

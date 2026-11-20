@@ -121,7 +121,7 @@ impl RunAsAdmin {
 
 const FIX: &str = "Properties > Compatibility and untick \"Run this program as an administrator\", also under \
                    \"Change settings for all users\". Then press Play again.";
-const GAME_NOTE: &str = "The EA app starts F1 25 without administrator rights, so running Swofty Launcher as administrator doesn't help.";
+const GAME_NOTE: &str = "The EA app starts F1 25 without administrator rights, so running ERC Launcher as administrator doesn't help.";
 
 /// Whether Swofty Launcher and the EA app run as administrator.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
