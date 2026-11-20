@@ -28,11 +28,13 @@ pub struct ResumeRow {
     #[serde(default)]
     pub game_mode: String,
     pub ready: bool,
-    /// False when the build lacks the career's own team, car or driver row: the game crashes loading it, so the
-    /// press shows a notice and loads nothing (no Load Anyway).
+    /// False when the career's mode is an addon's that is off: the game has no such mode to load it into, so the
+    /// press shows a notice and loads nothing. A career whose team, car or driver row the build seems to lack asks
+    /// Load Anyway / Back instead, like one whose addon is at another version.
     #[serde(default = "loadable_default")]
     pub loadable: bool,
-    /// `ready`, `missing` (an addon or rows the build lacks) or `version` (made with another addon version).
+    /// `ready`, `missing` (an addon that is off or not installed) or `version` (Mismatched: made with another
+    /// addon version, or rows the build seems to lack).
     pub severity: String,
     pub status: String,
     pub badge: String,
@@ -77,7 +79,7 @@ fn pill(n: &CareerNeeds) -> (String, &'static str) {
             parts.push(format!("Missing: {}", a.name));
             severity = MISSING;
         } else if !a.at_version {
-            parts.push(format!("Made with another version of {}", a.name));
+            parts.push(format!("Mismatched version of {}", a.name));
             if severity == READY {
                 severity = VERSION;
             }
@@ -92,7 +94,9 @@ fn pill(n: &CareerNeeds) -> (String, &'static str) {
     }
     if let Some(m) = &n.missing_rows {
         parts.push(m.text());
-        severity = MISSING;
+        if severity == READY {
+            severity = VERSION;
+        }
     }
     if parts.is_empty() {
         return ("Ready".into(), READY);
@@ -333,15 +337,19 @@ fn key_of(s: &Slot) -> String {
     }
 }
 
+/// The year a career mode's name ends in when that is all that follows `driver_career_` or `my_team_career_`
+/// (`driver_career_26`, `driver_career_1990`). An addon's own mode (`driver_career_f2_26`) has none, whatever its
+/// name ends in.
 fn year_of(mode: &str) -> Option<u32> {
-    mode.rsplit('_')
-        .next()
+    super::mode_suffix(mode)
+        .filter(|s| s.bytes().all(|b| b.is_ascii_digit()))
         .and_then(|y| y.parse::<u32>().ok())
         .filter(|y| (y.to_string().len() == 2 && *y < 100) || (1900..2100).contains(y))
 }
 
 /// The game's data group for a career mode with a year in its name; empty for a mode without one (an addon's own
-/// content), whose group the core takes from the careers index.
+/// content, `driver_career_f2_26` too), whose group the core takes from the content that registers the mode or
+/// from the careers index.
 pub fn group_of(mode: &str) -> String {
     match year_of(mode) {
         Some(y) if y < 100 => format!("f1_career_20{y:02}"),
@@ -429,7 +437,7 @@ pub fn resume_rows(
                 group: group_of(&c.mode),
                 game_mode: c.mode.clone(),
                 ready: severity == READY,
-                loadable: n.is_none_or(|n| n.missing_rows.is_none() && n.missing_mode.is_none()),
+                loadable: n.is_none_or(|n| n.missing_mode.is_none()),
                 severity: severity.into(),
                 status,
                 badge,
@@ -496,9 +504,10 @@ pub fn resume_list_for(
     aliases: crate::row_ids::IdAliases,
     pending: Option<&swofty_formats::lng::Lng>,
 ) -> Option<(Vec<CareerNeeds>, Vec<ResumeRow>)> {
-    let names = Names::of_build(store, game, build, aliases, pending)?;
-    let installed = store.addons().ok()?;
     let on: Vec<String> = order.iter().map(|m| m.id.clone()).collect();
+    let registry = crate::row_ids::registry_rows(&store.root, Some(&game.dir), &on);
+    let names = Names::of_build(store, game, build, aliases, pending)?.with_rows(&registry);
+    let installed = store.addons().ok()?;
     let index = super::read(&super::data_path(&store.root));
     let careers = super::of_profile(&index, profile);
     let mut needs = super::resume_needs(&careers, &on, &installed, Some(names.rows()));
@@ -719,10 +728,7 @@ mod tests {
         assert_eq!(rows[0].driver, "John BENNETT");
         assert_eq!(rows[0].team, "Bennett Racing");
         assert_eq!(rows[0].colour, None, "a player-made team has no database colour");
-        assert_eq!(
-            rows[0].status,
-            "Missing: Alpha; Made with another version of Beta"
-        );
+        assert_eq!(rows[0].status, "Missing: Alpha; Mismatched version of Beta");
         assert_eq!((rows[0].ready, rows[0].severity.as_str()), (false, MISSING));
         assert_eq!(rows[0].addons.len(), 2);
         assert_eq!(
@@ -731,14 +737,11 @@ mod tests {
         );
         assert_eq!(rows[0].addons[1].state, "Version 1");
         assert_eq!(rows[1].badge, "F1 1990 Driver Career");
-        assert_eq!(rows[1].status, "Missing rows from F1 1990");
+        assert_eq!(rows[1].status, "Mismatched rows from F1 1990");
+        assert_eq!((rows[1].ready, rows[1].severity.as_str()), (false, VERSION));
         assert!(
-            !rows[1].loadable,
-            "a career whose own rows the build lacks does not load"
-        );
-        assert!(
-            rows[0].loadable && rows[2].loadable && rows[3].loadable,
-            "an addon that is off or at another version still offers Load Anyway"
+            rows.iter().all(|r| r.loadable),
+            "rows the build seems to lack, an addon that is off or at another version all offer Load Anyway"
         );
         assert_eq!(rows[1].team, "", "a team the build lacks has no name");
         assert!(rows[2].ready && rows[2].status == "Ready" && rows[2].addons.is_empty());
@@ -850,6 +853,12 @@ mod tests {
         assert_eq!(group_of("driver_career_25"), "f1_career_2025");
         assert_eq!(group_of("my_team_career_26"), "f1_career_2026");
         assert_eq!(group_of("driver_career_progressive"), "");
+        assert_eq!(
+            group_of("driver_career_f2_26"),
+            "",
+            "an addon's mode ending in a number is not the stock 2026 group"
+        );
+        assert_eq!(group_of("my_team_career_f2_2026"), "");
         let list = vec![
             saved(
                 "driver_career_1990",
@@ -871,6 +880,20 @@ mod tests {
         assert_eq!(by("driver_career_1990").group, "f1_career_1990");
         assert_eq!(by("my_team_career_26").group, "f1_career_2026");
         assert_eq!(by("driver_career_progressive").group, "");
+        let f2 = resume_rows(
+            &[saved(
+                "driver_career_f2_26",
+                slot(4, "0x00000000000000dd", 646, 61, 0, 0, 4),
+            )],
+            &Created::default(),
+            &[],
+            &names,
+        );
+        assert_eq!(f2[0].group, "");
+        assert_eq!(
+            f2[0].badge, "Driver Career",
+            "an addon's mode ending in _26 is not named as the game's 2026 content"
+        );
         let json = serde_json::to_value(by("driver_career_1990")).unwrap();
         assert_eq!(json["group"], "f1_career_1990");
         assert_eq!(json["game_mode"], "driver_career_1990");

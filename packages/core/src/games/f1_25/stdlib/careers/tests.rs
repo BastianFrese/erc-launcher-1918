@@ -1038,13 +1038,13 @@ fn a_career_whose_team_and_car_rows_the_build_lacks_says_which_addon_made_them()
             tables: vec!["team".into(), "vehicle".into()]
         })
     );
-    assert_eq!(gap(0).unwrap().text(), "Missing rows from F1 1990");
+    assert_eq!(gap(0).unwrap().text(), "Mismatched rows from F1 1990");
     assert_eq!(gap(1).unwrap().addon, "F1 1990");
     assert_eq!(gap(1).unwrap().tables, ["team", "vehicle", "driver"]);
     assert_eq!(gap(2), None, "rows the build has are not missing");
     let unknown = gap(3).unwrap();
     assert_eq!(unknown.addon, "");
-    assert_eq!(unknown.text(), "Missing rows: team");
+    assert_eq!(unknown.text(), "Mismatched rows: team");
     assert_eq!(
         gap(4),
         None,
@@ -1055,6 +1055,37 @@ fn a_career_whose_team_and_car_rows_the_build_lacks_says_which_addon_made_them()
             .iter()
             .all(|n| n.missing_rows.is_none())
     );
+}
+
+#[test]
+fn a_career_driving_a_car_the_core_adds_from_the_registry_is_not_missing_rows() {
+    let list = parse(
+        r#"[{"career":"driver_career:667c9aad208c7d9c","slot":"667c9aad208c7d9c","mode":"driver_career",
+              "team_raw":476,"vehicle_raw":509,"driver_raw":16386,
+              "addons":[{"id":"swofty.classic-seasons-2016","version":"0.8.2","why":"the career's team, car or driver"}]}]"#,
+    );
+    let installed: BTreeMap<String, AddonManifest> =
+        [named("swofty.classic-seasons-2016", "F1 2016 GP/TT Addon")]
+            .into_iter()
+            .collect();
+    let mut rows = ids(&[476, 500], &[3], &[]);
+    let gap = resume_needs(&list, &[], &installed, Some(&rows))[0]
+        .missing_rows
+        .clone()
+        .unwrap();
+    assert_eq!(
+        gap.tables,
+        ["vehicle"],
+        "the database file alone lacks the registry's car"
+    );
+    assert_eq!(gap.text(), "Mismatched rows from F1 2016 GP/TT Addon");
+    rows.add(&[("entrants.vehicles.vehicle".to_owned(), [509].into())].into());
+    assert_eq!(
+        resume_needs(&list, &[], &installed, Some(&rows))[0].missing_rows,
+        None
+    );
+    rows.add(&[("entrants.engines.Engine".to_owned(), [600].into())].into());
+    assert!(!rows.vehicles.contains(&600) && !rows.teams.contains(&600));
 }
 
 #[test]
