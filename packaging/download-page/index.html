@@ -133,7 +133,7 @@
                     <span>HUD-Vorschau</span>
                 </button>
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-f1-panel border border-f1-border text-xs font-mono text-zinc-300 shadow-inner">
-                    <span class="text-white font-semibold">1.4.3</span>
+                    <span class="text-white font-semibold">1.4.4</span>
                     <span class="text-zinc-600">·</span>
                     <span class="text-zinc-400">Windows</span>
                 </div>
@@ -185,7 +185,7 @@
 
                 <!-- Primary CTA Download Button -->
                 <div class="w-full flex flex-col items-center">
-                    <a id="downloadBtn" href="ERC-Launcher-1.4.3-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
+                    <a id="downloadBtn" href="ERC-Launcher-1.4.4-setup.exe" download onclick="startDownload(); return true;" class="btn-f1-cta w-full sm:w-auto inline-flex items-center justify-center gap-3.5 px-8 py-4 rounded-xl text-white font-display font-bold text-sm sm:text-base tracking-wider uppercase cursor-pointer">
                         <!-- Download Icon -->
                         <svg id="downloadIcon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -197,7 +197,7 @@
                     <div class="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-zinc-400">
                         <div class="flex items-center gap-1.5">
                             <span class="text-zinc-500">Fassung</span>
-                            <span class="text-zinc-200 font-semibold">1.4.3</span>
+                            <span class="text-zinc-200 font-semibold">1.4.4</span>
                         </div>
                         <span class="text-zinc-700 hidden sm:inline">|</span>
                         <div class="flex items-center gap-1.5">
@@ -208,7 +208,7 @@
                         <!-- Interactive SHA-256 Copy Button -->
                         <button onclick="copySha256()" title="Vollständigen SHA-256 Hash kopieren" class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-f1-panel hover:bg-f1-panelLight border border-f1-border/80 hover:border-zinc-600 transition-colors cursor-pointer group">
                             <span class="text-zinc-500">SHA-256</span>
-                            <span class="text-zinc-200 font-semibold group-hover:text-white">274bd4ae...</span>
+                            <span class="text-zinc-200 font-semibold group-hover:text-white">ee55411a...</span>
                             <svg id="copyIcon" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-f1-red transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
@@ -356,7 +356,14 @@
                 </div>
                 <div class="rounded-xl bg-f1-panel/70 border border-f1-border divide-y divide-f1-border">
                     <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
-                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.4.3</div>
+                        <div class="font-mono text-sm text-white font-bold shrink-0 sm:w-20">1.4.4</div>
+                        <div class="text-sm text-zinc-300 leading-relaxed">
+                            Neuer Unterbau: Addons mit beschädigten Dateien halten den Start an statt halb
+                            zu laden, Karriere- und Strecken-Korrekturen, schnellere Streckenprüfung.
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <div class="font-mono text-sm text-zinc-400 font-bold shrink-0 sm:w-20">1.4.3</div>
                         <div class="text-sm text-zinc-300 leading-relaxed">
                             Neuer Unterbau: EA App mit Leerzeichen im Pfad, Steam-Dateien nach einer
                             Prüfung, importierte Strecken getrennt von Katalog-Addons.
@@ -677,7 +684,7 @@
     <!-- Interactive Scripts -->
     <script>
         // Full SHA-256 checksum string for clipboard copy
-        const FULL_SHA256 = "274bd4ae4b1292bf6ff95c9f6b55a4384e5a10e460a39edf6f9d688b06106c8d";
+        const FULL_SHA256 = "ee55411adedd583f3d62211d4c9835b8fdd95c215d30f2a41a8258d7ff04cf11";
 
         // Toast Helper Function
         let toastTimeout;
@@ -717,7 +724,7 @@
             tempInput.select();
             try {
                 document.execCommand('copy');
-                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.4.3-setup.exe in Zwischenablage.');
+                showToast('SHA-256 Kopiert', 'Prüfsumme für ERC-Launcher-1.4.4-setup.exe in Zwischenablage.');
             } catch (err) {
                 showToast('Hinweis', 'SHA-256: ' + FULL_SHA256.slice(0, 16) + '...', true);
             }
@@ -727,7 +734,7 @@
         // Echter Download: der Browser laedt die Datei, kein Fortschritt wird erfunden
         function startDownload() {
             // Der Klick selbst laedt (download-Attribut am Link); hier nur die Meldung.
-            showToast('Download gestartet', 'ERC-Launcher-1.4.3-setup.exe (63,1 MB)');
+            showToast('Download gestartet', 'ERC-Launcher-1.4.4-setup.exe (63,1 MB)');
         }
 
         // Interactive F1 Start Gantry Sequence

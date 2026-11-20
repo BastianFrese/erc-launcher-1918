@@ -123,7 +123,10 @@ impl Shell {
         Self::watch_anwesend(window, cx);
         Self::watch_ampel(window, cx);
         let root = store.root.clone();
-        let ads = crate::ads::Ads::start(window, &root);
+        let mut ads = crate::ads::Ads::start(window, &root);
+        if let Some(note) = ads.take_notice() {
+            window.notify(note, cx);
+        }
         let window_moved = cx.observe_window_bounds(window, |this, _, _| this.ads.moved());
         let mut shell = Self {
             library,
@@ -202,7 +205,7 @@ impl Shell {
             reload_generation: 0,
             slow_logged: false,
             update_check,
-            updates: crate::update::Updates::new(),
+            updates: crate::update::Updates::started(),
             blocks: crate::blocks::Blocks::default(),
             content_width: 900.,
             short: false,

@@ -1,6 +1,7 @@
 pub use swofty_addon::{GAME_ID, asset, builder, launcher, manifest, ops, view};
 
 pub mod activation;
+pub mod addon_files;
 pub mod addon_storage;
 pub mod app_control;
 pub mod baseline;
@@ -159,6 +160,9 @@ pub enum Error {
     NoSpace { drive: String, need: u64, free: u64 },
     #[error("{}", busy::CANCELLED)]
     Cancelled,
+    /// A part of the HUD that the composed records and another addon's archive changes both claim.
+    #[error("hud: {0}")]
+    HudConflict(Box<hud::conflict::Conflict>),
     #[error("{0}")]
     Other(String),
 }
