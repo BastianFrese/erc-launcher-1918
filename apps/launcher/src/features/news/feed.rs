@@ -6,7 +6,9 @@ use std::sync::Arc;
 use std::time::Duration;
 use swofty_i18n::{tr, trf};
 
-pub const FEED_URL: &str = "https://f1.swofty.net/news.json";
+/// Unsere Nachrichten. Die Datei liegt auf unserem Server; fehlt sie, bleiben die
+/// mitgelieferten Versionsnotizen stehen.
+pub const FEED_URL: &str = "https://download.erdi-erc.de/news.json";
 
 pub(super) const EMBEDDED: &str = include_str!(concat!(env!("OUT_DIR"), "/news.json"));
 

@@ -3,7 +3,7 @@
 //! blocks, and inline bold, italics, code and links. HTML and images are
 //! dropped, and only `https:`, `mailto:` and site-relative links are kept.
 
-pub const SITE: &str = "https://f1.swofty.net";
+pub const SITE: &str = "https://erdi-erc.de";
 
 pub const MAX_COLUMNS: usize = 32;
 
