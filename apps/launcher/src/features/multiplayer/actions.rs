@@ -8,7 +8,7 @@ use gpui_kit::component::WindowExt;
 use gpui_kit::*;
 use swofty_core::catalog;
 use swofty_core::online::multiplayer::client::{self as diag, Session, Setup};
-use swofty_core::online::multiplayer::types::{RoomSettings, RoomSummary};
+use swofty_core::online::multiplayer::types::{FixStep, RoomSettings, RoomSummary};
 use swofty_i18n::{tr, trf};
 
 use super::model::*;
@@ -365,6 +365,66 @@ impl Multiplayer {
         cx.notify();
     }
 
+    /// Holt fehlende Mods aus dem Katalog, schaltet eigene ab und gibt der Sitzung den
+    /// frischen Stand — alles im Hintergrund, die Oberfläche wartet nicht darauf.
+    pub(super) fn align_mods<H: Host<Self>>(
+        host: &mut H,
+        plan: Vec<FixStep>,
+        cx: &mut Context<H>,
+    ) {
+        let (m, needs) = host.split();
+        let Some(dir) = needs.game_dir.map(Path::to_path_buf) else {
+            return;
+        };
+        let (store, profile) = (needs.store.clone(), needs.profile.to_owned());
+        m.align_busy = true;
+        cx.spawn(async move |this, cx| {
+            let result = cx
+                .background_executor()
+                .spawn(async move {
+                    let katalog = read_local(&store, &profile, &dir)
+                        .map_err(|e| format!("Der eigene Mod-Stand liess sich nicht lesen: {e}"))?
+                        .catalog;
+                    let ergebnis =
+                        crate::features::abgleich::angleichen(&store, &profile, &katalog, &plan)?;
+                    let frisch = read_local(&store, &profile, &dir).ok();
+                    Ok::<_, String>((ergebnis, frisch))
+                })
+                .await;
+            this.update(cx, |host, cx| {
+                {
+                    let (m, _) = host.split();
+                    m.align_busy = false;
+                    match result {
+                        Ok((ergebnis, frisch)) => {
+                            if let Some(frisch) = frisch
+                                && let Some(session) = &m.session
+                            {
+                                session.update_local(&frisch);
+                            }
+                            if ergebnis.gelungen() {
+                                if !ergebnis.getan.is_empty() {
+                                    m.notice = Some(ergebnis.getan.join(" · "));
+                                }
+                            } else {
+                                m.error = Some(format!(
+                                    "Die Mods passen noch nicht:\n\n{}",
+                                    ergebnis.offen.join("\n")
+                                ));
+                            }
+                        }
+                        Err(e) => m.error = Some(e),
+                    }
+                }
+                host.changed(Change::Installed, cx);
+                cx.notify();
+            })
+            .ok();
+        })
+        .detach();
+        cx.notify();
+    }
+
     /// The online page's tick: the room's launch and game watch, leaving, and the page's polls while it
     /// shows.
     pub(super) fn tick<H: Host<Self> + PromptHost<Launching>>(
@@ -374,6 +434,8 @@ impl Multiplayer {
     ) {
         Self::launch(host, window, cx);
         let dialog = window.has_active_dialog(cx);
+        // Gesetzt, wenn in diesem Takt ein Mod-Abgleich starten soll (nach dem Ausleihen von `m`).
+        let mut align = None;
         let (m, needs) = <H as Host<Self>>::split(host);
         let mut changed = !dialog && m.drop_held();
         changed |= m.watch_game(needs.running, needs.busy);
@@ -408,6 +470,19 @@ impl Multiplayer {
                 changed = true;
             }
         }
+        // Weicht der eigene Mod-Stand ab, wird er einmal je Plan angeglichen —
+        // installieren, ausschalten, dann der Sitzung den frischen Stand geben.
+        let plan = m
+            .session
+            .as_ref()
+            .filter(|_| !m.state.as_ref().is_some_and(|s| s.host))
+            .map(|s| s.fix_plan())
+            .unwrap_or_default();
+        let key = format!("{plan:?}");
+        if !plan.is_empty() && !m.align_busy && m.align_plan.as_deref() != Some(key.as_str()) {
+            m.align_plan = Some(key);
+            align = Some(plan);
+        }
         if m.copied
             .is_some_and(|at| now.duration_since(at) > Duration::from_secs(2))
         {
@@ -416,6 +491,9 @@ impl Multiplayer {
         }
         if changed {
             cx.notify();
+        }
+        if let Some(plan) = align {
+            Self::align_mods(host, plan, cx);
         }
         let m = <H as Host<Self>>::split(host).0;
         if m.session.is_none() && m.lobby.game_due(now) {

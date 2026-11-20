@@ -1,3 +1,4 @@
+pub(crate) mod abgleich;
 pub(crate) mod addons;
 pub(crate) mod aktualisierung;
 pub(crate) mod ampel;

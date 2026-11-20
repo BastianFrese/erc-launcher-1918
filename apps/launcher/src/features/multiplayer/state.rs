@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::convert::Infallible;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -15,7 +14,7 @@ use swofty_i18n::tr;
 
 use super::model::{OwnPrint, exit_notice};
 use super::room_game::RoomGame;
-use crate::shell::host::{Host, Hosted, reports_nothing};
+use crate::shell::host::{Host, Hosted};
 use crate::shell::{Page, Shell};
 
 pub(super) const TICK: Duration = Duration::from_millis(500);
@@ -53,6 +52,10 @@ pub(crate) struct Multiplayer {
     pub(super) starting: Option<String>,
     pub(super) session: Option<Session>,
     pub(super) state: Option<SessionState>,
+    /// Der Mod-Abgleich läuft gerade.
+    pub(super) align_busy: bool,
+    /// Der zuletzt versuchte Plan — derselbe Plan wird nicht in einer Schleife wiederholt.
+    pub(super) align_plan: Option<String>,
     pub(super) leaving: bool,
     pub(super) viewing: Option<String>,
     pub(super) notice: Option<String>,
@@ -88,6 +91,8 @@ impl Multiplayer {
             starting: None,
             session: None,
             state: None,
+            align_busy: false,
+            align_plan: None,
             leaving: false,
             viewing: None,
             notice: None,
@@ -260,9 +265,14 @@ pub(crate) struct OnlineNeeds<'a> {
     pub(crate) token: Option<&'a str>,
 }
 
+/// Was der Mod-Abgleich der Shell meldet, damit sie danach alles neu liest.
+pub(crate) enum Change {
+    Installed,
+}
+
 impl Hosted for Multiplayer {
     type Needs<'a> = OnlineNeeds<'a>;
-    type Change = Infallible;
+    type Change = Change;
 }
 
 impl Host<Multiplayer> for Shell {
@@ -284,5 +294,9 @@ impl Host<Multiplayer> for Shell {
         )
     }
 
-    reports_nothing!();
+    fn changed(&mut self, change: Change, cx: &mut Context<Self>) {
+        match change {
+            Change::Installed => self.reload(cx),
+        }
+    }
 }
