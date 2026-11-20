@@ -18,11 +18,11 @@ use swofty_core::process::{
     stop_process,
 };
 use swofty_core::quarantine::{self, Attach, AttachWatch, Stage};
-use swofty_core::recovery::{Scope, SessionLock};
+use swofty_core::recovery::{Recovered, Scope, SessionLock};
 use swofty_core::session::{
     Config, DEFAULT_WINEDEBUG, LOADER_FALLBACK, LOADER_LOG, LOADER_MARK, LaunchMode, LaunchRequest, LogMark,
-    PERF_LOG, RUNTIME_LIBS_DIR, STOP_FILE, SessionEnd, SessionRecord, game_args, is_compat_layer,
-    parse_cpu_list, parse_steam_command, request_stop, written_since,
+    PERF_FALLBACK, RUNTIME_LIBS_DIR, STOP_FILE, SessionEnd, SessionRecord, game_args, is_compat_layer,
+    keep_game_logs, parse_cpu_list, parse_steam_command, request_stop,
 };
 use swofty_core::steam_client::{self, Ready, Report, State, Wait};
 use swofty_core::store::Store;
@@ -363,17 +363,42 @@ fn settle(store: &Store, g: &Game, wrapper: &mut Wrapper, mut relay: Option<&mut
         std::thread::sleep(Duration::from_millis(250));
     };
     match swofty_core::recovery::recover(&lock, &store.root, g, Scope::All) {
-        Ok(r) if r.recovered() => {
-            say("info", "the wrapper ended without rolling the session back");
-            crate::recover::announce(store, g, &r.lines(), &info);
-        }
         Ok(r) => {
-            r.lines().iter().for_each(|l| info(l));
-            if ended {
-                info("session over: its game files are rolled back");
+            if r.recovered() {
+                say("info", "the wrapper ended without rolling the session back");
+                crate::recover::announce(store, g, &r.lines(), &info);
+            } else {
+                r.lines().iter().for_each(|l| info(l));
+            }
+            if let Some(line) = settled(&r, ended) {
+                info(line);
             }
         }
         Err(e) => info(&format!("rollback failed, run swofty restore: {e:#}")),
+    }
+}
+
+const UNFINISHED: &str = "not every game file is back yet; the next swofty run or launcher start retries it, or run swofty restore";
+
+/// The last line of the roll back after a session. One that left a file in
+/// the game folder never ends on the line that says the files are back.
+fn settled(r: &Recovered, ended: bool) -> Option<&'static str> {
+    if !r.complete() {
+        Some(UNFINISHED)
+    } else if ended && !r.recovered() {
+        Some("session over: its game files are rolled back")
+    } else {
+        None
+    }
+}
+
+/// What the wrapper says once the profile's files are back, which is not the
+/// whole game folder while offline play's files stayed locked.
+fn rolled_back(offline_left: bool) -> &'static str {
+    if offline_left {
+        "rolled the profile's game files back, but not the offline play files above"
+    } else {
+        "rolled the profile's game files back"
     }
 }
 
@@ -669,24 +694,28 @@ struct Session<'a> {
 
 impl Drop for Session<'_> {
     fn drop(&mut self) {
-        match swofty_core::offline::restore_pending(&self.store.root, &self.game.dir) {
+        let offline_left = match swofty_core::offline::restore_pending(&self.store.root, &self.game.dir) {
             Ok(Some(notes)) => {
                 for note in notes {
                     info(&format!("offline play: {note}"));
                 }
                 info("offline play: the game folder is back to vanilla");
+                false
             }
-            Ok(None) => {}
-            Err(e) => info(&format!(
-                "offline play restore failed{}, run swofty restore: {e:#}",
-                still_running(&self.game.dir)
-            )),
-        }
+            Ok(None) => false,
+            Err(e) => {
+                info(&format!(
+                    "offline play restore failed{}; the next swofty run or launcher start retries it, or run swofty restore: {e:#}",
+                    still_running(&self.game.dir)
+                ));
+                true
+            }
+        };
         let inst = Installer::new(&self.store.root, self.game);
         match inst.roll_back(false) {
             Ok(done) => {
                 if !done.is_empty() {
-                    info("rolled the profile's game files back");
+                    info(rolled_back(offline_left));
                 }
                 for d in done.iter().flat_map(|r| &r.drift) {
                     info(&format!("rollback: {d}"));
@@ -847,7 +876,11 @@ fn play(
     let before = LogMark::read(&loader);
     std::fs::write(dir.join(LOADER_MARK), serde_json::to_vec(&before)?)?;
     let fallback = store.root.join(LOADER_FALLBACK);
-    for stale in [fallback.clone(), fallback.with_extension("prev.log")] {
+    for stale in [
+        fallback.clone(),
+        fallback.with_extension("prev.log"),
+        store.root.join(PERF_FALLBACK),
+    ] {
         std::fs::remove_file(stale).ok();
     }
     let latest = store.sessions_dir().join("latest");
@@ -1123,8 +1156,8 @@ fn play(
     let via_ea = ea.is_some();
     let (code, unread) = match ea {
         Some(started) => {
-            crate::ea::wait(game, &dir, &copies_before, started, tick);
-            (None, EA_UNREAD.to_owned())
+            let code = crate::ea::wait(game, &dir, &copies_before, started, tick);
+            (code.map(|c| c as i32), EA_UNREAD.to_owned())
         }
         None => {
             let status = wait_game(&mut spawn(target, "game_stdout.log")?, tick)?;
@@ -1144,7 +1177,7 @@ fn play(
         launched.elapsed().unwrap_or_default(),
     );
     crate::laps::end(laps, game);
-    keep_game_logs(&store.root, game, &fallback, &dir, before.as_ref(), launched);
+    keep_game_logs(&store.root, game, &dir, before.as_ref(), launched);
     let loader = std::fs::read(dir.join("loader.log"))
         .ok()
         .map(|b| launch::LoaderSeen::scan(&String::from_utf8_lossy(&b)));
@@ -1190,6 +1223,7 @@ fn note_known_problem(store: &Store, game: &Path, dir: &Path, crashed: bool) {
     if !crashed {
         if let Some(d) = swofty_core::known_problems::stall(&record, Some(game), store)
             .or_else(|| swofty_core::known_problems::tyres(&record, Some(game), store))
+            .or_else(|| swofty_core::known_problems::logos(&record, Some(game), store))
         {
             say("warning", &format!("known problem {}: {}", d.id, d.title));
         }
@@ -1202,7 +1236,7 @@ fn note_known_problem(store: &Store, game: &Path, dir: &Path, crashed: bool) {
 }
 
 const EA_UNREAD: &str =
-    "the EA app started F1 25, so the session has no handle on the game to read its exit code";
+    "the session could not read the exit code of the F1 25 the EA app started; the [ea app] lines say why";
 
 /// Why an exit status carries no code.
 fn why_no_code(status: ExitStatus) -> String {
@@ -1418,29 +1452,6 @@ fn note_refused(fallback: &Path) {
         ),
     );
     say("warning", quarantine::refused_text());
-}
-
-/// The session's loader.log: the game folder's when the loader wrote it,
-/// else its fallback in the data folder, which a session starts without.
-fn keep_game_logs(
-    data: &Path,
-    game: &Path,
-    fallback: &Path,
-    dir: &Path,
-    before: Option<&LogMark>,
-    launched: SystemTime,
-) {
-    swofty_core::crash_report::keep_fallback(data, &dir.join("game-logs"), launched);
-    let loader = game.join(LOADER_LOG);
-    if LogMark::replaced(&loader, before) {
-        std::fs::copy(&loader, dir.join("loader.log")).ok();
-    } else if fallback.is_file() {
-        std::fs::copy(fallback, dir.join("loader.log")).ok();
-    }
-    let perf = game.join(PERF_LOG);
-    if written_since(&perf, launched) {
-        std::fs::copy(&perf, dir.join("perf.log")).ok();
-    }
 }
 
 /// Wait for the game; a stop signal to the wrapper (Steam's Stop button, a
@@ -2319,6 +2330,7 @@ mod tests {
     }
 
     use super::*;
+    use swofty_core::session::PERF_LOG;
 
     #[test]
     fn an_old_launch_request_loses_its_arming() {
@@ -2576,22 +2588,42 @@ mod tests {
         touch(&perf, launched - Duration::from_secs(600));
         let before = LogMark::read(&loader);
         let fallback = dir.join(LOADER_FALLBACK);
-        keep_game_logs(&dir, &game, &fallback, &session, before.as_ref(), launched);
+        let perf_fallback = dir.join(PERF_FALLBACK);
+        keep_game_logs(&dir, &game, &session, before.as_ref(), launched);
         assert!(!session.join("loader.log").exists());
         assert!(!session.join("perf.log").exists());
 
         std::fs::create_dir_all(fallback.parent().unwrap()).unwrap();
         std::fs::write(&fallback, "attached in the data folder\n").unwrap();
-        keep_game_logs(&dir, &game, &fallback, &session, before.as_ref(), launched);
+        std::fs::write(
+            &perf_fallback,
+            "Swofty Launcher performance report\nan earlier session\n",
+        )
+        .unwrap();
+        touch(&perf_fallback, launched - Duration::from_secs(600));
+        keep_game_logs(&dir, &game, &session, before.as_ref(), launched);
         assert_eq!(
             std::fs::read_to_string(session.join("loader.log")).unwrap(),
             "attached in the data folder\n"
+        );
+        assert!(!session.join("perf.log").exists());
+
+        std::fs::write(
+            &perf_fallback,
+            "Swofty Launcher performance report\nin the data folder\n",
+        )
+        .unwrap();
+        touch(&perf_fallback, launched + Duration::from_secs(1));
+        keep_game_logs(&dir, &game, &session, before.as_ref(), launched);
+        assert_eq!(
+            std::fs::read_to_string(session.join("perf.log")).unwrap(),
+            "Swofty Launcher performance report\nin the data folder\n"
         );
 
         std::fs::write(&loader, "fresh\n").unwrap();
         std::fs::write(&perf, "Swofty Launcher performance report\nnew\n").unwrap();
         touch(&perf, launched + Duration::from_secs(1));
-        keep_game_logs(&dir, &game, &fallback, &session, before.as_ref(), launched);
+        keep_game_logs(&dir, &game, &session, before.as_ref(), launched);
         assert_eq!(
             std::fs::read_to_string(session.join("loader.log")).unwrap(),
             "fresh\n"
@@ -2606,7 +2638,7 @@ mod tests {
             "Swofty crash report\n",
         )
         .unwrap();
-        keep_game_logs(&dir, &game, &fallback, &session, before.as_ref(), launched);
+        keep_game_logs(&dir, &game, &session, before.as_ref(), launched);
         assert!(session.join("game-logs/crash-20261101-125350.txt").is_file());
         assert!(!fallback.with_file_name("crash-20261101-125350.txt").exists());
         std::fs::remove_dir_all(&dir).ok();
@@ -3040,5 +3072,38 @@ mod tests {
             ["[info] rolled the profile's game files back", "swofty: oops"]
         );
         std::fs::remove_dir_all(log.ancestors().nth(2).unwrap()).ok();
+    }
+
+    #[test]
+    fn a_roll_back_that_left_locked_files_never_says_the_files_are_back() {
+        let locked = Recovered {
+            problems: vec!["offline play staging: offline-play restore could not finish cleanly".into()],
+            ..Recovered::default()
+        };
+        assert_eq!(settled(&locked, true), Some(UNFINISHED));
+        assert_eq!(settled(&locked, false), Some(UNFINISHED));
+        let partly = Recovered {
+            swept: vec!["removed swofty/addons/core/swofty_core.dll".into()],
+            ..locked.clone()
+        };
+        assert!(partly.recovered());
+        assert_eq!(settled(&partly, true), Some(UNFINISHED));
+
+        assert_eq!(
+            settled(&Recovered::default(), true),
+            Some("session over: its game files are rolled back")
+        );
+        assert_eq!(settled(&Recovered::default(), false), None);
+        let recovered = Recovered {
+            offline: true,
+            ..Recovered::default()
+        };
+        assert_eq!(settled(&recovered, true), None);
+
+        assert_eq!(rolled_back(false), "rolled the profile's game files back");
+        assert_eq!(
+            rolled_back(true),
+            "rolled the profile's game files back, but not the offline play files above"
+        );
     }
 }
