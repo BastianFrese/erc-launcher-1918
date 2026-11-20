@@ -379,7 +379,7 @@ impl Shell {
         v_flex()
             .gap(px(24.))
             .child(
-                SettingsSection::new(tr("Swofty Launcher"))
+                SettingsSection::new(tr("ERC Launcher"))
                     .row(
                         SettingRow::new(tr("Version"))
                             .control(ValuePill::new(format!("v{}", update::current_version()))),
