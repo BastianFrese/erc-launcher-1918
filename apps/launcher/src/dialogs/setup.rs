@@ -27,7 +27,7 @@ use crate::ui::theme::{Palette, palette};
 use crate::ui::{game_art, label};
 use swofty_i18n::{tr, trf};
 
-pub(crate) const RISK: &str = "Because of how Swofty Launcher hooks the game's engine, which lets addons run \
+pub(crate) const RISK: &str = "Because of how ERC Launcher hooks the game's engine, which lets addons run \
                                their own engine code, it is highly risky to change the game with any outside \
                                tool that doesn't explicitly support Swofty Addons.";
 
@@ -225,7 +225,7 @@ impl SetupWizard {
             .child(heading(
                 tr("Are there other mods in your game folder?"),
                 "Mods copied into the F1 25 folder by hand, or put there by another mod manager or tool, \
-                 that Swofty Launcher didn't add.",
+                 that ERC Launcher didn't add.",
                 p,
             ))
             .child(
@@ -520,8 +520,8 @@ fn welcome(p: Palette) -> Div {
         .gap(px(12.))
         .child(illustration(IconName::Gamepad2, p))
         .child(heading(
-            tr("Welcome to Swofty Launcher"),
-            "Thanks for installing Swofty Launcher! Just a few things so we can get you sorted before your \
+            tr("Welcome to ERC Launcher"),
+            "Thanks for installing ERC Launcher! Just a few things so we can get you sorted before your \
              first modded session.",
             p,
         ))

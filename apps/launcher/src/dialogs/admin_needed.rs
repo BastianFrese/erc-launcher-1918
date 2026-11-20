@@ -21,7 +21,7 @@ pub(crate) fn text(dir: &Path, source: Source, windows: bool) -> String {
         return format!("{}.", compat::write_blocked_text_for(dir, false));
     }
     trf!(
-        "F1 25 is installed in {folder}, a folder Windows lets only administrators change, so Swofty can't add your mods there.\n\nRestart Swofty Launcher as administrator to play with mods, or move F1 25 to a folder outside Program Files{hint}.",
+        "F1 25 is installed in {folder}, a folder Windows lets only administrators change, so Swofty can't add your mods there.\n\nRestart ERC Launcher as administrator to play with mods, or move F1 25 to a folder outside Program Files{hint}.",
         folder = dir.display(),
         hint = copies::move_hint(source)
     )
@@ -147,7 +147,7 @@ fn elevated_started(started: Result<compat::Elevated, String>, window: &mut Wind
             app_log::note(&format!("restart as administrator: {why}"));
             return not_restarted(
                 trf!(
-                    "Windows didn't restart Swofty Launcher: {why}. It keeps running without administrator rights.",
+                    "Windows didn't restart ERC Launcher: {why}. It keeps running without administrator rights.",
                     why = why
                 ),
                 window,
@@ -181,7 +181,7 @@ fn elevated_started(started: Result<compat::Elevated, String>, window: &mut Wind
                     window.activate_window();
                     not_restarted(
                         trf!(
-                            "The administrator copy of Swofty Launcher closed as it started (exit code {code}). This one keeps running without administrator rights. Press {button} so the developers can see why.",
+                            "The administrator copy of ERC Launcher closed as it started (exit code {code}). This one keeps running without administrator rights. Press {button} so the developers can see why.",
                             code = format!("{code:#x}"),
                             button = crate::dialogs::send_logs::label()
                         ),
@@ -223,7 +223,7 @@ mod tests {
             ),
             "{shown}"
         );
-        assert!(!shown.contains("Swofty Launcher as administrator"), "{shown}");
+        assert!(!shown.contains("ERC Launcher as administrator"), "{shown}");
         assert_eq!(run_as_admin_headline(&ea), ea.headline());
     }
 
@@ -234,7 +234,7 @@ mod tests {
             ea.starts_with(r"F1 25 is installed in C:\Program Files\EA Games\F1 25, a folder"),
             "{ea}"
         );
-        assert!(ea.contains("Restart Swofty Launcher as administrator"), "{ea}");
+        assert!(ea.contains("Restart ERC Launcher as administrator"), "{ea}");
         assert!(
             ea.ends_with("outside Program Files with EA app > F1 25 > Manage > Move, not File Explorer."),
             "{ea}"

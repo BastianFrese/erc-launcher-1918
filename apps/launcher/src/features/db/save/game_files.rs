@@ -1,4 +1,4 @@
-//! Exporting the draft as game files for players without Swofty Launcher.
+//! Exporting the draft as game files for players without ERC Launcher.
 
 use std::cell::Cell;
 use std::path::PathBuf;
@@ -19,7 +19,7 @@ use crate::shell::host::Host;
 use crate::ui::Callout;
 use crate::ui::theme::{Palette, palette};
 
-pub(super) const GAME_FILES_NOTE: &str = "Players extract this .zip into the F1 25 folder. Steam's Verify integrity of game files undoes it, and Swofty Launcher won't start modded sessions while that file is replaced. Players who use Swofty Launcher should get the addon .zip instead.";
+pub(super) const GAME_FILES_NOTE: &str = "Players extract this .zip into the F1 25 folder. Steam's Verify integrity of game files undoes it, and ERC Launcher won't start modded sessions while that file is replaced. Players who use ERC Launcher should get the addon .zip instead.";
 
 pub(super) fn choice_row(
     id: &'static str,

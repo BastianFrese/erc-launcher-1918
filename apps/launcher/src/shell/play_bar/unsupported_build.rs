@@ -15,7 +15,7 @@ pub(crate) fn notice(exe: &Path) -> Option<Notice> {
 fn notice_for(version: String) -> Option<Notice> {
     Some(Notice {
         headline: trf!(
-            "This game version ({version}) isn't supported by Swofty Launcher yet.",
+            "This game version ({version}) isn't supported by ERC Launcher yet.",
             version = version
         ),
         detail: tr("Add-ons are off until a launcher update, so the game runs without them."),
@@ -31,7 +31,7 @@ mod tests {
         let n = notice_for("1.0.145.2472".into()).unwrap();
         assert_eq!(
             n.headline,
-            "This game version (1.0.145.2472) isn't supported by Swofty Launcher yet."
+            "This game version (1.0.145.2472) isn't supported by ERC Launcher yet."
         );
         assert_eq!(
             n.detail,

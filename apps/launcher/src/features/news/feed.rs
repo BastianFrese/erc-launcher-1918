@@ -50,7 +50,7 @@ impl Post {
     }
 
     pub(super) fn version(&self) -> &str {
-        self.title.strip_prefix("Swofty Launcher ").unwrap_or(&self.title)
+        self.title.strip_prefix("ERC Launcher ").unwrap_or(&self.title)
     }
 }
 

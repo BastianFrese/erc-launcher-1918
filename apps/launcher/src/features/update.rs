@@ -122,7 +122,7 @@ impl Updates {
             .unwrap_or_else(update::current_version);
         let c = self.addon.waiting(&target, self.addon_installed.as_ref())?;
         Some(trf!(
-            "{addon} {version} needs Swofty Launcher {needs} and installs once that launcher is out. You have {current}.",
+            "{addon} {version} needs ERC Launcher {needs} and installs once that launcher is out. You have {current}.",
             addon = managed::NAME,
             version = c.version,
             needs = c.needs.as_ref()?,
@@ -202,7 +202,7 @@ fn log_change(part: Part, before: &Option<String>, after: &Option<String>) {
 
 fn blocked_text(version: &Version, reason: &str) -> String {
     trf!(
-        "Swofty Launcher {version} is available. {reason}. You have {current}.",
+        "ERC Launcher {version} is available. {reason}. You have {current}.",
         version = version,
         reason = crate::ui::format::capitalised(reason),
         current = update::current_version()

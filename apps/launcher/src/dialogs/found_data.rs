@@ -309,7 +309,7 @@ impl Shell {
                             .line_height(px(21.))
                             .text_color(p.text_muted)
                             .child(tr(
-                                "This launcher has none of your addons yet. Swofty Launcher restarts to use the ones below.",
+                                "This launcher has none of your addons yet. ERC Launcher restarts to use the ones below.",
                             )),
                     ),
             )

@@ -1,6 +1,11 @@
 use std::path::Path;
 
-const SITE: &str = "https://f1.swofty.net";
+const SITE: &str = "https://erdi-erc.de";
+
+/// Der Merker in der Kopfzeile einer Versionsnotiz, die zu **unserem** Launcher gehoert.
+/// Notizen des fremden Zweigs (1.9.x) tragen ihn nicht: sie kommen nicht ins Programm,
+/// auch wenn ein Merge sie wieder in `docs/releases/` legt.
+const UNSER_MERKER: &str = "product: erc";
 
 fn front_matter(text: &str) -> Vec<(String, String)> {
     let mut lines = text.lines();
@@ -59,9 +64,15 @@ fn posts(dir: &Path, kind: &str, out: &mut Vec<serde_json::Value>) {
         if get("draft").as_deref() == Some("true") {
             continue;
         }
+        // Eine Versionsnotiz ohne unseren Merker ist die des fremden Zweigs (1.9.x).
+        // Sie gehoert nicht in unseren Reiter "Aenderungen" — ein Merge hat sie am
+        // 13.11. und noch einmal am 14.11. hereingetragen.
+        if kind == "release" && !fm.iter().any(|(k, v)| format!("{k}: {v}") == UNSER_MERKER) {
+            continue;
+        }
         let title = get("title").unwrap_or_else(|| slug.to_owned());
         let title = if kind == "release" && title.starts_with(|c: char| c.is_ascii_digit()) {
-            format!("Swofty Launcher {title}")
+            format!("ERC Launcher {title}")
         } else {
             title
         };
@@ -79,7 +90,9 @@ fn posts(dir: &Path, kind: &str, out: &mut Vec<serde_json::Value>) {
             "date": get("date").unwrap_or_default(),
             "summary": get("description").unwrap_or_default(),
             "image": image,
-            "url": format!("{SITE}/{}/{slug}", if kind == "release" { "releases" } else { "news" }),
+            // Nachrichten und Changelog stehen vollstaendig im Launcher;
+            // ein Verweis nach draussen gibt es nicht.
+            "url": serde_json::Value::Null,
         });
         if kind == "news" {
             post["body"] = body(&text).into();
@@ -113,6 +126,17 @@ fn main() {
     let mut feed = Vec::new();
     posts(&docs.join("news"), "news", &mut feed);
     posts(&docs.join("releases"), "release", &mut feed);
+    // Eine Fassung ohne eigene Notiz ist am 14.11. veroeffentlicht worden (1.1.0 war
+    // gebaut, bevor die Notiz geschrieben war) — der Reiter "Aenderungen" blieb leer.
+    // Wer die Fassung hebt, schreibt zuerst die Notiz.
+    let fassung = std::env::var("CARGO_PKG_VERSION").expect("cargo sets the version");
+    if !feed.iter().any(|p| p["id"] == format!("release/{fassung}")) {
+        panic!(
+            "docs/releases/{fassung}.md fehlt (mit \"product: erc\" in der Kopfzeile): jede \
+             Fassung braucht ihre Notiz, sonst steht im Reiter \"Aenderungen\" nichts fuer sie. \
+             Erst die Notiz, dann bauen."
+        );
+    }
     let out = std::path::PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"));
     let json = serde_json::json!({ "posts": feed });
     std::fs::write(out.join("news.json"), json.to_string()).expect("failed to write the embedded news feed");

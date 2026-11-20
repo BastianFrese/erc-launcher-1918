@@ -15,21 +15,65 @@ fn post(id: &str, date: &str) -> Post {
 }
 
 #[test]
-fn embeds_the_posts_in_full_and_the_release_notes_newest_first() {
+fn embeds_the_news_in_full() {
+    // Unsere Nachrichten reisen mit dem Launcher.
     let posts = embedded();
-    let news = posts.iter().find(|p| p.id == "news/1.3.0").unwrap();
+    let news = posts
+        .iter()
+        .find(|p| p.title == "Willkommen im ERC Launcher")
+        .expect("die Willkommensnachricht fehlt");
     assert_eq!(news.kind, "news");
-    assert!(
-        news.body
-            .starts_with("Swofty Launcher 1.3.0 makes everything an addon.")
-    );
-    assert!(news.body.contains("## Thank you, Team Simplified"));
+    assert!(news.body.contains("## Wenn etwas nicht laeuft") || news.body.contains("## Wenn etwas nicht läuft"));
     assert!(posts.windows(2).all(|w| w[0].date >= w[1].date));
-    let notes = posts.iter().find(|p| p.id == "release/1.2.5").unwrap();
-    assert_eq!(notes.title, "Swofty Launcher 1.2.5");
-    assert_eq!(notes.version(), "1.2.5");
-    assert_eq!(notes.url.as_deref(), Some("https://f1.swofty.net/releases/1.2.5"));
-    assert!(!notes.summary.is_empty() && !notes.date.is_empty() && notes.body.is_empty());
+}
+
+/// Eine fremde Versionsnotiz ist zweimal durchgerutscht (13.11. die 1.9.19–1.9.42,
+/// 14.11. die 1.9.43–1.9.49): sie sind mit "1.9" groesser als "1.0" und kamen deshalb
+/// an jedem Zahlenvergleich vorbei. Das Kennzeichen ist jetzt der Merker in der
+/// Kopfzeile, nicht die Nummer. Eingebettet wird nur, was ihn traegt (build.rs) —
+/// hier faellt auf, wenn im Baum wieder fremde Notizen liegen.
+#[test]
+fn every_release_note_carries_our_mark() {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/releases");
+    let mut fremde = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for path in entries.flatten().map(|e| e.path()) {
+            if path.extension().and_then(|e| e.to_str()) != Some("md") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let kopf: Vec<&str> = text
+                .lines()
+                .skip(1)
+                .take_while(|l| l.trim() != "---")
+                .collect();
+            if !kopf.iter().any(|l| l.trim() == "product: erc") {
+                fremde.push(
+                    path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or_default()
+                        .to_owned(),
+                );
+            }
+        }
+    }
+    assert!(
+        fremde.is_empty(),
+        "fremde Versionsnotizen in docs/releases (ohne \"product: erc\"): {fremde:?}"
+    );
+}
+
+#[test]
+fn the_running_version_has_its_note() {
+    // 1.1.0 ging ohne eigene Notiz hinaus, weil sie erst nach dem Bau geschrieben war.
+    let fassung = env!("CARGO_PKG_VERSION");
+    let posts = embedded();
+    assert!(
+        posts
+            .iter()
+            .any(|p| p.release() && p.version() == fassung),
+        "{fassung} hat keine Versionsnotiz im Programm"
+    );
 }
 
 #[test]

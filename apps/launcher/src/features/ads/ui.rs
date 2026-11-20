@@ -1,7 +1,7 @@
 //! Where the shell shows its ad slots: under the news page's release notes, a
 //! banner over the Discover cards and under the Online filters, the side column
 //! of an addon's page, and a floating video while the game builds and starts.
-//! Signed-in supporters, admins, Swofty Launcher Support and addon creators,
+//! Signed-in supporters, admins, ERC Launcher Support and addon creators,
 //! as the server's support status says, see none. `SWOFTY_ADS_VIDEO=1` shows
 //! the video without pressing Play, even while [`VIDEO_LIVE`] is off.
 
