@@ -7,6 +7,7 @@ use swofty_core::online::multiplayer::types::{
     GameStatus, MemberStage, MemberState, Phase, Problem, Progress, RoomAddon, RoomContent, RoomSettings,
     RoomSummary, Screen, SessionState, SessionStep, Step, StepState,
 };
+use swofty_core::session::Ending;
 use swofty_i18n::{fill, tr, trf, trn};
 
 /// Where the game is, in the page header.
@@ -694,6 +695,23 @@ pub(crate) fn exit_notice(host: bool) -> &'static str {
         "F1 25 closed, so your room closed."
     } else {
         "F1 25 closed, so you left the room."
+    }
+}
+
+/// Whether the room keeps itself for a game that ended without a regular close: a crash, an end without
+/// evidence (F1 25's own crash handler leaves -1) or no recorded end at all. Such an exit keeps the room open,
+/// so the player starts F1 25 again from it as the same member; a quit and a stop the launcher asked for leave
+/// it, as before.
+pub(crate) fn exit_keeps_room(end: Option<Ending>) -> bool {
+    !matches!(end, Some(Ending::Quit | Ending::Stopped))
+}
+
+/// What the room says after its game crashed and the room stayed open.
+pub(crate) fn crash_notice(host: bool) -> &'static str {
+    if host {
+        "F1 25 crashed, so your room stays open. Retry starts F1 25 again."
+    } else {
+        "F1 25 crashed, so you stay in the room. Retry starts F1 25 again."
     }
 }
 

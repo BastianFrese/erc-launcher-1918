@@ -73,6 +73,9 @@ pub(crate) struct RoomGame {
     pub(super) held: Option<RoomLaunch>,
     /// When the room's game was first seen gone, while the room waits for the session to write how it ended.
     pub(super) exited_at: Option<Instant>,
+    /// The room's game ended without a regular close and the room stayed open for it; the next launch clears
+    /// this, so only that exit kept the room.
+    pub(super) crashed: bool,
 }
 
 impl RoomGame {
@@ -92,6 +95,7 @@ impl RoomGame {
         root: &Path,
     ) -> Option<RoomLaunch> {
         self.closing = None;
+        self.crashed = false;
         let row_ids = match &ask.row_ids {
             Some(ids) => {
                 let file = root.join("state/room-row-ids.json");
@@ -488,6 +492,26 @@ mod tests {
         assert!(game.seen);
         assert!(!game.exited(false, true));
         assert!(game.exited(false, false));
+    }
+
+    #[test]
+    fn a_crash_keeps_the_room_and_the_next_launch_clears_its_marks() {
+        let mut game = RoomGame {
+            ask_seq: 1,
+            seen: true,
+            ..RoomGame::default()
+        };
+        assert!(game.exited(false, false), "the room's game is gone");
+        game.crashed = true;
+        // A second start takes a fresh ask: it forgets the crash and the earlier game, so only the exit of
+        // the game it starts now counts.
+        let session = Told::asking(2, None);
+        let ask = game.due(&session, false).unwrap();
+        game.begin(&session, ask, Path::new("unused")).unwrap();
+        assert!(!game.crashed && !game.seen && game.launching && game.closing.is_none());
+        game.launch_result(Some(&session), true);
+        assert!(!game.exited(true, false), "the game runs again");
+        assert!(game.exited(false, false), "and its exit is the next one");
     }
 
     #[test]

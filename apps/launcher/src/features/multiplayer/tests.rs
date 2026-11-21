@@ -8,8 +8,8 @@ use swofty_core::online::multiplayer::types::{
 
 use super::model::{
     GameState, OwnPrint, RoomStatus, Start, Tone, addon_checks, card_addons, content_check, content_word,
-    exit_leaves, exit_notice, extra_addons, joined, member_word, missing, refusal_text,
-    restart_ok_text, room_meta, round_trip_ms,
+    crash_notice, exit_keeps_room, exit_leaves, exit_notice, extra_addons, joined, member_word, missing,
+    refusal_text, restart_ok_text, room_meta, round_trip_ms,
 };
 use super::model::{
     RoomFocus, StepCard, StepRow, card_rooms, closed_subtitle, default_room_name, fix_lines, game_after_room,
@@ -368,6 +368,30 @@ fn leaves_the_room_when_the_rooms_game_exits() {
     );
     assert_eq!(exit_notice(false), "F1 25 closed, so you left the room.");
     assert_eq!(exit_notice(true), "F1 25 closed, so your room closed.");
+}
+
+#[test]
+fn a_crash_keeps_the_room_open_and_a_regular_close_does_not() {
+    use swofty_core::session::Ending;
+    assert!(exit_keeps_room(Some(Ending::Crash)));
+    assert!(
+        exit_keeps_room(Some(Ending::Unknown)),
+        "F1 25's own crash handler leaves -1, which reads Unknown"
+    );
+    assert!(exit_keeps_room(None), "a game that left no end at all");
+    assert!(!exit_keeps_room(Some(Ending::Quit)), "a regular close still leaves");
+    assert!(
+        !exit_keeps_room(Some(Ending::Stopped)),
+        "Stop in the launcher still leaves"
+    );
+    assert_eq!(
+        crash_notice(true),
+        "F1 25 crashed, so your room stays open. Retry starts F1 25 again."
+    );
+    assert_eq!(
+        crash_notice(false),
+        "F1 25 crashed, so you stay in the room. Retry starts F1 25 again."
+    );
 }
 
 #[test]

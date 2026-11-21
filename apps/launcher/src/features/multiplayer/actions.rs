@@ -512,6 +512,7 @@ impl Multiplayer {
             needs.running,
             needs.busy,
             || session_ended(needs.store),
+            || session_crashed(needs.store),
             Instant::now(),
         );
         if m.leaving && m.session.as_ref().is_none_or(Session::is_finished) {

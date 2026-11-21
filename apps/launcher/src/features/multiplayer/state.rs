@@ -18,7 +18,7 @@ use swofty_core::store::Store;
 use swofty_i18n::tr;
 
 use super::fix::RoomFix;
-use super::model::{OwnPrint, RoomFocus, exit_notice, leaves_on_exit, room_focus};
+use super::model::{OwnPrint, RoomFocus, crash_notice, exit_keeps_room, exit_notice, leaves_on_exit, room_focus};
 use super::preview::{self, RoomPreview};
 use super::room_game::RoomGame;
 use super::steward::{self, Steward};
@@ -80,6 +80,15 @@ pub(super) fn session_ended(store: &Store) -> bool {
     store
         .latest_session()
         .is_some_and(|dir| dir.join(swofty_core::session::END_FILE).is_file())
+}
+
+/// Whether the newest game session ended without a regular close ([`exit_keeps_room`]): a crash, an end
+/// without evidence or none at all.
+pub(super) fn session_crashed(store: &Store) -> bool {
+    let Some(dir) = store.latest_session() else {
+        return false;
+    };
+    exit_keeps_room(swofty_core::session::SessionRecord::read(&dir).end.map(|e| e.end))
 }
 
 pub(crate) struct RoomLaunch {
@@ -353,12 +362,15 @@ impl Multiplayer {
 
     /// Follows the game for the room: once the game the room started has exited and its session wrote how it
     /// ended, or [`EXIT_WAIT`] passed, the room is left, unless the room's session takes the exit as a failed
-    /// step ([`leaves_on_exit`]). True when it left.
+    /// step ([`leaves_on_exit`]). A game that ended without a regular close (`crashed`) keeps the room open
+    /// instead, so the player starts F1 25 again from the same membership. True when the room left or first
+    /// noted a crash.
     pub(crate) fn watch_game(
         &mut self,
         running: bool,
         busy: bool,
         end_written: impl FnOnce() -> bool,
+        crashed: impl FnOnce() -> bool,
         now: Instant,
     ) -> bool {
         if self.session.is_none() {
@@ -369,10 +381,25 @@ impl Multiplayer {
         if over || self.leaving || !exited || !leaves_on_exit(self.state.as_ref()) {
             return false;
         }
+        if self.game.crashed {
+            return false;
+        }
         if !self.game.exit_settled(end_written, now) {
             return false;
         }
         let host = self.state.as_ref().is_some_and(|s| s.host);
+        if crashed() {
+            // The game ended without a regular close: it crashed or was killed. The room stays open — the
+            // player starts F1 25 again from it, in this same room and with the same membership, instead of
+            // losing the session. Only a regular close or a stop leaves the room ([`exit_keeps_room`]).
+            self.game.crashed = true;
+            self.notice = Some(crash_notice(host).to_owned());
+            diag::line(format!(
+                "launcher: F1 25 ended without a regular close; the room stays open ({})",
+                crash_notice(host)
+            ));
+            return true;
+        }
         self.notice = Some(exit_notice(host).to_owned());
         diag::line(format!(
             "launcher: F1 25 exited; leaving the room ({})",

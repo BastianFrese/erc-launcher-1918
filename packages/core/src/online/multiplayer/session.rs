@@ -61,6 +61,9 @@ const LOBBY_SLOW: &str = "the game hasn't reached the LAN lobby yet";
 /// How often the session rereads the game folder's ownership answer.
 const OWNS_EVERY: Duration = Duration::from_secs(5);
 const NOT_ANSWERING: &str = "the game isn't answering";
+/// Why a session whose game is no longer in the room's LAN session waits to be driven again: the game left
+/// it, crashed or was closed.
+const GAME_LEFT: &str = "the game left the LAN session; rejoin or leave the room";
 /// How long a game that adopted its room configuration may sit on the main menu before the session
 /// treats its own start as failed.
 const ADOPT_DEADLINE: Duration = Duration::from_secs(120);
@@ -900,7 +903,14 @@ impl Worker {
     }
 
     fn hosting(&self) -> bool {
+        // The room itself says who hosts it: a launcher that re-entered its own room has a join intent but
+        // must host the game instead of waiting for itself to open the lobby.
         matches!(self.intent, Intent::Create(_))
+            || self
+                .lobby
+                .as_ref()
+                .zip(self.me.as_ref())
+                .is_some_and(|(lobby, me)| lobby.host == me.id)
     }
 
     fn run(mut self) {
@@ -2058,13 +2068,29 @@ impl Worker {
                         self.clear_game_error();
                     } else if self.seen_in_session && !self.over {
                         self.driven = None;
-                        self.paused = Some("the game left the LAN session; rejoin or leave the room".into());
+                        self.paused = Some(GAME_LEFT.into());
                     } else if !self.seen_in_session && lobby_slow(driven.elapsed(), self.hosting(), &status) {
                         self.last_error = Some(LOBBY_SLOW.into());
                     }
                     self.game_status = Some(status);
                 }
-                Err(e) => self.last_error = Some(format!("{NOT_ANSWERING}: {e}")),
+                Err(e) => {
+                    self.last_error = Some(format!("{NOT_ANSWERING}: {e}"));
+                    // A game that answered from inside the room's LAN session and does not any more is gone:
+                    // it crashed or was closed. Forget where it was — otherwise the room keeps showing this
+                    // player "in the lobby" and Retry takes the game for still being in the LAN session — and
+                    // wait for Retry, which starts F1 25 for the room again in this same room.
+                    if self.seen_in_session && !self.over {
+                        self.game_status = None;
+                        self.seen_in_session = false;
+                        self.launched = None;
+                        self.driven = None;
+                        self.paused = Some(GAME_LEFT.into());
+                        diag::line(
+                            "game: gone from the room's LAN session; the room stays open, Retry starts it again",
+                        );
+                    }
+                }
             }
         }
         self.sync_stage();
@@ -3591,6 +3617,87 @@ mod tests {
         assert_eq!(state.phase, Phase::InLobby);
         assert_eq!(state.last_error, None);
         assert_eq!(host_game.log().len(), before, "{:?}", host_game.log());
+    }
+
+    #[test]
+    fn a_room_whose_game_crashes_stays_open_and_retry_starts_it_again_in_it() {
+        let server = server();
+        let game = FakeGame::new("crash-rejoin");
+        game.closed.store(true, Ordering::Relaxed);
+        let host = create(
+            launching(setup(&server.url, "host-token", &game, print(&[])), None),
+            RoomSettings::default(),
+        );
+        let first = wait_until(&host, "the launch ask", asked);
+        let (code, member) = (first.room.clone().unwrap().code, first.launch.as_ref().unwrap().self_member);
+        host.launched();
+        game.closed.store(false, Ordering::Relaxed);
+        game.reach_lobby();
+        let lobby = wait_until(&host, "the lobby", in_lobby);
+        assert_eq!(lobby.members[0].stage, Some(MemberStage::InLobby));
+        // One housekeeping pass has seen the game inside the room's LAN session (`seen_in_session`).
+        thread::sleep(HOUSEKEEPING + Duration::from_millis(200));
+
+        // The game crashes: its process is gone while the room goes on.
+        game.closed.store(true, Ordering::Relaxed);
+        let gone = wait_until(&host, "the gone game", |s| {
+            s.game.is_none() && matches!(&s.phase, Phase::WaitingForGame(w) if w.contains("LAN session"))
+        });
+        assert!(!gone.phase.is_over(), "the room stays open");
+        assert_eq!(gone.room.as_ref().map(|r| r.code.as_str()), Some(code.as_str()));
+        assert_eq!(
+            gone.members[0].stage,
+            Some(MemberStage::Starting),
+            "the room stops showing this player in the lobby"
+        );
+        assert!(gone.launch.is_none());
+        let problem = progress::problem(&gone).expect("a problem with an action");
+        assert!(problem.retry, "{problem:?}");
+
+        // Retry starts F1 25 again for this same room, as its host.
+        host.retry();
+        let again = wait_until(&host, "the second launch ask", asked).launch.unwrap();
+        assert!(!again.restart, "{again:?}");
+        let request: Value = serde_json::from_str(&again.direct_request).unwrap();
+        assert_eq!(
+            (request["role"].clone(), request["self"].clone()),
+            (json!("host"), json!(member))
+        );
+
+        // The game comes back into the lobby: the same session is still in the same room.
+        host.launched();
+        game.closed.store(false, Ordering::Relaxed);
+        game.reach_lobby();
+        let back = wait_until(&host, "the lobby again", in_lobby);
+        assert_eq!(back.room.as_ref().map(|r| r.code.as_str()), Some(code.as_str()));
+        assert_eq!(back.members[0].stage, Some(MemberStage::InLobby));
+    }
+
+    #[test]
+    fn re_entering_ones_own_room_recovers_the_host_role_instead_of_waiting_for_itself() {
+        let server = server();
+        // The room outlived this launcher's first session: the server still names this player its host.
+        let room = Api::with_server(&server.url, "host-token")
+            .create(&RoomSettings::default())
+            .expect("a room");
+        let game = FakeGame::new("own-room");
+        game.closed.store(true, Ordering::Relaxed);
+        let again = join(
+            launching(setup(&server.url, "host-token", &game, print(&[])), None),
+            &room.code,
+        );
+        let state = wait_until(&again, "the host's own launch ask", asked);
+        assert!(state.host, "the room names this player its host");
+        assert_eq!(
+            state.phase,
+            Phase::WaitingForGame("starting F1 25 for the room".into()),
+            "it must not wait for itself to open the lobby"
+        );
+        let request: Value = serde_json::from_str(&state.launch.unwrap().direct_request).unwrap();
+        assert_eq!(
+            (request["role"].clone(), request["self"].clone()),
+            (json!("host"), json!(1))
+        );
     }
 
     #[test]
