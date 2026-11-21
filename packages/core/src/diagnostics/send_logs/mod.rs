@@ -63,9 +63,17 @@ const OVERLAY_READ: u64 = 32 << 20;
 
 /// Where the logs go: `SWOFTY_LOGS_URL` at run time, else the address baked in
 /// at build time, if any.
+/// Unser Sammelpunkt, wie ihn die 1.4.4 fest eingebaut hatte.
+pub const OUR_LOGS_URL: &str = "https://protokoll.erdi-erc.de/logs/mZxPpZ3eMnlS3faFjn_n7yQRov9J8H4M";
+
 pub fn destination() -> Option<LogServer> {
     let runtime = std::env::var("SWOFTY_LOGS_URL").ok();
-    LogServer::new(runtime.as_deref().or(option_env!("SWOFTY_LOGS_URL")))
+    LogServer::new(
+        runtime
+            .as_deref()
+            .or(option_env!("SWOFTY_LOGS_URL"))
+            .or(Some(OUR_LOGS_URL)),
+    )
 }
 
 pub fn available() -> bool {
