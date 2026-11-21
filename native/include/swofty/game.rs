@@ -248,10 +248,16 @@ const _: () = assert!(core::mem::offset_of!(Action, str) == 0x8);
 
 #[repr(C)]
 pub struct ActivityDef {
-    _pad_0x0: [u8; 0x10],
+    _pad_0x0: [u8; 0x8],
+    pub id: u16,
+    _pad_0xa: [u8; 0x6],
     pub r#type: u8,
+    _pad_0x11: [u8; 0x1],
+    pub duration: u16,
 }
+const _: () = assert!(core::mem::offset_of!(ActivityDef, id) == 0x8);
 const _: () = assert!(core::mem::offset_of!(ActivityDef, r#type) == 0x10);
+const _: () = assert!(core::mem::offset_of!(ActivityDef, duration) == 0x12);
 
 #[repr(C)]
 pub struct AiDriverConfig {
@@ -677,11 +683,13 @@ const _: () = assert!(core::mem::offset_of!(BankTransactionMessage, category) ==
 pub struct CalendarActivity {
     _pad_0x0: [u8; 0xa],
     pub day: u16,
-    _pad_0xc: [u8; 0x4],
+    pub state: u8,
+    _pad_0xd: [u8; 0x3],
     pub activity: *mut ActivityDef,
     _pad_0x18: [u8; 0x8],
 }
 const _: () = assert!(core::mem::offset_of!(CalendarActivity, day) == 0xa);
+const _: () = assert!(core::mem::offset_of!(CalendarActivity, state) == 0xc);
 const _: () = assert!(core::mem::offset_of!(CalendarActivity, activity) == 0x10);
 const _: () = assert!(core::mem::size_of::<CalendarActivity>() == 0x20);
 
@@ -1215,10 +1223,13 @@ const _: () = assert!(core::mem::offset_of!(CarTurbo, max_boost) == 0x2d8);
 pub struct CarWheel {
     _pad_0x0: [u8; 0x20],
     pub tyre_flags: u8,
-    _pad_0x21: [u8; 0x77],
+    _pad_0x21: [u8; 0x67],
+    pub wear: f32,
+    _pad_0x8c: [u8; 0xc],
     pub deflation: f32,
 }
 const _: () = assert!(core::mem::offset_of!(CarWheel, tyre_flags) == 0x20);
+const _: () = assert!(core::mem::offset_of!(CarWheel, wear) == 0x88);
 const _: () = assert!(core::mem::offset_of!(CarWheel, deflation) == 0x98);
 
 #[repr(C)]
@@ -2224,6 +2235,43 @@ const _: () = assert!(core::mem::offset_of!(ItemVtbl, populate) == 0x20);
 const _: () = assert!(core::mem::offset_of!(ItemVtbl, get_action) == 0x28);
 
 #[repr(C)]
+pub struct LapTimeRecord {
+    pub lap: u8,
+    _pad_0x1: [u8; 0x7],
+    pub sector1_a: u32,
+    _pad_0xc: [u8; 0x4],
+    pub sector1_b: u32,
+    _pad_0x14: [u8; 0x4],
+    pub sector2_a: u32,
+    _pad_0x1c: [u8; 0x4],
+    pub sector2_b: u32,
+    _pad_0x24: [u8; 0x4],
+    pub sector3_a: u32,
+    _pad_0x2c: [u8; 0x4],
+    pub sector3_b: u32,
+    _pad_0x34: [u8; 0x64],
+    pub valid_a: u8,
+    _pad_0x99: [u8; 0x7],
+    pub valid_b: u64,
+    pub time_a: u32,
+    _pad_0xac: [u8; 0x4],
+    pub time_b: u32,
+    _pad_0xb4: [u8; 0x14],
+}
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, lap) == 0x0);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, sector1_a) == 0x8);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, sector1_b) == 0x10);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, sector2_a) == 0x18);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, sector2_b) == 0x20);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, sector3_a) == 0x28);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, sector3_b) == 0x30);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, valid_a) == 0x98);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, valid_b) == 0xa0);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, time_a) == 0xa8);
+const _: () = assert!(core::mem::offset_of!(LapTimeRecord, time_b) == 0xb0);
+const _: () = assert!(core::mem::size_of::<LapTimeRecord>() == 0xc8);
+
+#[repr(C)]
 pub struct MarshalZone {
     pub definition: *mut MarshalZoneDef,
     _pad_0x8: [u8; 0xc],
@@ -2684,9 +2732,14 @@ pub struct ScheduleComponent {
     _pad_0x0: [u8; 0x410],
     pub seasons_begin: *mut ScheduleSeason,
     pub seasons_end: *mut ScheduleSeason,
+    _pad_0x420: [u8; 0x8],
+    pub current_season: u32,
+    pub season_over: u8,
 }
 const _: () = assert!(core::mem::offset_of!(ScheduleComponent, seasons_begin) == 0x410);
 const _: () = assert!(core::mem::offset_of!(ScheduleComponent, seasons_end) == 0x418);
+const _: () = assert!(core::mem::offset_of!(ScheduleComponent, current_season) == 0x428);
+const _: () = assert!(core::mem::offset_of!(ScheduleComponent, season_over) == 0x42c);
 
 #[repr(C)]
 pub struct ScheduleSeason {
@@ -3334,6 +3387,20 @@ const _: () = assert!(core::mem::offset_of!(TyreSlot, physical) == 0x8);
 const _: () = assert!(core::mem::offset_of!(TyreSlot, visual) == 0x10);
 
 #[repr(C)]
+pub struct TyreStint {
+    _pad_0x0: [u8; 0xc],
+    pub compound: u32,
+    pub set_index: u8,
+    _pad_0x11: [u8; 0x63],
+    pub end_lap: u16,
+    _pad_0x76: [u8; 0x2],
+}
+const _: () = assert!(core::mem::offset_of!(TyreStint, compound) == 0xc);
+const _: () = assert!(core::mem::offset_of!(TyreStint, set_index) == 0x10);
+const _: () = assert!(core::mem::offset_of!(TyreStint, end_lap) == 0x74);
+const _: () = assert!(core::mem::size_of::<TyreStint>() == 0x78);
+
+#[repr(C)]
 pub struct TyreSystem {
     _pad_0x0: [u8; 0x110],
     pub vehicles_begin: *mut *mut VehicleTyreComponent,
@@ -3467,6 +3534,31 @@ const _: () = assert!(core::mem::offset_of!(VehicleHelperSystem, participants_be
 const _: () = assert!(core::mem::offset_of!(VehicleHelperSystem, participants_end) == 0x90);
 const _: () = assert!(core::mem::offset_of!(VehicleHelperSystem, drive_through) == 0x568);
 const _: () = assert!(core::mem::offset_of!(VehicleHelperSystem, stop_go) == 0x578);
+
+#[repr(C)]
+pub struct VehicleLapTimesData {
+    _pad_0x0: [u8; 0x8],
+    pub laps: [LapTimeRecord; 200],
+    pub current_lap: u8,
+}
+const _: () = assert!(core::mem::offset_of!(VehicleLapTimesData, laps) == 0x8);
+const _: () = assert!(core::mem::offset_of!(VehicleLapTimesData, current_lap) == 0x9c48);
+
+#[repr(C)]
+pub struct VehicleLapTimesEntry {
+    _pad_0x0: [u8; 0x38],
+    pub data: VehicleLapTimesData,
+}
+const _: () = assert!(core::mem::offset_of!(VehicleLapTimesEntry, data) == 0x38);
+
+#[repr(C)]
+pub struct VehicleLapTimesSystem {
+    _pad_0x0: [u8; 0x58],
+    pub cars_begin: *mut *mut VehicleLapTimesEntry,
+    pub cars_end: *mut *mut VehicleLapTimesEntry,
+}
+const _: () = assert!(core::mem::offset_of!(VehicleLapTimesSystem, cars_begin) == 0x58);
+const _: () = assert!(core::mem::offset_of!(VehicleLapTimesSystem, cars_end) == 0x60);
 
 #[repr(C)]
 pub struct VehicleProgressEntry {
@@ -3802,6 +3894,10 @@ pub type Car_SuspensionDamage_OnCollision_t =
 pub type Car_Tyre_ChangeToNextCompound_t =
     unsafe extern "C" fn(tyre_component: *mut c_void, pit_stop: u8) -> u64;
 pub type Car_Tyre_CheckCompoundClassRule_t = unsafe extern "C" fn(set: *const c_void) -> bool;
+pub type Car_Tyre_CurveMap_FindBracketA_t =
+    unsafe extern "C" fn(curves: *mut c_void, key: f32, bracket: *mut *mut c_void);
+pub type Car_Tyre_CurveMap_FindBracketB_t =
+    unsafe extern "C" fn(curves: *mut c_void, key: f32, bracket: *mut *mut c_void);
 pub type Car_Tyre_IsCompoundAllowed_t = unsafe extern "C" fn(set: *const c_void) -> bool;
 pub type Car_Tyre_SetWearFactor_t =
     unsafe extern "C" fn(tyre_component: *mut c_void, apply_set: bool, force: u16);
@@ -4589,6 +4685,19 @@ pub type Gdb_HashMap_Rehash_t = unsafe extern "C" fn(map: *mut GdbValueMap, num_
 pub type Gdb_Load_GameDatabase_t =
     unsafe extern "C" fn(db: *mut GdbDatabase, cfg: *mut c_void) -> *mut GdbDatabase;
 pub type Gdb_Lookup_Key_t = unsafe extern "C" fn(path: *const c_char) -> *mut *mut c_void;
+pub type Ne_AnimClipPlayer_Sample_Thunk_t = unsafe extern "C" fn(player: *mut c_void, time: f32);
+pub type Ne_AnimPacketB1_Sample_t =
+    unsafe extern "C" fn(packet: *mut c_void, binding: *mut c_void, time: f32, out: *mut c_void);
+pub type Ne_AnimPacketB4_Sample_t =
+    unsafe extern "C" fn(packet: *mut c_void, binding: *mut c_void, time: f32, out: *mut c_void);
+pub type Ne_AnimPacketL1_Sample_t =
+    unsafe extern "C" fn(packet: *mut c_void, binding: *mut c_void, time: f32, out: *mut c_void);
+pub type Ne_AnimPacketL3_SampleTrack_t =
+    unsafe extern "C" fn(packet: *mut c_void, track: *mut c_void, index: u32, time: f32, out: *mut c_void);
+pub type Ne_AnimPacketL4_SampleTrack_t =
+    unsafe extern "C" fn(packet: *mut c_void, track: *mut c_void, index: u32, time: f32, out: *mut c_void);
+pub type Ne_AnimPacketS4_SampleTrack_t =
+    unsafe extern "C" fn(packet: *mut c_void, track: *mut c_void, index: u32, time: f32, out: *mut c_void);
 pub type Ne_Compare_StringNoCase_t = unsafe extern "C" fn(a: *const c_char, b: *const c_char) -> i32;
 pub type Ne_Crt_FloatToInt32Checked_t = unsafe extern "C" fn(bits: u32) -> c_int;
 pub type Ne_Crt_InvalidParameterAbortStub_140e0fd20_t = unsafe extern "C" fn();
@@ -5679,6 +5788,16 @@ pub mod bindings {
     };
     pub const Car_Tyre_ComputeGripMultiplier: Binding = Binding {
         id: "Car_Tyre_ComputeGripMultiplier",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Car_Tyre_CurveMap_FindBracketA: Binding = Binding {
+        id: "Car_Tyre_CurveMap_FindBracketA",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Car_Tyre_CurveMap_FindBracketB: Binding = Binding {
+        id: "Car_Tyre_CurveMap_FindBracketB",
         kind: "func",
         status: Status::Experimental,
     };
@@ -10837,6 +10956,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_Game_RetireLocalPlayer: Binding = Binding {
+        id: "Game_Game_RetireLocalPlayer",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_Game_SetCurrentGameMode: Binding = Binding {
         id: "Game_Game_SetCurrentGameMode",
         kind: "func",
@@ -11959,15 +12083,6 @@ pub mod bindings {
     };
     pub const Game_PitLane_VehicleExiting: Binding = Binding {
         id: "Game_PitLane_VehicleExiting",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    #[deprecated(
-        since = "1.10.0",
-        note = "deprecated in 1.10.0, removed in the next release: its notes' exe claim is wrong: the only refuel strings are parts of the EnsureFuelLoad race objective names, and there is no fuelling string"
-    )]
-    pub const Game_PitStopActionObserver_SetTransitionSequence: Binding = Binding {
-        id: "Game_PitStopActionObserver_SetTransitionSequence",
         kind: "func",
         status: Status::Experimental,
     };
@@ -13586,6 +13701,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Ne_AnimClipPlayer_Sample_Thunk: Binding = Binding {
+        id: "Ne_AnimClipPlayer_Sample_Thunk",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Ne_AnimClipResourceFactory_CreateResource: Binding = Binding {
         id: "Ne_AnimClipResourceFactory_CreateResource",
         kind: "func",
@@ -13593,6 +13713,36 @@ pub mod bindings {
     };
     pub const Ne_AnimLayer_ApplyChannels: Binding = Binding {
         id: "Ne_AnimLayer_ApplyChannels",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ne_AnimPacketB1_Sample: Binding = Binding {
+        id: "Ne_AnimPacketB1_Sample",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ne_AnimPacketB4_Sample: Binding = Binding {
+        id: "Ne_AnimPacketB4_Sample",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ne_AnimPacketL1_Sample: Binding = Binding {
+        id: "Ne_AnimPacketL1_Sample",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ne_AnimPacketL3_SampleTrack: Binding = Binding {
+        id: "Ne_AnimPacketL3_SampleTrack",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ne_AnimPacketL4_SampleTrack: Binding = Binding {
+        id: "Ne_AnimPacketL4_SampleTrack",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Ne_AnimPacketS4_SampleTrack: Binding = Binding {
+        id: "Ne_AnimPacketS4_SampleTrack",
         kind: "func",
         status: Status::Experimental,
     };
@@ -16276,15 +16426,6 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
-    #[deprecated(
-        since = "1.10.0",
-        note = "deprecated in 1.10.0, removed in the next release: renamed: every caller sets a UIDBRef weak object reference through it and the compare is object identity, not a numeric S64 compare; use Ne_Property_SetUIDBRefIfChanged"
-    )]
-    pub const Ne_Property_SetS64IfChanged: Binding = Binding {
-        id: "Ne_Property_SetS64IfChanged",
-        kind: "func",
-        status: Status::Experimental,
-    };
     pub const Ne_Property_SetUIDBRefIfChanged: Binding = Binding {
         id: "Ne_Property_SetUIDBRefIfChanged",
         kind: "func",
@@ -16857,15 +16998,6 @@ pub mod bindings {
     };
     pub const Ne_Std_ThrowDequeTooLong: Binding = Binding {
         id: "Ne_Std_ThrowDequeTooLong",
-        kind: "func",
-        status: Status::Experimental,
-    };
-    #[deprecated(
-        since = "1.10.0",
-        note = "deprecated in 1.10.0, removed in the next release: renamed: it is std::_Throw_bad_optional_access, which only raises std::bad_optional_access and ends the process in a fast fail; use Ne_Std_ThrowBadOptionalAccess"
-    )]
-    pub const Ne_Std_ThrowException: Binding = Binding {
-        id: "Ne_Std_ThrowException",
         kind: "func",
         status: Status::Experimental,
     };
@@ -21484,6 +21616,11 @@ pub mod bindings {
         kind: "data",
         status: Status::Experimental,
     };
+    pub const k_Live_VehicleLapTimesSystemKey: Binding = Binding {
+        id: "k_Live_VehicleLapTimesSystemKey",
+        kind: "data",
+        status: Status::Experimental,
+    };
     pub const k_Ne_BagCodecVtbl: Binding = Binding {
         id: "k_Ne_BagCodecVtbl",
         kind: "vtable",
@@ -23037,6 +23174,16 @@ pub mod bindings {
     pub const site_Sess_InGameSessionCompleteAiCall: Binding = Binding {
         id: "site_Sess_InGameSessionCompleteAiCall",
         kind: "call",
+        status: Status::Experimental,
+    };
+    pub const site_Sess_MarshalLights_PrevLightLoad: Binding = Binding {
+        id: "site_Sess_MarshalLights_PrevLightLoad",
+        kind: "site",
+        status: Status::Experimental,
+    };
+    pub const site_Sess_MarshalLights_WalkDone: Binding = Binding {
+        id: "site_Sess_MarshalLights_WalkDone",
+        kind: "site",
         status: Status::Experimental,
     };
     pub const site_Sess_PitEvalListNext: Binding = Binding {

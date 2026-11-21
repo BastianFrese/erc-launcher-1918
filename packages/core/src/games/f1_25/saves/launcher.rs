@@ -47,24 +47,26 @@ pub fn ea_dir(data: &Path, profile: &str) -> PathBuf {
     root(data).join(profile).join(EA_DIR)
 }
 
-/// The `launcher_saves` and `plain_saves` of a session's settings: the profile's launcher store when it
-/// plays on launcher saves, and the plain root the core writes its containers to.
+/// The `launcher_saves` and `plain_saves` of a session's settings on `copy`: the profile's launcher store when it
+/// plays on launcher saves, and the plain root the core writes its containers to, which keeps the EA app copy's
+/// generations apart from Steam's.
 pub fn session_saves(
     data: &Path,
     profile: &str,
     launcher_saves: bool,
     vanilla: bool,
+    copy: crate::install::Source,
 ) -> (
     Option<crate::addons::settings::SessionSaves>,
     Option<crate::addons::settings::SessionPlainSaves>,
 ) {
-    let redirect = launcher_saves && !steam_save_pending(data, profile);
+    let redirect = redirected(data, profile, launcher_saves);
     let saves = redirect.then(|| crate::addons::settings::SessionSaves {
         profile: profile.to_owned(),
         remote: crate::data::paths::game_folder_view(&remote_dir(data, profile)),
     });
     let plain = (!vanilla)
-        .then(|| super::plain::root_of_session(data, profile, redirect))
+        .then(|| super::plain::root_of_session(data, profile, redirect, copy))
         .flatten()
         .map(|root| crate::addons::settings::SessionPlainSaves {
             root: crate::data::paths::game_folder_view(&root),
@@ -73,12 +75,32 @@ pub fn session_saves(
     (saves, plain)
 }
 
+/// Whether a session of `profile` has the core serve the game's profile save from the profile's launcher store:
+/// the profile uses launcher saves and its store is not waiting for the first-start import.
+pub fn redirected(data: &Path, profile: &str, launcher_saves: bool) -> bool {
+    launcher_saves && !steam_save_pending(data, profile)
+}
+
 pub fn location(data: &Path, profile: &str) -> Location {
     Location::launcher(data, profile)
 }
 
 pub fn location_ea(data: &Path, profile: &str) -> Location {
     Location::launcher_ea(data, profile)
+}
+
+/// The launcher store a session on `game` plays from: the EA layout's for an EA app copy, else the Steam
+/// layout's.
+pub fn store_of_game(data: &Path, profile: &str, game: &crate::install::Game) -> Location {
+    store_of_copy(data, profile, crate::install::Source::detect(&game.dir))
+}
+
+/// [`store_of_game`] for a copy `copy` installed.
+pub fn store_of_copy(data: &Path, profile: &str, copy: crate::install::Source) -> Location {
+    match copy {
+        crate::install::Source::EaApp => location_ea(data, profile),
+        _ => location(data, profile),
+    }
 }
 
 /// The launcher store that goes with a game save: the Steam layout's for a Steam save, the EA layout's for

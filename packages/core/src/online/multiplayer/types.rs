@@ -2,7 +2,8 @@
 
 use std::collections::BTreeMap;
 
-use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 use crate::row_ids::Overrides;
@@ -119,19 +120,70 @@ pub struct RoomSummary {
     pub created_at: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RoomAddons {
     pub count: u32,
     #[serde(default)]
     pub tracks: Vec<String>,
     #[serde(default)]
     pub list: Vec<RoomAddon>,
+    /// The host's launcher version, from a server that lists it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub launcher: Option<String>,
+    /// The SHA-256 of the host's game executable, from a server that lists it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub game: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dlc: Option<bool>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RoomAddon {
     pub id: String,
     pub name: String,
+    /// The version, Addon Browser download, load order place and built-in flag of the host's copy, from a
+    /// server that lists them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub registry: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub order: Option<usize>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub builtin: bool,
+}
+
+/// The host's addons as the host's fingerprint lists them, which the session module reports beside its state
+/// once the host's fingerprint arrived.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct HostPrint {
+    pub digest: String,
+    #[serde(default)]
+    pub launcher: String,
+    #[serde(default)]
+    pub exe_sha256: String,
+    #[serde(default)]
+    pub dlc: Option<bool>,
+    #[serde(default)]
+    pub addons: Vec<HostAddon>,
+    /// Addon id to option id to value.
+    #[serde(default)]
+    pub options: BTreeMap<String, BTreeMap<String, Value>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HostAddon {
+    pub id: String,
+    pub name: String,
+    pub version: semver::Version,
+    /// The SHA-256 of the Addon Browser download the host's copy came from.
+    #[serde(default)]
+    pub registry: Option<String>,
+    /// Its place in the host's load order among the addons that change game data.
+    #[serde(default)]
+    pub order: Option<usize>,
+    #[serde(default)]
+    pub builtin: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -179,6 +231,67 @@ pub struct Problem {
     /// One more sentence on what is wrong, shown under the text.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
+}
+
+/// Where one step of a session stands.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StepState {
+    Pending,
+    Active,
+    Done,
+    Failed,
+    Skipped,
+    /// A state a newer module names that this launcher doesn't know.
+    #[serde(other)]
+    Unknown,
+}
+
+/// What stopped a step: a stable code for logs, the sentence to show, and what can fix it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StepProblem {
+    pub code: String,
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    /// Whether trying again can help; without it the session's [`Problem`] says.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retry: Option<bool>,
+    #[serde(default, deserialize_with = "lenient", skip_serializing_if = "Vec::is_empty")]
+    pub fix_plan: Vec<FixStep>,
+    /// See [`SessionStep::warns`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub warning: bool,
+}
+
+/// One step of a session, in the order the module lists them. The module names the step by `id` (`account`,
+/// `room`, `addons`, `build`, `game`, `network`, `lobby`, `race`); the launcher gives it its title.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SessionStep {
+    pub id: String,
+    pub state: StepState,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub problem: Option<StepProblem>,
+    /// See [`SessionStep::warns`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub warning: bool,
+}
+
+impl SessionStep {
+    /// A done step whose problem is a warning: something differs that the session goes on with, such as an
+    /// addon difference the room launch can't fix while the game still starts. The module marks it
+    /// `warning: true` on the step or on its problem.
+    pub fn warns(&self) -> bool {
+        self.state == StepState::Done && self.problem.as_ref().is_some_and(|p| self.warning || p.warning)
+    }
+}
+
+/// A value a module may send in a shape this launcher doesn't read, read as its default instead of failing the
+/// document around it.
+fn lenient<'de, D: Deserializer<'de>, T: DeserializeOwned + Default>(d: D) -> Result<T, D::Error> {
+    Ok(serde_json::from_value(Value::deserialize(d)?).unwrap_or_default())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -231,6 +344,22 @@ pub struct MemberStats {
     pub bytes_out: u64,
     pub packets_in: u64,
     pub bytes_in: u64,
+    /// Round-trip asks this player's bridge sent to the member's; 0 from a module before the asks.
+    #[serde(default)]
+    pub probes_out: u64,
+    /// The answered asks' round trips; `None` until one comes back, and from a module before the asks.
+    #[serde(default)]
+    pub rtt: Option<Rtt>,
+}
+
+/// Round trips from this player's bridge to a member's and back through the relay, in microseconds.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Rtt {
+    pub last_us: u32,
+    pub min_us: u32,
+    /// The first round trip, then 7/8 of the value before plus 1/8 of each new one.
+    pub smoothed_us: u32,
+    pub samples: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -302,6 +431,9 @@ pub struct SessionState {
     pub progress: Option<Progress>,
     #[serde(skip)]
     pub problem: Option<Problem>,
+    /// The steps the module reports beside this state, in order; empty from a module older than them.
+    #[serde(skip)]
+    pub steps: Vec<SessionStep>,
 }
 
 impl SessionState {
@@ -321,6 +453,7 @@ impl SessionState {
             last_error: None,
             launch: None,
             content: RoomContent::default(),
+            steps: Vec::new(),
             progress: None,
             problem: None,
         }

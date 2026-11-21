@@ -455,10 +455,13 @@ static_assert(offsetof(CarTurbo, max_boost) == 0x2d8);
 struct CarWheel {
     uint8_t _pad_0x0[0x20];
     uint8_t tyre_flags; // L2 experimental
-    uint8_t _pad_0x21[0x77];
+    uint8_t _pad_0x21[0x67];
+    float wear; // L2 experimental
+    uint8_t _pad_0x8c[0xc];
     float deflation; // L2 experimental
 };
 static_assert(offsetof(CarWheel, tyre_flags) == 0x20);
+static_assert(offsetof(CarWheel, wear) == 0x88);
 static_assert(offsetof(CarWheel, deflation) == 0x98);
 
 inline constexpr address<"Car_Assets_CreateSystemForPerformanceMode"> Car_Assets_CreateSystemForPerformanceMode{}; // L3 stable
@@ -517,6 +520,10 @@ inline constexpr fn<"Car_Tyre_ChangeToNextCompound", Car_Tyre_ChangeToNextCompou
 using Car_Tyre_CheckCompoundClassRule_t = bool(const void *set);
 inline constexpr fn<"Car_Tyre_CheckCompoundClassRule", Car_Tyre_CheckCompoundClassRule_t> Car_Tyre_CheckCompoundClassRule{}; // L2 experimental
 inline constexpr address<"Car_Tyre_ComputeGripMultiplier"> Car_Tyre_ComputeGripMultiplier{}; // L2 experimental
+using Car_Tyre_CurveMap_FindBracketA_t = void(void *curves, float key, void **bracket);
+inline constexpr fn<"Car_Tyre_CurveMap_FindBracketA", Car_Tyre_CurveMap_FindBracketA_t> Car_Tyre_CurveMap_FindBracketA{}; // L2 experimental
+using Car_Tyre_CurveMap_FindBracketB_t = void(void *curves, float key, void **bracket);
+inline constexpr fn<"Car_Tyre_CurveMap_FindBracketB", Car_Tyre_CurveMap_FindBracketB_t> Car_Tyre_CurveMap_FindBracketB{}; // L2 experimental
 inline constexpr address<"Car_Tyre_GripScale"> Car_Tyre_GripScale{}; // L2 experimental
 using Car_Tyre_IsCompoundAllowed_t = bool(const void *set);
 inline constexpr fn<"Car_Tyre_IsCompoundAllowed", Car_Tyre_IsCompoundAllowed_t> Car_Tyre_IsCompoundAllowed{}; // L2 experimental

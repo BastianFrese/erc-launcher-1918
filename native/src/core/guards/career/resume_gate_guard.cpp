@@ -225,7 +225,7 @@ constexpr uint8_t MODE_HEAD[] = {0x56, 0x57, 0x48, 0x83, 0xEC, 0x68, 0x80, 0xFA,
 const runtime::Sig SIG_SET_DATA_GROUP{"game.career_wizard_set_data_group",
                                       "56 57 48 83 EC 28 48 89 D7 48 89 CE 48 85 D2 74 0D 48 89 F9 E8 ?? ?? ?? ?? 48 FF C0 EB 05 "
                                       "B8 01 00 00 00 48 8B 8E 20 01 00 00",
-                                      0x387f690};
+                                      0x387d100};
 using SetDataGroup = void(void *wizard, const char *group);
 using Reserve = void(void *str, uint64_t n);
 using ModeOf = void *(void *vm, uint8_t kind);
@@ -425,9 +425,16 @@ struct ListAsk {
     rl::Target target;
 } list_ask;
 
-void refuse(size_t row, const std::string &why)
+void refuse(const rl::Facts &f, const std::string &why)
 {
-    swofty::log("[career] resume screen: row %zu: not pressed: %s", row, why.c_str());
+    if (!rl::busy_reason(f).empty()) {
+        swofty::log("[career] resume screen: row %zu: not pressed: %s", f.row, why.c_str());
+        return;
+    }
+    swofty::log("[career] resume screen: row %zu: not pressed: %s; the continue screen stays open and says to pick the career "
+                "on it",
+                f.row, why.c_str());
+    runtime::popup_show(rl::REFUSE_TITLE, rl::failed_text(), "swofty_core");
 }
 
 void press_selected(void *vm, bool my_team, const rl::Target &t)
@@ -444,7 +451,7 @@ void press_selected(void *vm, bool my_team, const rl::Target &t)
     read_mode(vm, t, f);
     std::string why = rl::press_refusal(f);
     if (!why.empty()) {
-        refuse(t.row, why);
+        refuse(f, why);
         return;
     }
     using PressSlot = void(void *vm, uint8_t card);
@@ -537,7 +544,7 @@ void load_target(Handle *orig, bool my_team, void *vm)
         why = rl::wizard_reason(f);
     }
     if (!why.empty()) {
-        refuse(t.row, why);
+        refuse(f, why);
         return;
     }
     uint64_t was = rewrite_card0(vm, t.sel);

@@ -45,9 +45,6 @@ pub const CAP_FACTS: DialFacts = DialFacts {
     quad_size: Some(screens::CAP_MESH_SIZE),
 };
 
-/// A stock board instances the host scene once and the composer adds one more beside it.
-const HOST_INSTANCES: usize = 2;
-
 /// What the screen records added, per archive.
 #[derive(Debug, Default)]
 pub struct Out {
@@ -646,6 +643,47 @@ fn claims(stock: &dyn Stock, recs: &[Rec], race: &Pkg, spectator: &Pkg) -> Resul
     Ok(())
 }
 
+/// The refusal of a board past the UI tree's slot limit: every addon with a screen record grows the
+/// host scene, so all of them are named, and the ones that bring the board back inside the limit on
+/// their own are the ones to turn off.
+fn too_big(
+    screen: &str,
+    facts: &ScreenFacts,
+    board: walk::Board,
+    recs: &[Rec],
+    members: &[usize],
+    own_slots: &[usize],
+) -> Error {
+    let ours = conflict::addons_of(recs.iter().map(|r| r.input.addon.as_str()));
+    let off = ours
+        .iter()
+        .filter(|a| {
+            let slots = recs
+                .iter()
+                .zip(own_slots)
+                .filter(|(r, _)| r.input.addon == **a)
+                .map(|(_, s)| s)
+                .sum();
+            let here = members.iter().filter(|i| recs[**i].input.addon == **a).count();
+            !board.without(slots, here).over()
+        })
+        .cloned()
+        .collect();
+    conflict::by(
+        conflict::Conflict::error(
+            &facts.instance.scene,
+            conflict::Kind::Walk {
+                screen: screen.to_owned(),
+                host: board.host,
+                instances: board.instances(),
+                slots: board.tree(),
+                off,
+            },
+        ),
+        &ours,
+    )
+}
+
 /// Composes every `screen` record of `inputs` into the race template, the spectator template and
 /// the archives of [`Out`].
 #[allow(clippy::too_many_arguments)]
@@ -705,9 +743,12 @@ pub fn compose_screens(
     if recs.iter().any(|r| units::used(&r.input.record.elements)) {
         cap.units = units::load(stock, screens::FLOW_RACE)?;
     }
+    let end = super::composer::anim_end(stock, &CAP_FACTS);
     let mut plans: Vec<Plan> = Vec::new();
     let mut previews: Vec<Plan> = Vec::new();
     for r in &recs {
+        cap.anim =
+            super::composer::anim_of(end.as_deref(), &CAP_FACTS, &r.pfx, &r.input.addon, &mut out.lines)?;
         let plan = cap.add_scene_record(&r.input.record, &r.pfx, &r.sprites)?;
         let root = scene_root_mut(&mut cap.pkg)?;
         let mine =
@@ -724,18 +765,18 @@ pub fn compose_screens(
         previews.push(cap.add_scene_record_in(&r.input.record, &r.pfx, &r.sprites, Mode::Preview(&state))?);
     }
     let host = cap.finish(None)?;
+    let mut host_slots = 0;
+    let mut own_slots = vec![0; recs.len()];
     if let Ok(host_pkg) = Pkg::parse(&host)
         && let Ok(host_root) = stock_edit::scene_root(&host_pkg)
     {
-        for r in &recs {
+        host_slots = walk::cost(host_root).slots;
+        for (r, own) in recs.iter().zip(&mut own_slots) {
             let cost = |name: &str| idf::find(host_root, name).map(walk::cost).unwrap_or_default();
-            out.lines.extend(walk::lines(
-                &r.input.addon,
-                &r.pfx,
-                cost(&r.pfx),
-                cost(&preview_root(&r.pfx)),
-                HOST_INSTANCES,
-            ));
+            let (live, preview) = (cost(&r.pfx), cost(&preview_root(&r.pfx)));
+            *own = live.slots + preview.slots;
+            out.lines
+                .extend(walk::lines(&r.input.addon, &r.pfx, live, preview));
         }
     }
     out.scene.push((screens::CAP.to_owned(), "UILayout", vec![host]));
@@ -760,6 +801,16 @@ pub fn compose_screens(
             e.1.push(ri);
         }
     }
+    for (key, (facts, members)) in &by_screen {
+        let board = walk::Board {
+            host: host_slots,
+            records: members.len(),
+        };
+        out.lines.extend(walk::board_lines(key, board));
+        if board.over() {
+            return Err(too_big(key, facts, board, &recs, members, &own_slots));
+        }
+    }
     let all_pfx: Vec<String> = recs.iter().map(|r| r.pfx.clone()).collect();
     let mut replay: Option<(Pkg, Pkg)> = None;
     let mut standings = false;
@@ -767,21 +818,59 @@ pub fn compose_screens(
         let read = |name: &str| read_from(&facts.stock_erp, name);
         let prefixes: Vec<String> = members.iter().map(|i| recs[*i].pfx.clone()).collect();
         let instance = add_instances(&read(&facts.instance.scene)?, facts, &prefixes, &read)?;
-        let res: Res = (facts.instance.scene.clone(), "UILayout", vec![instance]);
-        match key.as_str() {
-            "standings" => {
-                standings = true;
-                out.scene.push(res);
+        let mut scenes: Vec<Res> = vec![(facts.instance.scene.clone(), "UILayout", vec![instance])];
+        let mut own_masks: BTreeMap<usize, ScreenFacts> = BTreeMap::new();
+        let mut by_pfx = members.clone();
+        by_pfx.sort_by(|a, b| recs[*a].pfx.cmp(&recs[*b].pfx));
+        let donor = match by_pfx.len() {
+            0 | 1 => None,
+            _ => Some(stock_edit::plain_null(&race_read(screens::LAPC_SCENE)?)?),
+        };
+        for &ri in by_pfx.iter().skip(1) {
+            let pfx = &recs[ri].pfx;
+            let mut mine = facts.clone();
+            for ((k, el, scene), chain) in facts.mask_wraps().into_iter().zip(&mut mine.masks) {
+                let bytes = match scenes.iter().find(|res| res.0 == scene) {
+                    Some(res) => res.2[0].clone(),
+                    None => read(&scene).or_else(|_| race_read(&scene))?,
+                };
+                let entry = StockNodes {
+                    template: facts.parent_ui.clone(),
+                    scene: Some(scene.clone()),
+                    hide: Vec::new(),
+                    wrap: vec![el],
+                    while_: None,
+                };
+                let (new, names) = stock_edit::wrap_scene(&bytes, &entry, pfx, donor.as_ref())?;
+                match scenes.iter_mut().find(|res| res.0 == scene) {
+                    Some(res) => res.2 = vec![new],
+                    None => scenes.push((scene, "UILayout", vec![new])),
+                }
+                chain.truncate(k);
+                chain.extend(names);
             }
-            "replay" => {
-                out.replay_template.push(res.clone());
-                out.replay_scene.push(res);
+            out.lines.push(format!(
+                "{pfx}: screen {key}: another record masks the stock board too, so this record masks it through wrapper nulls"
+            ));
+            own_masks.insert(ri, mine);
+        }
+        for res in scenes {
+            match key.as_str() {
+                "standings" => {
+                    standings = true;
+                    out.scene.push(res);
+                }
+                "replay" => {
+                    out.replay_template.push(res.clone());
+                    out.replay_scene.push(res);
+                }
+                "spectator" => out.spectator_scene.push(res),
+                _ => out.scene.push(res),
             }
-            "spectator" => out.spectator_scene.push(res),
-            _ => out.scene.push(res),
         }
         for &ri in members {
             let r = &recs[ri];
+            let facts = own_masks.get(&ri).unwrap_or(facts);
             let target = r.targets.iter().find(|t| t.facts.key == *key).expect("a member");
             let show = &target.show;
             let hide = &target.hide;
@@ -912,8 +1001,10 @@ pub fn compose_screens(
     }
 
     let mut scene_cache: BTreeMap<String, Node> = BTreeMap::new();
-    let mut wrapped: BTreeSet<String> = BTreeSet::new();
-    for r in &recs {
+    let mut taken: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut by_pfx: Vec<&Rec> = recs.iter().collect();
+    by_pfx.sort_by(|a, b| a.pfx.cmp(&b.pfx));
+    for r in by_pfx {
         let mut nodes: Vec<StockNodes> = r.stock_nodes.clone();
         if r.targets.iter().any(|t| t.facts.key == "standings") {
             nodes.push(StockNodes {
@@ -976,23 +1067,35 @@ pub fn compose_screens(
             } else {
                 s
             };
+            let (s, moved) = stock_edit::share(s, &scene, taken.entry(scene.clone()).or_default());
+            let s = &s;
+            if !moved.is_empty() {
+                out.lines.push(format!(
+                    "{}: another record hides {} of {} too, so this record hides them through wrapper nulls",
+                    r.pfx,
+                    moved.join(", "),
+                    scene.rsplit('/').next().unwrap_or(&scene)
+                ));
+            }
             let mut wraps = Vec::new();
             if !s.wrap.is_empty() {
-                if wrapped.contains(&scene) {
-                    return Err(err(format!(
-                        "{}: {} is wrapped by another record already; one record wraps a scene",
-                        r.pfx,
-                        scene.rsplit('/').next().unwrap_or(&scene)
-                    )));
-                }
-                let bytes = race_read(&scene).or_else(|_| read_from(screens::FLOW_REPLAY, &scene))?;
-                let (new, names) = stock_edit::wrap_scene(&bytes, s, &r.pfx)?;
+                let bytes = match out
+                    .scene
+                    .iter()
+                    .chain(&out.spectator_scene)
+                    .find(|res| res.0 == scene)
+                {
+                    Some(res) => res.2[0].clone(),
+                    None => race_read(&scene).or_else(|_| read_from(screens::FLOW_REPLAY, &scene))?,
+                };
+                let (new, names) = stock_edit::wrap_scene(&bytes, s, &r.pfx, None)?;
                 wraps = names;
-                wrapped.insert(scene.clone());
-                match template_of_path(&s.template) {
-                    "spectator" => out.spectator_scene.push((scene.clone(), "UILayout", vec![new])),
-                    _ => out.scene.push((scene.clone(), "UILayout", vec![new])),
-                }
+                put_scene(
+                    &mut out,
+                    template_of_path(&s.template) == "spectator",
+                    &scene,
+                    new,
+                );
             }
             let n = stock_edit::attach_stock_nodes(
                 &mut live.root,
@@ -1071,6 +1174,74 @@ pub fn compose_screens(
         }
     }
     Ok(out)
+}
+
+/// The scenes the composer writes only when several records share a stock part: a scene the
+/// `stock_nodes` of more than one entry hide one element of (the later entries wrap it,
+/// [`stock_edit::share`]), and the mask scenes of a screen more than one record is on (the later
+/// records mask the board through wrappers).
+pub fn shared_scenes(stock: &dyn Stock, inputs: &[Input]) -> Result<Vec<String>> {
+    let mut out = BTreeSet::new();
+    let mut on: BTreeMap<String, (ScreenFacts, usize)> = BTreeMap::new();
+    for i in inputs {
+        for t in screens::targets(&i.record)?.unwrap_or_default() {
+            on.entry(t.facts.key.clone()).or_insert((t.facts.clone(), 0)).1 += 1;
+        }
+    }
+    for (facts, n) in on.values() {
+        if *n > 1 {
+            out.extend(facts.mask_wraps().into_iter().map(|(_, _, scene)| scene));
+        }
+    }
+    let entries: Vec<&StockNodes> = inputs
+        .iter()
+        .filter(|i| i.record.screen.is_some())
+        .flat_map(|i| &i.record.stock_nodes)
+        .collect();
+    if entries.len() < 2 {
+        return Ok(out.into_iter().collect());
+    }
+    let read =
+        |name: &str| -> Result<Pkg> { Ok(Pkg::parse(&first(stock.read(dials::STOCK_ERP, name)?, name)?)?) };
+    let (race, spectator) = (read(dials::TEMPLATE)?, read(dials::SPECTATOR)?);
+    let mut seen = BTreeSet::new();
+    for s in entries {
+        let template = match template_of_path(&s.template) {
+            "spectator" => &spectator,
+            _ => &race,
+        };
+        let Some(scene) = s
+            .scene
+            .clone()
+            .or_else(|| stock_edit::scene_of(&template.root, &s.template).ok().flatten())
+        else {
+            continue;
+        };
+        for h in &s.hide {
+            if !seen.insert((scene.clone(), h.clone())) {
+                out.insert(scene.clone());
+            }
+        }
+    }
+    Ok(out.into_iter().collect())
+}
+
+/// Makes `bytes` the one entry of `scene` in the scene archives: an earlier entry is replaced where
+/// it is, and the template's own archive gets one when it has none.
+fn put_scene(out: &mut Out, spectator: bool, scene: &str, bytes: Vec<u8>) {
+    for res in out.scene.iter_mut().chain(&mut out.spectator_scene) {
+        if res.0 == scene {
+            res.2 = vec![bytes.clone()];
+        }
+    }
+    let list = if spectator {
+        &mut out.spectator_scene
+    } else {
+        &mut out.scene
+    };
+    if !list.iter().any(|res| res.0 == scene) {
+        list.push((scene.to_owned(), "UILayout", vec![bytes]));
+    }
 }
 
 /// The archives the screen records' scene archive is made for: the host, the standings instance, the
@@ -1373,6 +1544,24 @@ mod tests {
             layout: None,
         };
         assert!(super::super::check::stock_kept(&sp, &bp, &ours).unwrap());
+    }
+
+    #[test]
+    fn a_scene_wrapped_again_keeps_one_entry_per_archive() {
+        let mut out = Out::default();
+        put_scene(&mut out, false, screens::LAPC_SCENE, vec![1]);
+        put_scene(&mut out, false, screens::LAPC_SCENE, vec![2]);
+        assert_eq!(
+            out.scene,
+            [(screens::LAPC_SCENE.to_owned(), "UILayout", vec![vec![2]])]
+        );
+        assert!(out.spectator_scene.is_empty());
+        put_scene(&mut out, true, screens::LAPC_SCENE, vec![3]);
+        assert_eq!(
+            out.scene,
+            [(screens::LAPC_SCENE.to_owned(), "UILayout", vec![vec![3]])]
+        );
+        assert_eq!(out.spectator_scene, out.scene);
     }
 
     #[test]

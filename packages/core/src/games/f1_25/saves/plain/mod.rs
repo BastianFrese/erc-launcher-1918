@@ -8,6 +8,7 @@
 //!     manifest.json
 //!     containers/<fnv64>.bag
 //!   inject.json                     launcher requests for the core
+//!   inject.applying.json            the requests a profile load took and has not answered yet
 //!   injected.json                   the core's answers
 //!   pins.json                       generations the launcher keeps (launcher-owned)
 //! ```
@@ -20,23 +21,44 @@ mod loss;
 mod manifest;
 mod prune;
 pub mod rewrite;
+mod split;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 pub use loss::{Loss, Lost, PutBack, put_backs};
-pub use manifest::{Container, Event, Manifest, SCHEMA, SLOT_SUFFIX, Slot, Source, mode_of};
+pub use manifest::{Container, Event, Manifest, SCHEMA, SLOT_SUFFIX, Slot, Source, is_mode_half, mode_of};
 pub use prune::{Keep, Pruned, prune_all_held};
+pub use split::{Moved, Outcome, SPLIT, SPLIT_ASIDE, Split, split_all_held, split_profile};
 
 use crate::{Result, io_err};
 
 pub const DIR: &str = "plain";
+/// The plain root of a profile's EA layout launcher save, beside `saves/<profile>/ea`, the title folder the EA save
+/// device is pointed at.
+pub const EA_DIR: &str = "ea-plain";
 pub const CURRENT: &str = "CURRENT";
 pub const GENERATIONS: &str = "generations";
 const PINS: &str = "pins.json";
+/// How many generations back from `CURRENT` the core looks for the one it puts containers back from
+/// (native/src/core/career/plain_saves_logic.hpp `MAX_SCAN`).
+pub const SCAN: usize = 4096;
 
 pub fn root_of_profile(data: &Path, profile: &str) -> PathBuf {
     crate::saves::launcher::root(data).join(profile).join(DIR)
+}
+
+pub fn root_of_profile_ea(data: &Path, profile: &str) -> PathBuf {
+    crate::saves::launcher::root(data).join(profile).join(EA_DIR)
+}
+
+/// The plain root of the launcher save a session on `copy` plays from: the EA layout's for an EA app copy, else the
+/// Steam layout's, as [`crate::saves::launcher::store_of_game`] picks the store.
+pub fn root_of_launcher(data: &Path, profile: &str, copy: crate::install::Source) -> PathBuf {
+    match copy {
+        crate::install::Source::EaApp => root_of_profile_ea(data, profile),
+        _ => root_of_profile(data, profile),
+    }
 }
 
 pub fn root_of_copy(data: &Path, source: &str) -> PathBuf {
@@ -44,12 +66,12 @@ pub fn root_of_copy(data: &Path, source: &str) -> PathBuf {
 }
 
 /// The plain root of a vault source: `launcher-<profile>` keeps it beside the profile's launcher save,
-/// `steam-<id3>` and `ea-<user>` under `$DATA/plain/`.
+/// `launcher-ea.<profile>` beside the EA layout's, `steam-<id3>` and `ea-<user>` under `$DATA/plain/`.
 pub fn root_of_source(data: &Path, source: &str) -> PathBuf {
-    if let Some(p) = source
-        .strip_prefix("launcher-ea.")
-        .or_else(|| source.strip_prefix("launcher-"))
-    {
+    if let Some(p) = source.strip_prefix("launcher-ea.") {
+        return root_of_profile_ea(data, p);
+    }
+    if let Some(p) = source.strip_prefix("launcher-") {
         return root_of_profile(data, p);
     }
     root_of_copy(data, source)
@@ -70,15 +92,22 @@ pub fn remember_copy_source(data: &Path, source: &str) {
     std::fs::write(&path, source).ok();
 }
 
-/// The plain root a session of `profile` writes, which `settings.json` hands the core. A session on the copy's
-/// own save has none until the launcher has found the copy's save once.
-pub fn root_of_session(data: &Path, profile: &str, on_launcher_saves: bool) -> Option<PathBuf> {
+/// The plain root a session of `profile` on `copy` writes, which `settings.json` hands the core. A session on the
+/// copy's own save has none until the launcher has found the copy's save once, and none while the save it found
+/// last belongs to the other copy.
+pub fn root_of_session(
+    data: &Path,
+    profile: &str,
+    on_launcher_saves: bool,
+    copy: crate::install::Source,
+) -> Option<PathBuf> {
     match on_launcher_saves {
-        true => Some(root_of_profile(data, profile)),
+        true => Some(root_of_launcher(data, profile, copy)),
         false => {
             let source = std::fs::read_to_string(data.join(COPY_SOURCE)).ok()?;
             let source = source.trim();
-            (!source.is_empty()).then(|| root_of_copy(data, source))
+            let ea = copy == crate::install::Source::EaApp;
+            (!source.is_empty() && source.starts_with("ea-") == ea).then(|| root_of_copy(data, source))
         }
     }
 }
@@ -168,6 +197,18 @@ impl Plain {
             .find_map(|n| self.manifest(n))
     }
 
+    /// The newest generation a session with the core wrote at a profile save: the one the core puts containers back
+    /// from at load. Like the core, it looks at the newest [`SCAN`] generations only.
+    pub fn newest_session_save(&self) -> Option<Manifest> {
+        let current = self.current()?;
+        self.numbers()
+            .into_iter()
+            .filter(|n| *n <= current)
+            .take(SCAN)
+            .filter_map(|n| self.manifest(n))
+            .find(Manifest::is_session_save)
+    }
+
     pub fn careers(&self) -> Vec<CareerRow> {
         let Some(m) = self.newest() else {
             return Vec::new();
@@ -225,6 +266,10 @@ impl Plain {
         inject::answers(&self.root)
     }
 
+    pub fn applying(&self) -> Vec<inject::Request> {
+        inject::applying(&self.root)
+    }
+
     /// Ask the core to put a mode back from `generation`: both halves, `gm_<mode>` and
     /// `<mode>_SaveSlotGameModeComponent`, in one request each from the same generation. `mode` may also be
     /// the name of either half.
@@ -247,6 +292,29 @@ impl Plain {
             .map(|n| inject::ask(&self.root, generation, n, true, now))
             .collect()
     }
+}
+
+/// Withdraw the requests every plain store under `data` holds from a profile load that stopped before it
+/// answered them, so the next Play does not apply them again. Only while F1 25 is closed. Lines for the
+/// log.
+pub fn withdraw_all_unanswered(data: &Path) -> Vec<String> {
+    let mut out = Vec::new();
+    for root in prune::roots(data) {
+        match inject::withdraw_unanswered(&root) {
+            Ok(withdrawn) => out.extend(withdrawn.iter().map(|r| {
+                format!(
+                    "saves: withdrew restore request {} ({} from generation {}): F1 25 stopped while it was applied, so the \
+                     next Play loads the save without it",
+                    r.id, r.container, r.generation
+                )
+            })),
+            Err(e) => out.push(format!(
+                "saves: could not withdraw the unanswered restore requests of {}: {e}",
+                root.display()
+            )),
+        }
+    }
+    out
 }
 
 #[cfg(test)]

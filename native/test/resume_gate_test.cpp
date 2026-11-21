@@ -21,7 +21,7 @@ static const char *SETTINGS = R"({"schema":1,"resume_needs":[
  {"key":"67cdf241e227f68c","career":"driver_career:67cdf241e227f68c","addons":[
    {"id":"a.on","name":"Alpha","version":"1.0.0","on":true,"at_version":true},
    {"id":"a.off","name":"Beta","version":"1.0.0","on":false,"at_version":true},
-   {"id":"a.old","name":"Gamma","version":"2.0.0","on":true,"at_version":false},
+   {"id":"a.old","name":"Gamma","version":"2.0.0","on":true,"at_version":false,"made_with":"1.0.4"},
    {"id":"a.gone","version":"","on":false,"at_version":false}]},
  {"key":"7","career":"my_team:7","addons":[{"id":"a.on","name":"Alpha","version":"1.0.0","on":true,"at_version":true}]},
  {"key":"9","career":"x","addons":[]},
@@ -37,9 +37,12 @@ static void table_and_status()
            "an unknown or empty key finds nothing");
     const rg::Entry *e = rg::find(t, "67cdf241e227f68c");
     expect(e && rg::unmet(*e).size() == 3, "off, another version and not installed are each unmet");
-    expect(e && rg::unmet(*e)[0] == "Beta" && rg::unmet(*e)[1] == "Gamma 2.0.0" && rg::unmet(*e)[2] == "a.gone",
-           "an add-on is named; one on at another version carries the installed version; one unknown by name uses its id");
-    expect(rg::status_line(e) == "Missing: Beta, Gamma 2.0.0, a.gone", "the status line lists the unmet add-ons");
+    expect(e && rg::missing(*e) == std::vector<std::string>{"Beta", "a.gone"},
+           "an add-on that is off or not installed is missing; one unknown by name uses its id");
+    expect(e && rg::other_versions(*e) == std::vector<std::string>{"Gamma (saved with 1.0.4, installed 2.0.0)"},
+           "an add-on on at another version names the version the career was saved with and the installed one");
+    expect(rg::status_line(e) == "Missing: Beta, a.gone; Other version: Gamma (saved with 1.0.4, installed 2.0.0)",
+           "the status line keeps missing add-ons and other versions apart");
     expect(rg::status_line(rg::find(t, "7")) == "All addons ready", "a career with everything on says so");
     expect(rg::status_line(rg::find(t, "9")) == "All addons ready", "a career with no add-ons says so");
     expect(rg::status_line(nullptr).empty(), "a career with no data has no status");
@@ -47,7 +50,22 @@ static void table_and_status()
     for (int i = 0; i < 6; i++)
         many.needs.push_back({"x" + std::to_string(i), "N" + std::to_string(i), "", false, true});
     expect(rg::status_line(&many) == "Missing: N0, N1, N2, N3 and 2 more", "a long list is cut with a count");
-    expect(rg::prompt_text(*e).find("Beta, Gamma 2.0.0, a.gone") != std::string::npos, "the prompt names the add-ons");
+    expect(rg::prompt_text(*e).find("does not have on: Beta, a.gone.") != std::string::npos &&
+               rg::prompt_text(*e).find("other versions of: Gamma (saved with 1.0.4, installed 2.0.0).") != std::string::npos,
+           "the prompt names the missing add-ons and the other versions");
+    rg::Table only = rg::parse(R"({"resume_needs":[{"key":"1","addons":[
+     {"id":"s.2018","name":"SWOFTY 2018","version":"1.0.5","on":true,"at_version":false,"made_with":"1.0.4"},
+     {"id":"a.ss","name":"Silly Season","version":"1.0.0","on":true,"at_version":false,"wants":">=1.0.1"},
+     {"id":"a.bare","name":"Bare","version":"3.0.0","on":true,"at_version":false}]}]})");
+    const rg::Entry *v = rg::find(only, "1");
+    expect(v && rg::missing(*v).empty(), "add-ons that are on are never missing");
+    expect(rg::status_line(v) == "Other version: SWOFTY 2018 (saved with 1.0.4, installed 1.0.5), Silly Season (needs "
+                                 ">=1.0.1, installed 1.0.0), Bare 3.0.0",
+           "a career saved with other versions says so, not missing");
+    expect(v && rg::dialog_text(*v) == "This career was saved with other versions of add-ons this profile has on: SWOFTY 2018 "
+                                       "(saved with 1.0.4, installed 1.0.5), Silly Season (needs >=1.0.1, installed 1.0.0), "
+                                       "Bare 3.0.0. Loading it anyway can break it.",
+           "the dialog of a career saved with other versions says it does not lack an add-on");
 }
 
 static void press_state()
@@ -72,7 +90,7 @@ static void dialog_and_title()
 {
     rg::Table t = rg::parse(SETTINGS);
     const rg::Entry *bad = rg::find(t, "67cdf241e227f68c"), *good = rg::find(t, "7");
-    expect(rg::dialog_text(*bad).find("Beta, Gamma 2.0.0, a.gone") != std::string::npos &&
+    expect(rg::dialog_text(*bad).find("Beta, a.gone") != std::string::npos &&
                rg::dialog_text(*bad).find("press") == std::string::npos,
            "the dialog names the add-ons and does not tell the player to press again");
     expect(rg::loads("load_anyway") && !rg::loads("back") && !rg::loads("") && !rg::loads("yes"),
@@ -155,13 +173,13 @@ static void list_rows()
     expect(rl::press(es[0]) == rl::Action::Ask && rl::press(es[1]) == rl::Action::Load, "not-ready rows ask, ready rows load");
     expect(rl::dialog_text(es[0]).find("Missing: Beta") != std::string::npos, "the dialog names the status");
     auto rows = rl::parse(R"({"resume_list":[
-        {"index":0,"key":"8","ready":false,"loadable":false,"status":"Missing rows from F1 1990"},
+        {"index":0,"key":"8","ready":false,"loadable":false,"status":"Missing: F1 1990"},
         {"index":1,"key":"9","ready":false,"loadable":true,"status":"Missing: Beta"}]})");
     expect(rows.size() == 2 && !rows[0].loadable && rows[1].loadable && es[0].loadable,
            "loadable parses, and a row without it is loadable");
     expect(rl::press(rows[0]) == rl::Action::Refuse && rl::press(rows[1]) == rl::Action::Ask,
-           "a row whose own rows the build lacks is refused; a row that only needs an addon asks");
-    expect(rl::refuse_text(rows[0]).find("Missing rows from F1 1990") != std::string::npos &&
+           "a row the launcher marks not loadable is refused; a loadable row that is not ready asks");
+    expect(rl::refuse_text(rows[0]).find("Missing: F1 1990") != std::string::npos &&
                rl::refuse_text(rows[0]).find("anyway") == std::string::npos,
            "the refusal names the status and offers no Load Anyway");
     expect(!rl::expired(1000, 1000 + rl::TARGET_LIFE_MS) && rl::expired(1000, 1001 + rl::TARGET_LIFE_MS),

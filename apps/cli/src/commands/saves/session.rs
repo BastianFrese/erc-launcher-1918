@@ -38,6 +38,7 @@ fn map_moved_ids(store: &Store, profile: &str, g: &Game, loc: &Location, snapsho
         &store.root,
         profile,
         on_launcher_saves,
+        swofty_core::install::Source::detect(&g.dir),
         &aliases,
         now,
         save,
@@ -92,6 +93,8 @@ pub(super) fn before_session_at(
     for line in swofty_core::saves::stall::sweep(store, game_loc.as_ref(), Running::now(), vault::now()) {
         say("warning", &line);
     }
+    split_plain_stores(store);
+    withdraw_unanswered_restores(store);
     if let Some(l) = game_loc.as_ref().filter(|l| !l.layout.is_launcher()) {
         swofty_core::saves::plain::remember_copy_source(&store.root, &l.source);
     }
@@ -226,6 +229,30 @@ fn seed_if_empty(store: &Store, profile: &str, from: &Location, to: &Location) {
     }
 }
 
+/// Split each profile's shared plain store between the Steam and EA app copies, once per profile. Skipped while
+/// F1 25 runs.
+pub fn split_plain_stores(store: &Store) {
+    if Running::now().game {
+        return;
+    }
+    for line in swofty_core::saves::plain::split_all_held(&store.root) {
+        say("info", &line);
+    }
+}
+
+/// Withdraw the restore requests of a profile load that stopped before it
+/// answered them (the game closed or crashed while it applied them), so the
+/// next Play does not apply them again. Skipped while F1 25 runs: the game may
+/// still answer them.
+pub fn withdraw_unanswered_restores(store: &Store) {
+    if Running::now().game {
+        return;
+    }
+    for line in swofty_core::saves::plain::withdraw_all_unanswered(&store.root) {
+        say("warning", &line);
+    }
+}
+
 /// Snapshot the profile save once the game exited and the session's game
 /// files are rolled back.
 pub fn after_session(before: Option<Before>) {
@@ -255,6 +282,14 @@ pub fn after_session(before: Option<Before>) {
             "warning",
             &format!("saves: could not snapshot the profile save after the session: {e}"),
         ),
+    }
+}
+
+/// Learn the saves a session ended stuck in a started race weekend on, once the session's end snapshot is in
+/// the vault.
+pub fn learn_stuck_weekends(store: &Store) {
+    for line in swofty_core::saves::stuck::sweep(store, vault::now()) {
+        say("warning", &line);
     }
 }
 

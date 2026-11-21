@@ -57,6 +57,12 @@ fn filled_icon(icon: IconName, cx: &App) -> Option<Arc<[u8]>> {
 }
 
 impl Shell {
+    /// Unser Online-Reiter steht jedem offen; der Raumserver nimmt auch Spieler ohne
+    /// Anmeldung, unter dem eigenen Schlüssel dieser Installation.
+    pub(crate) fn nav_mp(&self) -> bool {
+        true
+    }
+
     pub(crate) fn sub_nav(&self, layout_width: f32) -> Option<SubNav> {
         let tab = self.navigation.page.tab();
         let (links, fixed) = match tab {
@@ -183,6 +189,16 @@ impl Shell {
             cx.notify();
             return;
         }
+        let m = ev.keystroke.modifiers;
+        let back = match key {
+            "escape" => !m.modified() && self.root_focus.is_focused(window),
+            "left" => m == Modifiers::alt(),
+            _ => false,
+        };
+        if back && self.navigation.cursor.is_none() && self.page_back(cx) {
+            cx.stop_propagation();
+            return;
+        }
         if self.navigation.cursor.is_none()
             && self.navigation.page == Page::Online
             && self.root_focus.is_focused(window)
@@ -232,7 +248,7 @@ impl Shell {
                     let page = if self.navigation.page.tab() == Some(tab) {
                         self.navigation.page
                     } else {
-                        tab.home()
+                        self.tab_home(tab)
                     };
                     self.open_page(page, cx);
                 }

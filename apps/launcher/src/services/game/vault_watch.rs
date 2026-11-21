@@ -56,6 +56,15 @@ pub fn vault_at_start(store: &Store) {
     {
         crate::app::app_log::note(&l);
     }
+    for l in swofty_core::saves::stuck::sweep(store, vault::now()) {
+        crate::app::app_log::note(&l);
+    }
+    for l in swofty_core::saves::plain::split_all_held(&store.root) {
+        crate::app::app_log::note(&l);
+    }
+    for l in swofty_core::saves::plain::withdraw_all_unanswered(&store.root) {
+        crate::app::app_log::note(&l);
+    }
     for l in swofty_core::saves::plain::prune_all_held(&store.root) {
         crate::app::app_log::note(&l);
     }

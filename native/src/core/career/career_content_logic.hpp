@@ -356,6 +356,25 @@ inline Pick pick(const uint8_t *begin, const uint8_t *end, int32_t car_group, ui
     return fallback;
 }
 
+struct Cars {
+    bool known = false;
+    int32_t car_group = -1;
+    uint32_t model = MODEL_2026;
+};
+
+// pick()'s arguments for the tile that writes data group `group` into the career wizard: the stock 2025 and
+// 2026 tiles' own, else those of the registered content with that data group.
+inline Cars cars_of(const std::string &group, const Desc *content)
+{
+    if (group == "f1_career_2025")
+        return {true, -1, MODEL_2025};
+    if (group == "f1_career_2026")
+        return {true, -1, MODEL_2026};
+    if (content && content->data_group == group)
+        return {true, content->car_group, content->model};
+    return {};
+}
+
 struct Db {
     bool (*text)(const std::string &key, std::string &out, void *user);
     bool (*integer)(const std::string &key, int64_t &out, void *user);
@@ -405,20 +424,24 @@ inline bool text_is(const Db &db, const std::string &key, const std::string &wan
     return db.text(key, v, db.user) && v == want;
 }
 
-// The statId of the game_modes.ModeChampionship row that saves to save (save_data.name or
-// save_data_0.name), or -1.
+// The statId of the game_modes.ModeChampionship row whose mode container is save, or -1. The container is named after
+// the row (_metadata_), which is not always its save_data.name: the stock 2025 Driver Career row driver_career_25 has
+// save_data.name driver_career_24. A row whose save_data.name (or save_data_0.name) is save matches when no row is
+// named save.
 inline int64_t mode_stat_id(const Db &db, const std::string &save)
 {
     int64_t n = 0;
-    if (!count_of(db, "game_modes._ModeChampionship_instancecount_", n))
+    if (save.empty() || !count_of(db, "game_modes._ModeChampionship_instancecount_", n))
         return -1;
-    for (int64_t i = 0; i < n; i++) {
-        std::string row = "game_modes.ModeChampionship_" + std::to_string(i);
-        int64_t stat = -1;
-        if ((text_is(db, row + ".save_data.name", save) || text_is(db, row + ".save_data_0.name", save)) &&
-            db.integer(row + ".statId", stat, db.user))
-            return stat;
-    }
+    for (int pass = 0; pass < 2; pass++)
+        for (int64_t i = 0; i < n; i++) {
+            std::string row = "game_modes.ModeChampionship_" + std::to_string(i);
+            bool named = pass == 0 ? text_is(db, row + "._metadata_", save)
+                                   : text_is(db, row + ".save_data.name", save) || text_is(db, row + ".save_data_0.name", save);
+            int64_t stat = -1;
+            if (named && db.integer(row + ".statId", stat, db.user))
+                return stat;
+        }
     return -1;
 }
 

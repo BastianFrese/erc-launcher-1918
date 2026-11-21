@@ -12,6 +12,7 @@
 #include "core/runtime/build.hpp"
 #include "core/runtime/files.hpp"
 #include "core/runtime/runtime.hpp"
+#include "core/testing/save_sandbox_logic.hpp"
 
 #ifndef SWOFTY_CORE_VERSION
 #define SWOFTY_CORE_VERSION ""
@@ -30,6 +31,13 @@ struct Config {
 
 std::mutex write_lock;
 
+std::string env_text(const char *name)
+{
+    char v[16] = {};
+    DWORD n = GetEnvironmentVariableA(name, v, sizeof v);
+    return n && n < sizeof v ? std::string(v, n) : std::string();
+}
+
 const Config &config()
 {
     static const Config cfg = [] {
@@ -39,6 +47,11 @@ const Config &config()
             return c;
         if (!s.ok) {
             swofty::log("[saves] plain store off: %s", s.why.c_str());
+            return c;
+        }
+        std::string other = off_for_session(runtime::settings_json_text(), env_text(runtime::save_sandbox::OFF_ENV));
+        if (!other.empty()) {
+            swofty::log("[saves] plain store off: %s (%s); nothing is written or put back", other.c_str(), s.root.c_str());
             return c;
         }
         c.on = true;
@@ -84,12 +97,26 @@ Plan make_plan()
         return p;
     p.on = true;
     Root root(c.root);
-    p.newest = newest_core_save(root);
-    std::error_code ec;
-    if (fs::is_regular_file(root.path() / INJECT, ec)) {
+    std::vector<uint64_t> other;
+    p.newest = newest_core_save(root, &other);
+    for (uint64_t n : other)
+        swofty::log("[saves] plain store: generation %llu was written at another save than the profile's (such as the race "
+                    "highlights); nothing is put back from it",
+                    (unsigned long long)n);
+    Taken t = take_requests(root);
+    if (!t.why.empty())
+        swofty::log("[saves] inject requests not taken: %s; they wait for the next profile load", t.why.c_str());
+    if (t.left_over)
+        swofty::log("[saves] %s is left from a profile load that stopped while applying it; its requests are not applied "
+                    "again (the launcher answers them as withdrawn)%s",
+                    INJECT_APPLYING, t.taken ? "; the new inject.json replaces it" : "");
+    if (t.taken) {
         p.had_inject_file = true;
-        p.requests = parse_requests(read_text(root.path() / INJECT, size_t(1) << 20));
+        p.requests = std::move(t.requests);
         p.handled.assign(p.requests.size(), false);
+        swofty::log("[saves] applying %zu inject request(s); %s holds them until injected.json has the answers, so a game "
+                    "that stops before then does not apply them again",
+                    p.requests.size(), INJECT_APPLYING);
     }
     return p;
 }
@@ -246,7 +273,7 @@ std::vector<Added> at_load(Plan &plan, const std::map<std::string, std::string> 
         }
     }
     if (plan.had_inject_file && !answer(root, plan.results))
-        swofty::log("[saves] could not write injected.json; inject.json is left for the next load");
+        swofty::log("[saves] could not write injected.json; %s is left for the launcher to answer", INJECT_APPLYING);
     return out;
 }
 

@@ -134,7 +134,7 @@ inline Action press(const Entry &e)
 
 inline std::string dialog_text(const Entry &e)
 {
-    return "This career needs something this profile does not have: " + e.status + ". Loading it anyway can break it.";
+    return "This career does not match this profile's add-ons (" + e.status + "). Loading it anyway can break it.";
 }
 
 constexpr const char *REFUSE_TITLE = "Career can't load";
@@ -143,6 +143,12 @@ inline std::string refuse_text(const Entry &e)
 {
     return "This career needs what this profile's add-ons don't have (" + e.status +
            "). Turn on the add-on it was made with to load it.";
+}
+
+inline std::string failed_text()
+{
+    return "The list could not open this career. Pick it on this screen, then press Send Logs in the launcher so it can be "
+           "fixed.";
 }
 
 inline bool setup_after_press(std::string_view flow, uint64_t press_at, uint64_t now)

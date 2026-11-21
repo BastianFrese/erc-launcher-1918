@@ -11,6 +11,7 @@ pub mod client;
 pub mod diag;
 pub mod direct;
 pub mod fingerprint;
+pub mod matching;
 pub mod game;
 pub mod guest;
 pub mod progress;

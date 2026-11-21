@@ -43,9 +43,11 @@ fn label(p: Palette) -> Div {
 
 impl Shell {
     /// Whether an overlay could be over a slot: slots draw over everything in
-    /// the window, so they hide while one is open.
+    /// the window, so they hide while one is open. An open popup, such as the
+    /// menu beside Play or a select's list, counts.
     pub(crate) fn ads_covered(&self, window: &mut Window, cx: &mut App) -> bool {
-        self.navigation.popover.is_some()
+        gpui_kit::base::GlobalState::is_in_deferred_context(cx)
+            || self.navigation.popover.is_some()
             || self.overlays.tasks.is_some()
             || self.crashes.shown().is_some()
             || self.account.ban.is_some()
@@ -70,7 +72,7 @@ impl Shell {
         }
     }
 
-    fn ad_fits(unit: Unit, width: f32) -> bool {
+    pub(crate) fn ad_fits(unit: Unit, width: f32) -> bool {
         width * crate::ui::scale::current() >= f32::from(unit.size().width)
     }
 
@@ -122,7 +124,9 @@ impl Shell {
         if !Self::ad_fits(unit, width) {
             return None;
         }
-        let ad = self.ad_box(unit, p.background, p)?;
+        let ad = self
+            .ad_box(unit, p.background, p)
+            .or_else(|| super::stand_in::stand_in(unit, p))?;
         Some(h_flex().w_full().justify_center().child(ad).into_any_element())
     }
 

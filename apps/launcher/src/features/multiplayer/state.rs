@@ -1,28 +1,43 @@
 use std::collections::{HashMap, HashSet};
+use std::ops::RangeInclusive;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::*;
+use swofty_core::diagnostics::send_logs::RoomRun;
 use swofty_core::install::Game;
 use swofty_core::online::multiplayer::client::{self as diag, Local, Session};
-use swofty_core::online::multiplayer::types::{GameStatus, RoomSummary, SessionState};
+use swofty_core::online::multiplayer::matching::{self, Own, ROOM_PROFILE};
+use swofty_core::online::multiplayer::types::{
+    GameStatus, HostAddon, HostPrint, RoomSettings, RoomSummary, SessionState,
+};
 use swofty_core::platform::process::GameProcess;
 use swofty_core::store::Store;
 use swofty_i18n::tr;
 
-use super::model::{OwnPrint, exit_notice};
+use super::fix::RoomFix;
+use super::model::{OwnPrint, RoomFocus, exit_notice, leaves_on_exit, room_focus};
+use super::preview::{self, RoomPreview};
 use super::room_game::RoomGame;
+use super::steward::{self, Steward};
 use crate::shell::host::{Host, Hosted};
 use crate::shell::{Page, Shell};
 
 pub(super) const TICK: Duration = Duration::from_millis(500);
 pub(super) const GAME_EVERY: Duration = Duration::from_secs(2);
 pub(super) const ROOMS_EVERY: Duration = Duration::from_secs(5);
+/// How long the room waits after its game exited for the game's session to write how it ended.
+pub(super) const EXIT_WAIT: Duration = Duration::from_secs(5);
 pub(super) const MIN_PLAYERS: u8 = 2;
 pub(super) const MAX_PLAYERS: u8 = 24;
 pub(super) const AVATARS_DIR: &str = "avatars";
+
+/// Every room size the create form offers, as the room server accepts them.
+pub(super) fn room_sizes() -> RangeInclusive<u8> {
+    MIN_PLAYERS..=MAX_PLAYERS
+}
 
 pub(super) fn read_local(store: &Store, profile: &str, dir: &Path) -> Result<Local, String> {
     let game = Game::locate(&store.root, dir.to_path_buf()).map_err(|e| e.to_string())?;
@@ -30,12 +45,47 @@ pub(super) fn read_local(store: &Store, profile: &str, dir: &Path) -> Result<Loc
     Local::read(store, &profile, &game.identity).map_err(|e| e.to_string())
 }
 
+/// This player's side for the room list: what the player has to match a host with, and the own profile's
+/// fingerprint when that profile reads. A profile that fails its own checks leaves only the digest out.
+pub(super) fn read_own(store: &Store, profile: &str, dir: &Path) -> Result<OwnPrint, String> {
+    let game = Game::locate(&store.root, dir.to_path_buf()).map_err(|e| e.to_string())?;
+    let own = Own::read(store, Some(game.identity.exe_sha256.clone())).ok();
+    let local = store
+        .profile(profile)
+        .map_err(|e| e.to_string())
+        .and_then(|p| Local::read(store, &p, &game.identity).map_err(|e| e.to_string()))
+        .inspect_err(|e| eprintln!("swofty-launcher: this profile's addons don't read as a whole: {e}"))
+        .ok();
+    Ok(OwnPrint::of(local.as_ref(), own))
+}
+
+/// The room profile for `addons` (the host's, from the room list, or none yet), and its fingerprint. The
+/// player's own profile gives only its cosmetic addons.
+pub(super) fn room_local(
+    store: &Store,
+    profile: &str,
+    dir: &Path,
+    addons: &[HostAddon],
+) -> Result<Local, String> {
+    matching::write_room_profile(store, addons, &Default::default(), profile).map_err(|e| e.to_string())?;
+    read_local(store, ROOM_PROFILE, dir)
+}
+
 pub(super) fn read_game(dir: &Path, running: bool) -> Option<GameStatus> {
     diag::game_status(dir, running)
 }
 
+/// Whether the newest game session wrote how its game ended.
+pub(super) fn session_ended(store: &Store) -> bool {
+    store
+        .latest_session()
+        .is_some_and(|dir| dir.join(swofty_core::session::END_FILE).is_file())
+}
+
 pub(crate) struct RoomLaunch {
     pub(crate) row_ids: Option<PathBuf>,
+    /// The profile the room's game plays: the room profile for a joiner, the player's own for the host.
+    pub(crate) profile: Option<String>,
     /// The direct start request the game reads at boot, as `swofty\direct_start.json`: the room target, this
     /// player's role, the host's address and the room configuration (`LaunchAsk::direct_start`).
     pub(crate) direct_start: String,
@@ -61,14 +111,23 @@ pub(crate) struct Multiplayer {
     pub(super) align_plan: Option<String>,
     pub(super) leaving: bool,
     pub(super) viewing: Option<String>,
+    pub(super) away: bool,
     pub(super) notice: Option<String>,
     pub(super) error: Option<String>,
     pub(super) copied: Option<Instant>,
     pub(crate) game: RoomGame,
+    pub(super) fix: RoomFix,
+    /// The session plays the room profile: it started with that profile's fingerprint, or the match built it.
+    pub(super) roomed: Arc<std::sync::atomic::AtomicBool>,
+    /// The host's addons once the session has them, for a joiner.
+    pub(super) host_print: Option<HostPrint>,
     pub(super) faces: HashMap<String, Arc<Image>>,
     pub(super) faces_asked: HashSet<String>,
     pub(super) _inputs: [Subscription; 2],
     pub(super) lobby: Lobby,
+    pub(super) steward: Steward,
+    pub(super) preview: Option<RoomPreview>,
+    pub(super) steps_scroll: ScrollHandle,
 }
 
 impl Multiplayer {
@@ -83,6 +142,13 @@ impl Multiplayer {
             })
         };
         let inputs = [changed(cx, &name), changed(cx, &code)];
+        let debug = cfg!(debug_assertions);
+        let (state, preview) = preview::room(debug, std::env::var_os(preview::ROOM_ENV).as_deref()).unzip();
+        let mut lobby = Lobby::default();
+        if let Some(rooms) = preview::rooms(debug, std::env::var_os(preview::ROOMS_ENV).as_deref()) {
+            lobby.rooms = rooms;
+            lobby.rooms_loaded = true;
+        }
         Self {
             visible: false,
             refused: None,
@@ -90,23 +156,65 @@ impl Multiplayer {
             name,
             code,
             public: true,
-            max: 8,
+            max: RoomSettings::default().max_members,
             starting: None,
             session: None,
-            state: None,
+            state,
             align_busy: false,
             align_plan: None,
             leaving: false,
             viewing: None,
+            away: false,
             notice: None,
             error: None,
             copied: None,
             game: RoomGame::default(),
+            fix: RoomFix::default(),
+            roomed: Arc::default(),
+            host_print: None,
             faces: HashMap::new(),
             faces_asked: HashSet::new(),
             _inputs: inputs,
-            lobby: Lobby::default(),
+            lobby,
+            steward: Steward::default(),
+            preview,
+            steps_scroll: ScrollHandle::new(),
         }
+    }
+
+    /// Whether the page shows a room: one this launcher is in, or a previewed one.
+    pub(crate) fn in_room(&self) -> bool {
+        self.session.is_some() || self.preview.is_some()
+    }
+
+    pub(crate) fn form_open(&self) -> bool {
+        self.form
+    }
+
+    /// Ends a step out of the room, so the Multiplayer page shows the room again.
+    pub(crate) fn show_room(&mut self) {
+        self.away = false;
+    }
+
+    pub(crate) fn focus(&self) -> RoomFocus {
+        room_focus(self.in_room(), self.away, self.viewing.as_deref())
+    }
+
+    /// League Stewarding's page, when the room page offers it.
+    pub(super) fn steward_url(&self) -> Option<String> {
+        let previewed = self.preview.as_ref().and_then(|p| p.steward.clone());
+        self.steward.url.clone().or(previewed)
+    }
+
+    /// Whether the room page offers League Stewarding's page, with the game `running`.
+    pub(super) fn steward_offered(&self, running: bool) -> bool {
+        let state = self.state.as_ref();
+        steward::offered(
+            self.session.is_some() && !self.leaving,
+            state.is_some_and(|s| s.host),
+            state.is_some_and(|s| s.phase.is_over()),
+            running,
+        )
     }
 
     pub(super) fn busy(&self) -> bool {
@@ -116,9 +224,13 @@ impl Multiplayer {
     pub(super) fn finish_leaving(&mut self) {
         self.session = None;
         self.game = RoomGame::default();
+        self.fix = RoomFix::default();
+        self.roomed = Arc::default();
+        self.host_print = None;
         self.state = None;
         self.leaving = false;
         self.viewing = None;
+        self.away = false;
         self.lobby.refresh();
     }
 }
@@ -226,6 +338,11 @@ impl Multiplayer {
 
     /// Leaves the room. True when there was one to leave.
     pub(crate) fn leave(&mut self) -> bool {
+        if self.preview.take().is_some() {
+            self.state = None;
+            self.away = false;
+            return true;
+        }
         let Some(session) = &self.session else {
             return false;
         };
@@ -234,15 +351,25 @@ impl Multiplayer {
         true
     }
 
-    /// Follows the game for the room: once the game the room started has exited, the room is left.
-    /// True when it left.
-    pub(crate) fn watch_game(&mut self, running: bool, busy: bool) -> bool {
+    /// Follows the game for the room: once the game the room started has exited and its session wrote how it
+    /// ended, or [`EXIT_WAIT`] passed, the room is left, unless the room's session takes the exit as a failed
+    /// step ([`leaves_on_exit`]). True when it left.
+    pub(crate) fn watch_game(
+        &mut self,
+        running: bool,
+        busy: bool,
+        end_written: impl FnOnce() -> bool,
+        now: Instant,
+    ) -> bool {
         if self.session.is_none() {
             return false;
         }
         let exited = self.game.exited(running, busy);
         let over = self.state.as_ref().is_some_and(|s| s.phase.is_over());
-        if over || self.leaving || !exited {
+        if over || self.leaving || !exited || !leaves_on_exit(self.state.as_ref()) {
+            return false;
+        }
+        if !self.game.exit_settled(end_written, now) {
             return false;
         }
         let host = self.state.as_ref().is_some_and(|s| s.host);
@@ -252,6 +379,38 @@ impl Multiplayer {
             exit_notice(host)
         ));
         self.leave()
+    }
+
+    /// Tells the room's session how the game it ran ended, as the launcher judged it.
+    pub(crate) fn game_exited(&self, exit_code: Option<i32>, stopped_by_launcher: bool, crashed: bool) {
+        if let Some(session) = &self.session {
+            session.game_exited(exit_code, stopped_by_launcher, crashed);
+        }
+    }
+
+    /// The room the launcher is in, as a crashed game's logs name it: None outside a room, while leaving one,
+    /// or once it is over.
+    pub(crate) fn crash_room(&self) -> Option<RoomRun> {
+        let state = self.state.as_ref();
+        if self.session.is_none() || self.leaving || state.is_some_and(|s| s.phase.is_over()) {
+            return None;
+        }
+        let word = |v: Option<serde_json::Value>| v.and_then(|v| v.as_str().map(str::to_owned));
+        Some(RoomRun {
+            code: state.and_then(|s| s.room.as_ref()).map(|r| r.code.clone()),
+            step: word(
+                state
+                    .and_then(|s| s.progress.as_ref())
+                    .and_then(|p| serde_json::to_value(p.step).ok()),
+            ),
+            phase: word(
+                state
+                    .and_then(|s| serde_json::to_value(&s.phase).ok())
+                    .and_then(|v| v.get("phase").cloned()),
+            ),
+            host: state.is_some_and(|s| s.host),
+            launched: self.game.seen,
+        })
     }
 }
 

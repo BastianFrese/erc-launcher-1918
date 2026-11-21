@@ -38,6 +38,7 @@ constexpr const char *MANIFEST = "manifest.json";
 constexpr const char *CONTAINERS = "containers";
 constexpr const char *INJECT = "inject.json";
 constexpr const char *INJECTED = "injected.json";
+constexpr const char *INJECT_APPLYING = "inject.applying.json";
 constexpr size_t MAX_SCAN = 4096;
 
 inline std::string hex16(uint64_t v)
@@ -201,6 +202,19 @@ inline Settings parse_settings(std::string_view text)
     s.root = r;
     s.ok = true;
     return s;
+}
+
+// The root settings.json names beside a launcher_saves block is the plain store of the profile's launcher saves. A session
+// run once on the copy's own save (SWOFTY_LAUNCHER_SAVES=off) plays another save and leaves that store alone: why, or ""
+// when the root is the session's.
+inline std::string off_for_session(std::string_view settings_text, std::string_view launcher_saves)
+{
+    json::Value doc;
+    if (launcher_saves != "off" || settings_text.empty() || !json::parse(std::string(settings_text), doc) ||
+        doc.type != json::Value::Obj || doc["launcher_saves"].type == json::Value::Null)
+        return {};
+    return "this session runs on the copy's own save (SWOFTY_LAUNCHER_SAVES=off), and the root is the plain store of the "
+           "profile's launcher saves";
 }
 
 // ---- manifests ----
@@ -442,8 +456,26 @@ inline std::optional<std::vector<uint8_t>> read_container(const Root &root, uint
     return bytes;
 }
 
-// The newest generation that a session with the core wrote at a profile save (rule 2), walking back from CURRENT.
-inline std::optional<Manifest> newest_core_save(const Root &root)
+// Whether a generation is of the profile save. An older core also wrote one at a save of another kind, the race
+// highlights: its registered containers are that save's own (HIGHLIGHTS_CHILD) and none of the profile's, which always has
+// the options container and every game mode's pair. A generation that lists no registered container (the EA app copy's)
+// holds only the kept ones and counts.
+inline bool profile_generation(const Manifest &m)
+{
+    bool registered = false;
+    for (const Entry &e : m.containers) {
+        if (!e.registered)
+            continue;
+        if (e.name == sp::PROFILE_CHILD || !pair_of(e.name).empty())
+            return true;
+        registered = true;
+    }
+    return !registered;
+}
+
+// The newest generation that a session with the core wrote at a profile save (rule 2), walking back from CURRENT. A save
+// generation of another save is passed over, and its number added to `other` when given.
+inline std::optional<Manifest> newest_core_save(const Root &root, std::vector<uint64_t> *other = nullptr)
 {
     auto cur = root.current();
     if (!cur)
@@ -454,8 +486,12 @@ inline std::optional<Manifest> newest_core_save(const Root &root)
         if (*it > *cur)
             continue;
         auto m = read_generation(root, *it);
-        if (m && m->event == "save" && !m->session.empty())
+        if (!m || m->event != "save" || m->session.empty())
+            continue;
+        if (profile_generation(*m))
             return m;
+        if (other)
+            other->push_back(m->generation);
     }
     return std::nullopt;
 }
@@ -476,11 +512,17 @@ struct PutBack {
     std::vector<Skip> skipped;
 };
 
+// The containers a put-back may add to the kept set: either half of a game mode's pair, and the career snapshots' own entry.
+// A registered container that is not a mode's would never be written back (the save leaves out a kept name the root
+// registers), and anything else (the race highlights' replay container of an older core's generation) is not the profile's.
+inline bool restorable(const std::string &name) { return !pair_of(name).empty() || name == sp::ENTRY_NAME; }
+
 // Rule 2: the containers of that save generation the tree the game just loaded lacks, matched by name. `tree` maps each
 // container the tree holds to the SHA-256 of its bytes ("" when they are not known). A container the tree has is never
 // replaced, and what the newest save generation does not hold (a deletion, or a container that never was) is not brought
 // back from an older one. The halves of a mode's pair come back together or not at all: when one half is absent and the
-// other is present, the absent one comes back only if the present one is byte for byte the one in that generation.
+// other is present, the absent one comes back only if the present one is byte for byte the one in that generation. Only a
+// restorable container comes back.
 inline PutBack put_back(const Manifest &newest, const std::map<std::string, std::string> &tree)
 {
     PutBack out;
@@ -488,6 +530,10 @@ inline PutBack put_back(const Manifest &newest, const std::map<std::string, std:
     for (const Entry &e : newest.containers) {
         if (tree.count(e.name) || !taken.insert(e.name).second)
             continue;
+        if (!restorable(e.name)) {
+            out.skipped.push_back({e.name, "it is not a game mode's container"});
+            continue;
+        }
         std::string pair = pair_of(e.name);
         if (!pair.empty()) {
             const Entry *bad = nullptr;
@@ -614,15 +660,132 @@ inline std::string results_json(const std::vector<Result> &rs)
     return t;
 }
 
-// injected.json is written (durably) before inject.json goes, so a request is never lost without an answer.
+// The requests a profile load takes. inject.json is renamed to inject.applying.json before any of them is applied, so a game
+// that stops while it applies them (a crash in the mode's read) does not apply them again at the next load: only a new
+// inject.json is taken, and the launcher answers a leftover inject.applying.json as withdrawn.
+struct Taken {
+    std::vector<Request> requests;
+    bool taken = false;
+    bool left_over = false;
+    std::string why;
+};
+
+inline Taken take_requests(const Root &root)
+{
+    Taken t;
+    std::error_code ec;
+    fs::path inject = root.path() / INJECT, applying = root.path() / INJECT_APPLYING;
+    t.left_over = fs::is_regular_file(applying, ec);
+    if (!fs::is_regular_file(inject, ec))
+        return t;
+    fs::rename(inject, applying, ec);
+    if (ec) {
+        t.why = std::string(INJECT) + " could not be renamed to " + INJECT_APPLYING + " (" + ec.message() + ")";
+        return t;
+    }
+    runtime::durable::sync_dir(root.path());
+    t.taken = true;
+    t.requests = parse_requests(read_text(applying, size_t(1) << 20));
+    return t;
+}
+
+// injected.json is written (durably) before inject.applying.json goes, so a request is never lost without an answer. An
+// inject.json the launcher wrote while the game ran holds newer requests and stays for the next load.
 inline bool answer(const Root &root, const std::vector<Result> &rs)
 {
     if (!runtime::durable::write_file(root.path() / INJECTED, results_json(rs)))
         return false;
     std::error_code ec;
-    fs::remove(root.path() / INJECT, ec);
+    fs::remove(root.path() / INJECT_APPLYING, ec);
     runtime::durable::sync_dir(root.path());
     return true;
 }
+
+// ---- a registered mode's replace ----
+// A registered mode reads its container once, at the root load, into tables it never clears: reading it a second time appends
+// to what the first read left (crash-20261120-172027: a 26-entry table at F1_25.exe+0xbecf60 held 24 entries, the second read
+// wrote its first three entries at 24, 25 and 26, the last over the table's count, and faulted on the fourth). So a replace
+// request hands the mode a bag made from our bytes in place of its own as the root's loop reaches the container, and a
+// container the game has read is never read again.
+
+struct Swap {
+    enum class State { pending, applying, refused };
+    std::string key;
+    std::vector<size_t> requests;
+    uint64_t generation = 0;
+    std::vector<std::string> halves;
+    std::set<std::string> read;
+    State state = State::pending;
+    std::string why;
+};
+
+inline std::string mode_key(const std::string &name)
+{
+    std::string p = pair_of(name);
+    return p.empty() ? name : p;
+}
+
+// The replace requests grouped by mode. A mode's halves come from the generation of its first replace request.
+inline std::vector<Swap> plan_swaps(const std::vector<Request> &requests)
+{
+    std::vector<Swap> out;
+    for (size_t i = 0; i < requests.size(); i++) {
+        const Request &q = requests[i];
+        if (!q.replace || !sp::name_ok(q.container))
+            continue;
+        std::string key = mode_key(q.container);
+        auto it = std::find_if(out.begin(), out.end(), [&](const Swap &s) { return s.key == key; });
+        if (it == out.end()) {
+            out.push_back({key, {i}, q.generation, {}, {}, Swap::State::pending, {}});
+            continue;
+        }
+        it->requests.push_back(i);
+    }
+    return out;
+}
+
+inline Swap *swap_for(std::vector<Swap> &swaps, const std::string &name)
+{
+    std::string key = mode_key(name);
+    for (Swap &s : swaps)
+        if (s.key == key)
+            return &s;
+    return nullptr;
+}
+
+// Why the half `name` must not take our bytes, or empty: a request on it with a base needs the loaded container to hash the
+// same (`loaded_sha256` is empty when the load did not capture it).
+inline std::string swap_refusal(const std::vector<Request> &requests, const Swap &s, const std::string &name,
+                                const std::string &loaded_sha256)
+{
+    for (size_t i : s.requests)
+        if (requests[i].container == name && !base_matches(requests[i], loaded_sha256))
+            return changed_since_detail(requests[i]);
+    return {};
+}
+
+// The halves of a mode the root's loop never reached, so the file lacks them: after the root load the registered child reads
+// each from a fresh bag. A refused mode puts nothing back.
+inline std::vector<std::string> swap_absent(const Swap &s)
+{
+    std::vector<std::string> out;
+    if (s.state == Swap::State::refused)
+        return out;
+    for (const std::string &h : s.halves)
+        if (!s.read.count(h))
+            out.push_back(h);
+    return out;
+}
+
+// The container objects a mode has read in this process. The core reads a registered container only into an object no read
+// has reached.
+class ReadOnce {
+public:
+    void mark(uintptr_t obj) { seen_.insert(obj); }
+    bool may_read(uintptr_t obj) const { return obj && !seen_.count(obj); }
+
+private:
+    std::set<uintptr_t> seen_;
+};
 
 }

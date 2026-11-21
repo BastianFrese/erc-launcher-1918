@@ -129,8 +129,22 @@ inline constexpr address<"Ne_ActorManager_InsertEntryNode"> Ne_ActorManager_Inse
 inline constexpr address<"Ne_ActorManager_RegisterEntry"> Ne_ActorManager_RegisterEntry{}; // L2 experimental
 inline constexpr address<"Ne_ActorSceneDataResourceFactory_DestroyResource"> Ne_ActorSceneDataResourceFactory_DestroyResource{}; // L2 experimental
 inline constexpr address<"Ne_ActorSceneDataResource_DestroyScenes"> Ne_ActorSceneDataResource_DestroyScenes{}; // L2 experimental
+using Ne_AnimClipPlayer_Sample_Thunk_t = void(void *player, float time);
+inline constexpr fn<"Ne_AnimClipPlayer_Sample_Thunk", Ne_AnimClipPlayer_Sample_Thunk_t> Ne_AnimClipPlayer_Sample_Thunk{}; // L2 experimental
 inline constexpr address<"Ne_AnimClipResourceFactory_CreateResource"> Ne_AnimClipResourceFactory_CreateResource{}; // L2 experimental, NeAnimClipResourceFactory::createResource
 inline constexpr address<"Ne_AnimLayer_ApplyChannels"> Ne_AnimLayer_ApplyChannels{}; // L2 experimental
+using Ne_AnimPacketB1_Sample_t = void(void *packet, void *binding, float time, void *out);
+inline constexpr fn<"Ne_AnimPacketB1_Sample", Ne_AnimPacketB1_Sample_t> Ne_AnimPacketB1_Sample{}; // L2 experimental
+using Ne_AnimPacketB4_Sample_t = void(void *packet, void *binding, float time, void *out);
+inline constexpr fn<"Ne_AnimPacketB4_Sample", Ne_AnimPacketB4_Sample_t> Ne_AnimPacketB4_Sample{}; // L2 experimental
+using Ne_AnimPacketL1_Sample_t = void(void *packet, void *binding, float time, void *out);
+inline constexpr fn<"Ne_AnimPacketL1_Sample", Ne_AnimPacketL1_Sample_t> Ne_AnimPacketL1_Sample{}; // L2 experimental
+using Ne_AnimPacketL3_SampleTrack_t = void(void *packet, void *track, uint32_t index, float time, void *out);
+inline constexpr fn<"Ne_AnimPacketL3_SampleTrack", Ne_AnimPacketL3_SampleTrack_t> Ne_AnimPacketL3_SampleTrack{}; // L2 experimental
+using Ne_AnimPacketL4_SampleTrack_t = void(void *packet, void *track, uint32_t index, float time, void *out);
+inline constexpr fn<"Ne_AnimPacketL4_SampleTrack", Ne_AnimPacketL4_SampleTrack_t> Ne_AnimPacketL4_SampleTrack{}; // L2 experimental
+using Ne_AnimPacketS4_SampleTrack_t = void(void *packet, void *track, uint32_t index, float time, void *out);
+inline constexpr fn<"Ne_AnimPacketS4_SampleTrack", Ne_AnimPacketS4_SampleTrack_t> Ne_AnimPacketS4_SampleTrack{}; // L2 experimental
 inline constexpr address<"Ne_AnimSetResourceFactory_CreateResource"> Ne_AnimSetResourceFactory_CreateResource{}; // L2 experimental, NeAnimSetResource::NeAnimSetResource
 inline constexpr address<"Ne_Application2_OnFocusChanged"> Ne_Application2_OnFocusChanged{}; // L2 experimental, NeApplication2::onFocusChanged
 inline constexpr address<"Ne_Application2_OnVisibilityChanged"> Ne_Application2_OnVisibilityChanged{}; // L2 experimental, NeApplication2::onVisibilityChanged
@@ -692,7 +706,6 @@ inline constexpr address<"Ne_PresenceQueue_VectorPush"> Ne_PresenceQueue_VectorP
 inline constexpr address<"Ne_Presence_OnSubscribeResult"> Ne_Presence_OnSubscribeResult{}; // L2 experimental
 inline constexpr address<"Ne_Property_ResolveBindingChain"> Ne_Property_ResolveBindingChain{}; // L2 experimental
 inline constexpr address<"Ne_Property_SetS32IfChanged"> Ne_Property_SetS32IfChanged{}; // L2 experimental
-[[deprecated("deprecated in 1.10.0, removed in the next release: renamed: every caller sets a UIDBRef weak object reference through it and the compare is object identity, not a numeric S64 compare; use Ne_Property_SetUIDBRefIfChanged")]] inline constexpr address<"Ne_Property_SetS64IfChanged"> Ne_Property_SetS64IfChanged{}; // L2 experimental
 inline constexpr address<"Ne_Property_SetUIDBRefIfChanged"> Ne_Property_SetUIDBRefIfChanged{}; // L2 experimental
 inline constexpr address<"Ne_PtrList_RemoveLocked"> Ne_PtrList_RemoveLocked{}; // L2 experimental
 inline constexpr address<"Ne_Queue_EnqueueEventRecord"> Ne_Queue_EnqueueEventRecord{}; // L2 experimental
@@ -817,7 +830,6 @@ inline constexpr address<"Ne_Std_ThrowBadArrayNewLength"> Ne_Std_ThrowBadArrayNe
 inline constexpr address<"Ne_Std_ThrowBadFunctionCall"> Ne_Std_ThrowBadFunctionCall{}; // L2 experimental
 inline constexpr address<"Ne_Std_ThrowBadOptionalAccess"> Ne_Std_ThrowBadOptionalAccess{}; // L2 experimental
 inline constexpr address<"Ne_Std_ThrowDequeTooLong"> Ne_Std_ThrowDequeTooLong{}; // L2 experimental
-[[deprecated("deprecated in 1.10.0, removed in the next release: renamed: it is std::_Throw_bad_optional_access, which only raises std::bad_optional_access and ends the process in a fast fail; use Ne_Std_ThrowBadOptionalAccess")]] inline constexpr address<"Ne_Std_ThrowException"> Ne_Std_ThrowException{}; // L2 experimental
 inline constexpr address<"Ne_Std_ThrowExceptionNoReturn"> Ne_Std_ThrowExceptionNoReturn{}; // L2 experimental
 inline constexpr address<"Ne_Std_ThrowInvalidBitsetPosition"> Ne_Std_ThrowInvalidBitsetPosition{}; // L2 experimental
 inline constexpr address<"Ne_Std_ThrowMapSetTooLong"> Ne_Std_ThrowMapSetTooLong{}; // L2 experimental

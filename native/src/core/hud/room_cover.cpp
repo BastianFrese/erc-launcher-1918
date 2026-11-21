@@ -259,16 +259,16 @@ void CoverScreen::paint(hud::drawlist::Frame &f, uint64_t now)
         } else {
             // ERC-BEGIN netplay-cover-signal
             // Unser Netplay-Weg beantwortet die Frage selbst; alles andere fragt den Sitzungsdienst.
-            int sig = runtime::session_host_cover_signal();
+            int host_sig = runtime::session_host_cover_signal();
             if (runtime::netplay_room_requested()) {
                 switch (runtime::netplay_room::cover_signal()) {
-                case runtime::netplay_room::CoverSignal::failed: sig = -1; break;
-                case runtime::netplay_room::CoverSignal::shown: sig = 1; break;
-                default: sig = 0; break;
+                case runtime::netplay_room::CoverSignal::failed: host_sig = -1; break;
+                case runtime::netplay_room::CoverSignal::shown: host_sig = 1; break;
+                default: host_sig = 0; break;
                 }
             }
             // ERC-END netplay-cover-signal
-            last = sig < 0 ? Signal::failed : sig > 0 ? Signal::shown : Signal::waiting;
+            last = plugin_signal(runtime::direct_start_cover_signal(), host_sig);
         }
     }
     Event ev = Event::none;

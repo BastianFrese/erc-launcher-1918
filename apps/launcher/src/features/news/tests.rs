@@ -30,11 +30,17 @@ fn embeds_the_news_in_full() {
 /// Eine fremde Versionsnotiz ist zweimal durchgerutscht (13.11. die 1.9.19–1.9.42,
 /// 14.11. die 1.9.43–1.9.49): sie sind mit "1.9" groesser als "1.0" und kamen deshalb
 /// an jedem Zahlenvergleich vorbei. Das Kennzeichen ist jetzt der Merker in der
-/// Kopfzeile, nicht die Nummer. Eingebettet wird nur, was ihn traegt (build.rs) —
-/// hier faellt auf, wenn im Baum wieder fremde Notizen liegen.
+/// Kopfzeile, nicht die Nummer. Fremde Notizen (etwa Swoftys 1.10.x) duerfen nach einem
+/// Merge in `docs/releases/` liegen; eingebettet wird nur, was ihn traegt (build.rs) —
+/// hier faellt auf, wenn doch eine fremde Notiz im Programm landet.
 #[test]
-fn every_release_note_carries_our_mark() {
+fn no_foreign_release_note_reaches_the_program() {
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/releases");
+    let eingebettet: Vec<String> = embedded()
+        .iter()
+        .filter(|p| p.release())
+        .map(|p| p.version().to_owned())
+        .collect();
     let mut fremde = Vec::new();
     if let Ok(entries) = std::fs::read_dir(&dir) {
         for path in entries.flatten().map(|e| e.path()) {
@@ -47,19 +53,22 @@ fn every_release_note_carries_our_mark() {
                 .skip(1)
                 .take_while(|l| l.trim() != "---")
                 .collect();
-            if !kopf.iter().any(|l| l.trim() == "product: erc") {
-                fremde.push(
-                    path.file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or_default()
-                        .to_owned(),
-                );
+            if kopf.iter().any(|l| l.trim() == "product: erc") {
+                continue;
+            }
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default();
+            let version = name.strip_suffix(".md").unwrap_or(name);
+            if eingebettet.iter().any(|v| v == version) {
+                fremde.push(name.to_owned());
             }
         }
     }
     assert!(
         fremde.is_empty(),
-        "fremde Versionsnotizen in docs/releases (ohne \"product: erc\"): {fremde:?}"
+        "fremde Versionsnotizen wurden eingebettet: {fremde:?}"
     );
 }
 

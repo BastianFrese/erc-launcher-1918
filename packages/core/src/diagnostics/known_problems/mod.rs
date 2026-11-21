@@ -17,10 +17,12 @@ mod hooks;
 mod logos;
 mod memory;
 mod package_ids;
+mod saves;
 mod slow_init;
 mod stall;
 mod system;
 mod tyres;
+pub mod weekend;
 mod wording;
 
 #[cfg(test)]
@@ -32,14 +34,18 @@ use crate::session::SessionRecord;
 use crate::store::Store;
 
 use broken_addons::{
-    aggressive_ai, aggressive_ai_crash, pitlane, pitlane_crash, skip_cutscenes, skip_cutscenes_crash,
+    aggressive_ai, aggressive_ai_crash, anim_clip_crash, anim_clip_nan, marshal_lights, marshal_lights_crash,
+    pitlane, pitlane_crash, skip_cutscenes, skip_cutscenes_crash, td_wheel_off, td_wheel_off_anim,
+    td_wheel_off_anim_crash, td_wheel_off_crash, tyre_curve_crash, tyre_curve_nan, unloaded_ai_line,
+    unloaded_ai_line_crash,
 };
+pub use career::stuck_weekend;
 use career::{
     calendar_event_missing, career_content_off, career_driver_missing, career_track_crash,
     entrant_list_crash, imported_calendar_crash, imported_calendar_empty_season, missing_entrant_list,
-    missing_track_stat, morph_driver_crash, race_driver_missing, retirement_driver_crash,
-    sequencer_record_crash, third_car_line, third_car_line_crash, weekends_track_crash,
-    weekends_track_record_bad_index,
+    missing_track_stat, morph_driver_crash, race_driver_missing, retirement_driver_crash, sent_to_team_hq,
+    sent_to_team_hq_crash, sequencer_record_crash, third_car_line, third_car_line_crash,
+    weekends_track_crash, weekends_track_record_bad_index,
 };
 use crash_record::{Fatal, fatal, loaded_modules, wine};
 pub use evidence::Evidence;
@@ -50,6 +56,7 @@ use graphics::graphics_mods;
 use hang::{hang, hang_watchdog};
 pub use logos::unbuilt_logos;
 pub use package_ids::{PACKAGE_ID_MAX, PackageIds};
+pub use saves::unsaved_profile;
 pub(crate) use slow_init::slow_start;
 use stall::BOOT_STALL_SECS;
 pub use stall::stalled;
@@ -92,6 +99,12 @@ pub fn stall(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Opt
     stalled(&evidence(session, game, store))
 }
 
+/// Why the career of `session`, which ended without a crash, can't go on: it
+/// ended in a race weekend that started with no session run.
+pub fn stuck(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Option<Diagnosis> {
+    stuck_weekend(&evidence(session, game, store))
+}
+
 /// Why `session`, which ended without a crash, ran with cars that had no
 /// tyres, when its log names them.
 pub fn tyres(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Option<Diagnosis> {
@@ -102,6 +115,12 @@ pub fn tyres(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Opt
 /// logos, when its log says the game could not write them.
 pub fn logos(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Option<Diagnosis> {
     unbuilt_logos(&evidence(session, game, store))
+}
+
+/// Why `session`, which ended without a crash, could not save the profile,
+/// when its log says the kept careers could not be written back.
+pub fn saves(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Option<Diagnosis> {
+    unsaved_profile(&evidence(session, game, store))
 }
 
 /// The cause of a crash, from the first rule that recognises it. A crash no
@@ -147,7 +166,7 @@ type Rule = fn(&Crash) -> Option<Diagnosis>;
 const RULES: &[Rule] = &[
     |c| low_disk(&c.evidence.loader).map(|(drive, free, need)| low_disk_space(&drive, free, need)),
     |c| (c.evidence.code == Some(APP_CONTROL)).then(app_control),
-    |c| quit_fault(c.evidence).then(quit_fault_diagnosis),
+    |c| quit_fault(c.evidence).then(|| stuck_weekend(c.evidence).unwrap_or_else(quit_fault_diagnosis)),
     hooks::crash_in_hook,
     |c| aggressive_ai_crash(c.evidence, &c.fatal).then(|| aggressive_ai(c.evidence)),
     |c| skip_cutscenes_crash(c.evidence, &c.fatal).then(|| skip_cutscenes(c.evidence)),
@@ -155,8 +174,15 @@ const RULES: &[Rule] = &[
     memory::heap_exhausted,
     |c| hang_watchdog(c.evidence, &c.fatal).then(|| hang(c.evidence, &c.fatal, &c.mods)),
     |c| pitlane_crash(c.evidence, &c.fatal).then(|| pitlane(c.evidence)),
+    |c| td_wheel_off_crash(c.evidence, &c.fatal).then(|| td_wheel_off(c.evidence)),
+    |c| tyre_curve_crash(c.evidence, &c.fatal).then(tyre_curve_nan),
+    |c| td_wheel_off_anim_crash(c.evidence, &c.fatal).then(|| td_wheel_off_anim(c.evidence)),
+    |c| anim_clip_crash(c.evidence, &c.fatal).then(anim_clip_nan),
+    |c| unloaded_ai_line_crash(&c.fatal).then(|| unloaded_ai_line(c.evidence, &c.fatal)),
+    |c| marshal_lights_crash(c.evidence, &c.fatal).then(|| marshal_lights(c.evidence, &c.fatal)),
     |c| hardware_settings_crash(c.evidence, &c.fatal).then(|| hardware_settings(c.evidence)),
     |c| entrant_list_crash(c.evidence, &c.fatal).then(|| missing_entrant_list(c.evidence)),
+    |c| sent_to_team_hq_crash(c.evidence, &c.fatal).then(|| sent_to_team_hq(c.evidence, &c.fatal)),
     |c| {
         let content_off = !c.evidence.off.is_empty() || missing_track_stat(&c.evidence.loader).is_some();
         (content_off && career_track_crash(c.evidence, &c.fatal)).then(|| career_content_off(c.evidence))
