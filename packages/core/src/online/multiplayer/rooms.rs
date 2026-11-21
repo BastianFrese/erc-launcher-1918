@@ -695,6 +695,36 @@ mod tests {
     }
 
     #[test]
+    fn a_created_room_sends_the_session_token_as_its_bearer() {
+        use std::io::{Read, Write};
+        let server = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = server.local_addr().unwrap();
+        let reader = std::thread::spawn(move || {
+            let (mut stream, _) = server.accept().unwrap();
+            let mut request = Vec::new();
+            let mut buf = [0u8; 4096];
+            while !request.windows(4).any(|w| w == b"\r\n\r\n") {
+                match stream.read(&mut buf) {
+                    Ok(0) | Err(_) => break,
+                    Ok(n) => request.extend_from_slice(&buf[..n]),
+                }
+            }
+            let _ = stream.write_all(b"HTTP/1.1 500 X\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            String::from_utf8_lossy(&request).into_owned()
+        });
+        let token = "i1H8signedinsessiontokenfromjson00";
+        let _ = Api::with_server(&format!("http://{addr}"), token).create(&RoomSettings::default());
+        let request = reader.join().unwrap();
+        assert!(request.starts_with("POST /v1/mp/lobbies HTTP/1.1\r\n"), "{request}");
+        assert!(
+            request
+                .lines()
+                .any(|l| l.eq_ignore_ascii_case(&format!("authorization: Bearer {token}"))),
+            "no bearer with the session token in:\n{request}"
+        );
+    }
+
+    #[test]
     fn sends_the_token_over_plain_http_only_to_this_machine() {
         for server in [
             "http://example.com",

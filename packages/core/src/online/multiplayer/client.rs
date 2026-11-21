@@ -720,6 +720,27 @@ mod tests {
     }
 
     #[test]
+    fn a_room_starts_with_the_token_the_launcher_resolved() {
+        // Der Token der Anmeldung (oder der Gast-Schluessel) muss in der `Api` stehen, die
+        // `POST /v1/mp/lobbies` schickt; ein leeres Token kaeme beim Raumserver als `signed_out` an.
+        let dir = std::env::temp_dir().join(format!("swofty-room-token-{}", std::process::id()));
+        let game = Identity {
+            build_id: "25251167".into(),
+            exe_sha256: "a".repeat(64),
+        };
+        let local = Local::new(
+            Fingerprint::new(game, Vec::new(), BTreeMap::new(), None),
+            BTreeMap::new(),
+            Vec::new(),
+        );
+        for token in ["i1H8signedinsessiontokenfromjson00", "0123456789abcdef0123456789abcdef"] {
+            let ours = Session::ours_setup(Setup::new(token, &dir, local.clone()));
+            assert_eq!(ours.api.token(), token, "the room call carries this token");
+            assert_eq!(ours.api.server(), room_server().trim_end_matches('/'));
+        }
+    }
+
+    #[test]
     fn a_game_started_without_the_module_gets_the_last_environment_or_the_first_launch_one() {
         let data = std::env::temp_dir().join(format!("swofty-session-env-{}", std::process::id()));
         std::fs::create_dir_all(data.join("state")).unwrap();

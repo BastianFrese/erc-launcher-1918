@@ -376,7 +376,11 @@ impl Multiplayer {
             let result = cx
                 .background_executor()
                 .spawn(async move {
-                    diag::load(&store.root, Some(&token)).map_err(|e| e.to_string())?;
+                    // Kein `diag::load` mehr: unser Sitzungsablauf (`multiplayer::session`) baut die
+                    // Raum-Anfrage selbst. Das fremde Servermodul `mp-launcher` gibt es auf unserem
+                    // Server nicht; die Frage danach beim Unterbau-Server wird mit "not signed in"
+                    // abgelehnt und hat bisher jeden Raum-Anlauf abgebrochen, bevor der Token
+                    // ueberhaupt an `POST /v1/mp/lobbies` ging.
                     let joining = matches!(start, Start::Join(_));
                     let (read, roomed) = match (&listed, joining) {
                         (Some(addons), true) => (room_local(&store, &profile, &dir, addons), true),
