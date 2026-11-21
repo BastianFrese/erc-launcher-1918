@@ -114,6 +114,9 @@ hud_track_position.osd_visibility_option.track_position
     <prefix>_sn1  v_<prefix>  visible = false   (the stock cap instance never shows the elements)
 ```
 
+`also.<the record's own screen>` takes only `hide`: those elements stay off the record's own screen
+(for one record that shows a short list on the HUD and the long one on the replay screen).
+
 `isHidden` on a scene element does not hide it in game, so every static hide here is a template node:
 `hidden: true` on an element, `also.<screen>.hide`, the cap's graphics and the editor copy.
 
@@ -124,6 +127,14 @@ never draw inside another's host; the `.uipre` hides the same two elements insid
 HUD editor. These are childless template nodes: `2 x (records - 1)` per record and screen, one walk
 slot each, plus one child-list slot on `host_n` for every eight more children. The host scene itself
 does not grow. The build lists the count per record and screen.
+
+Every screen record also adds its own host instance to the board, so a board holds the cap scene
+once per record plus the stock one: `(1 + records) x (cap + every record)` walk slots. A family of
+addons that each must work alone (a season per addon, say) can carry one shared record instead of
+one each: when several addons bring a record with the same key, the same explicit `prefix`, equal
+fields and the same bytes in every sprite, the build composes it once, from the first addon in the
+load order, and prints `<prefix>: <addon> brings the same record <key> as <first>; composed once`
+for the others. Records that share a prefix and differ in anything still stop the build.
 
 Masks on the other screens are layout chains into the stock instances: replay `driver_table > Scene
 Root` and `session_timer > Scene Root`; spectator `spectator_mode_2 > driver_position_table >
