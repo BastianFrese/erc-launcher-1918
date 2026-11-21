@@ -121,6 +121,7 @@ pub(crate) struct Multiplayer {
     pub(super) lobby: Lobby,
     pub(super) steward: Steward,
     pub(super) preview: Option<RoomPreview>,
+    pub(super) steps_scroll: ScrollHandle,
 }
 
 impl Multiplayer {
@@ -169,6 +170,7 @@ impl Multiplayer {
             lobby,
             steward: Steward::default(),
             preview,
+            steps_scroll: ScrollHandle::new(),
         }
     }
 

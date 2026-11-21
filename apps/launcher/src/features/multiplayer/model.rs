@@ -513,13 +513,9 @@ pub(crate) struct StepRow {
     pub(crate) hint: Option<&'static str>,
 }
 
-/// The status card of a module that reports steps: the step list, and whether the session's headline shows
-/// above it.
+/// The steps of a module that reports them. The room page draws them as one row ([`super::tracker::Tracker`]).
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StepCard {
-    /// While leaving, once the session ended without a step failing, or for a problem no step carries. A
-    /// warning carries the session's problem as well as a failure does.
-    pub(crate) banner: bool,
     /// Empty once the session ended without a step failing.
     pub(crate) rows: Vec<StepRow>,
 }
@@ -547,10 +543,7 @@ impl StepCard {
                 .map(|(i, step)| StepRow::of(step, state, failed.is_some_and(|f| i > f), hint))
                 .collect()
         };
-        Some(Self {
-            banner: leaving || stray || (over && failed.is_none()),
-            rows,
-        })
+        Some(Self { rows })
     }
 }
 
@@ -617,18 +610,6 @@ pub(crate) fn closed_subtitle(opened: bool, host: bool) -> &'static str {
 /// What the room page says once the session is over while F1 25 is still `starting`.
 pub(crate) fn game_after_room(over: bool, starting: bool) -> Option<&'static str> {
     (over && starting).then(|| tr("F1 25 keeps starting without the room."))
-}
-
-/// The play button's word while a session for the room is `busy` and not `over`.
-pub(crate) fn room_starting_word(busy: bool, over: bool, hosting: bool) -> Option<&'static str> {
-    if !busy || over {
-        return None;
-    }
-    Some(if hosting {
-        tr("Opening room…")
-    } else {
-        tr("Joining…")
-    })
 }
 
 /// What a fix plan asks the player to change to match the host, one sentence per step.
