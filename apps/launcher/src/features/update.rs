@@ -18,6 +18,7 @@ use swofty_core::updates::release::{self as update, Install, Release};
 use swofty_core::updates::updater::{self, Catalog, Gate, Part, Phase, Plan, Ran, Track};
 
 use crate::features::sections::{Reporter, Shared};
+use crate::services::library::display_name;
 use crate::shell::host::{Host, Hosted};
 use crate::shell::play_bar::link;
 use crate::shell::{PlayState, Shell};
@@ -27,7 +28,7 @@ use swofty_i18n::{tr, trf};
 const TICK: Duration = Duration::from_secs(5);
 const RESTART_DELAY: Duration = Duration::from_millis(1500);
 pub(crate) const BUILDING: &str =
-    "Swofty is still building your mods. Update when it finishes, or cancel the build.";
+    "ERC is still building your mods. Update when it finishes, or cancel the build.";
 pub const BUTTON_WIDTH: f32 = 204.;
 const MOVE_DOCS: &str = "https://f1.swofty.net/guide/installation#moving-your-addons-and-saves";
 
@@ -123,7 +124,7 @@ impl Updates {
         let c = self.addon.waiting(&target, self.addon_installed.as_ref())?;
         Some(trf!(
             "{addon} {version} needs ERC Launcher {needs} and installs once that launcher is out. You have {current}.",
-            addon = managed::NAME,
+            addon = display_name(managed::ID, managed::NAME),
             version = c.version,
             needs = c.needs.as_ref()?,
             current = update::current_version()

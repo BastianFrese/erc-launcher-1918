@@ -32,7 +32,7 @@ pub(super) fn eula(p: Palette) -> Div {
         .gap(px(24.))
         .w(px(WIDTH))
         .child(heading(
-            tr("Swofty Launcher EULA"),
+            tr("ERC Launcher EULA"),
             tr("Read this before you start. You need to accept it to play."),
             p,
         ))

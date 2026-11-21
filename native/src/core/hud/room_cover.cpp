@@ -1,4 +1,7 @@
 #include "core/runtime/runtime.hpp"
+// ERC-BEGIN netplay-cover
+#include "core/netplay/netplay_room.hpp"
+// ERC-END netplay-cover
 
 #include "core/hud/room_cover.hpp"
 #include "core/hud/room_cover_logic.hpp"
@@ -14,14 +17,17 @@ namespace hud::room_cover {
 
 namespace {
 
-constexpr uint32_t BG_TOP = 0x0b0d12ffu;
-constexpr uint32_t BG_BOTTOM = 0x181b22ffu;
-constexpr uint32_t TEXT = 0xe9ecf3ffu;
-constexpr uint32_t MUTED = 0xa3a8b7ffu;
+constexpr uint32_t BG_TOP = 0x0a0b0dffu;
+constexpr uint32_t BG_BOTTOM = 0x16181cffu;
+constexpr uint32_t TEXT = 0xf2f4f7ffu;
+constexpr uint32_t MUTED = 0xb6babdffu;
 constexpr uint32_t FAINT = 0x737988ffu;
-constexpr uint32_t ACCENT = 0x8b7fd6ffu;
-constexpr uint32_t ACCENT_HI = 0xa196e6ffu;
-constexpr uint32_t TRACK = 0x272b35ffu;
+constexpr uint32_t ACCENT = 0xe10600ffu;
+constexpr uint32_t ACCENT_HI = 0xff2b1fffu;
+constexpr uint32_t TRACK = 0x22262dffu;
+/// Startampel: dunkel, solange das Licht aus ist; gruen, wenn es losgeht.
+constexpr uint32_t LIGHT_OFF = 0x3a1418ffu;
+constexpr uint32_t READY = 0x00d26affu;
 
 uint32_t with_alpha(uint32_t rgba, float k)
 {
@@ -61,7 +67,7 @@ private:
     Cover cover;
     Kind kind = Kind::none;
     Progress progress;
-    std::string subtitle = "Starting your session";
+    std::string subtitle = "Sitzung wird gestartet";
     std::atomic<bool> armed{false};
     uint64_t polled_at = 0;
     Signal last = Signal::waiting;
@@ -74,53 +80,120 @@ void CoverScreen::draw(hud::drawlist::Frame &f, uint64_t now, float alpha)
     hud::drawlist::reset_state(f);
     f.opacity = alpha;
     float W = f.width, H = f.height, u = H / 1080.0f, cx = W * 0.5f;
-    hud::drawlist::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
+    // Hintergrund: das ERC-Bild aus der Boxengasse (aus der 1.4.4), sonst der Verlauf.
+    static int bg_slot = -1;
+    static bool bg_tried = false;
+    static uint32_t bg_w = 0, bg_h = 0;
+    if (!bg_tried) {
+        bg_tried = true;
+        bg_slot = runtime::overlay_image("core.room_cover\nbg", "swofty:addons/core/cover.png", &bg_w, &bg_h);
+    }
+    if (bg_slot >= 0 && bg_w && bg_h) {
+        float s = std::max(W / float(bg_w), H / float(bg_h));
+        float dw = bg_w * s, dh = bg_h * s;
+        hud::drawlist::image(f, bg_slot, (W - dw) * 0.5f, (H - dh) * 0.5f, dw, dh, 0xffffffffu);
+    } else {
+        hud::drawlist::rect_gradient(f, 0, 0, W, H, 0, BG_TOP, BG_BOTTOM, 0);
+    }
+    // Abdunkeln, damit Text und Instrumente lesbar bleiben.
+    hud::drawlist::rect_gradient(f, 0, 0, W, H * 0.42f, 0, 0x000000a8, 0x00000000, 0);
+    hud::drawlist::rect_gradient(f, 0, H * 0.52f, W, H * 0.48f, 0, 0x00000000, 0x000000c4, 0);
 
-    hud::drawlist::TextStyle word = style(112 * u, TEXT, 0.16f);
-    std::string name = "SWOFTY";
+    bool ready = progress.completed();
+    int pct = progress.percent(now);
+    float shown = progress.shown(now);
+
+    // Wortmarke oben in der Mitte.
+    hud::drawlist::TextStyle word = style(34 * u, TEXT, 0.34f);
+    std::string name = "ERC";
     float ww = text_width(word, name);
-    float wy = H * 0.30f;
-    hud::drawlist::text(f, cx - ww * 0.5f + word.tracking * 0.5f, wy, word, name);
-
-    hud::drawlist::TextStyle tag = style(26 * u, ACCENT_HI, 0.62f);
+    hud::drawlist::text(f, cx - ww * 0.5f + word.tracking * 0.5f, 44 * u, word, name);
+    hud::drawlist::TextStyle tag = style(13 * u, MUTED, 0.55f);
     std::string tagline = "LAUNCHER";
     float tw = text_width(tag, tagline);
-    float ty = wy + 112 * u * 1.25f;
-    hud::drawlist::text(f, cx - tw * 0.5f + tag.tracking * 0.5f, ty, tag, tagline);
-    float rule = 64 * u, ry = ty + 13 * u;
-    hud::drawlist::rect_rounded(f, cx - tw * 0.5f - 24 * u - rule, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
-    hud::drawlist::rect_rounded(f, cx + tw * 0.5f + 24 * u, ry, rule, 2 * u, u, with_alpha(ACCENT, 0.55f));
+    hud::drawlist::text(f, cx - tw * 0.5f + tag.tracking * 0.5f, 88 * u, tag, tagline);
 
-    hud::drawlist::TextStyle sub = style(34 * u, MUTED, 0.04f);
-    float sw = text_width(sub, subtitle);
-    float sy = H * 0.55f;
-    hud::drawlist::text(f, cx - sw * 0.5f, sy, sub, subtitle);
+    // Vier Instrumente wie auf dem Armaturenbrett.
+    float pw2 = 300 * u, ph = 104 * u, pad = 54 * u;
+    auto panel = [&](float x, float y) {
+        hud::drawlist::rect_rounded(f, x, y, pw2, ph, 6 * u, 0x101216cc);
+        hud::drawlist::rect_rounded(f, x, y, pw2, 2 * u, u, with_alpha(ACCENT, 0.45f));
+    };
+    auto heading = [&](float x, float y, const char *t) {
+        hud::drawlist::TextStyle h = style(13 * u, MUTED, 0.16f);
+        hud::drawlist::text(f, x + 14 * u, y + 12 * u, h, t);
+    };
 
-    float bw = std::min(W * 0.34f, 720 * u * 1.6f), bh = 8 * u, bx = cx - bw * 0.5f, by = H * 0.67f;
-    float shown = progress.shown(now);
-    int pct = progress.percent(now);
+    float top_y = 130 * u, bot_y = H - 130 * u - ph;
+    panel(pad, top_y);
+    heading(pad, top_y, "SYSTEM CHECK");
+    {
+        hud::drawlist::TextStyle v = style(15 * u, ready ? READY : TEXT, 0.10f);
+        hud::drawlist::text(f, pad + 14 * u, top_y + 40 * u, v, ready ? "PASS" : "LAEUFT");
+        for (int i = 0; i < 5; ++i) {
+            bool on = ready || i < std::clamp(pct / 20, 0, 5);
+            hud::drawlist::rect_rounded(f, pad + 14 * u + i * 26 * u, top_y + 72 * u, 18 * u, 18 * u, 3 * u,
+                                        on ? READY : 0x2a2f37ffu);
+        }
+    }
+    panel(W - pad - pw2, top_y);
+    heading(W - pad - pw2, top_y, "STRECKE");
+    {
+        hud::drawlist::TextStyle v = style(15 * u, TEXT, 0.08f);
+        hud::drawlist::text(f, W - pad - pw2 + 14 * u, top_y + 40 * u, v, subtitle);
+        // Ein Streckenumriss als Platzhalter, bis echtes Kartenmaterial da ist.
+        const float pts[][2] = {{0.05f, 0.62f}, {0.18f, 0.34f}, {0.38f, 0.30f}, {0.52f, 0.46f}, {0.44f, 0.66f},
+                                {0.60f, 0.78f}, {0.84f, 0.72f}, {0.90f, 0.52f}, {0.74f, 0.40f}};
+        for (size_t i = 0; i + 1 < sizeof pts / sizeof pts[0]; ++i)
+            hud::drawlist::line(f, W - pad - pw2 + 14 * u + pts[i][0] * 270 * u, top_y + 52 * u + pts[i][1] * 40 * u,
+                                W - pad - pw2 + 14 * u + pts[i + 1][0] * 270 * u,
+                                top_y + 52 * u + pts[i + 1][1] * 40 * u, 2 * u, with_alpha(ACCENT_HI, 0.75f));
+    }
+    panel(pad, bot_y);
+    heading(pad, bot_y, "ANTRIEB");
+    {
+        for (int i = 0; i < 9; ++i) {
+            float hgt = (0.25f + 0.75f * std::fabs(std::sin(float(i) * 1.7f))) * 54 * u;
+            hud::drawlist::rect_rounded(f, pad + 14 * u + i * 30 * u, bot_y + ph - 16 * u - hgt, 18 * u, hgt, 2 * u,
+                                        i * 11 < pct ? ACCENT : 0x2a2f37ffu);
+        }
+    }
+    panel(W - pad - pw2, bot_y);
+    heading(W - pad - pw2, bot_y, "FUNK");
+    {
+        hud::drawlist::TextStyle v = style(15 * u, READY, 0.10f);
+        hud::drawlist::text(f, W - pad - pw2 + 14 * u, bot_y + 40 * u, v, "ONLINE");
+        for (int i = 0; i < 22; ++i) {
+            float x = W - pad - pw2 + 14 * u + i * 12 * u;
+            float a = std::sin(float(now % 2400) / 2400.0f * 6.283f + i * 0.7f);
+            float hgt = (0.2f + 0.8f * std::fabs(a)) * 28 * u;
+            hud::drawlist::rect_rounded(f, x, bot_y + ph - 14 * u - hgt, 3 * u, hgt, 1.5f * u, with_alpha(READY, 0.7f));
+        }
+    }
 
-    hud::drawlist::TextStyle status = style(24 * u, MUTED);
-    hud::drawlist::TextStyle pctst = style(24 * u, TEXT, 0.04f);
+    // In der Mitte: der Ring mit dem Fortschritt.
+    float r = 150 * u, gy = H * 0.52f;
+    constexpr float PI_ = 3.14159265f, start = -0.75f * PI_, span = 1.5f * PI_;
+    hud::drawlist::arc(f, cx, gy, r, start, start + span, 8 * u, TRACK);
+    float to = start + span * shown;
+    if (shown > 0.001f) {
+        hud::drawlist::arc(f, cx, gy, r, start, to, 22 * u, with_alpha(ACCENT, 0.16f));
+        hud::drawlist::arc(f, cx, gy, r, start, to, 8 * u, ready ? READY : ACCENT);
+    }
+    hud::drawlist::TextStyle big = style(64 * u, TEXT, 0.02f);
     std::string pt = std::to_string(pct) + "%";
-    float ly = by - 24 * u - 34 * u;
-    hud::drawlist::text(f, bx, ly, status, progress.label());
-    float pw = text_width(pctst, pt);
-    hud::drawlist::text(f, bx + bw - pw, ly, pctst, pt);
+    float pw3 = text_width(big, pt);
+    hud::drawlist::text(f, cx - pw3 * 0.5f, gy - 40 * u, big, pt);
+    hud::drawlist::TextStyle rdy = style(16 * u, ready ? READY : MUTED, 0.22f);
+    std::string label = ready ? "BEREIT" : "LAEDT";
+    float lw = text_width(rdy, label);
+    hud::drawlist::text(f, cx - lw * 0.5f, gy + 40 * u, rdy, label);
 
-    hud::drawlist::rect_rounded(f, bx, by, bw, bh, bh * 0.5f, TRACK);
-    float fw = std::max(bh, bw * shown);
-    hud::drawlist::rect_gradient(f, bx, by, fw, bh, bh * 0.5f, ACCENT, ACCENT_HI, SWOFTY_GRADIENT_HORIZONTAL);
-    float sweep = std::fmod(float(now % 1800) / 1800.0f, 1.0f);
-    float sx = bx + (fw + 90 * u) * sweep - 90 * u, sl = std::max(sx, bx), sr = std::min(sx + 90 * u, bx + fw);
-    if (!progress.completed() && sr - sl > bh)
-        hud::drawlist::rect_rounded(f, sl, by, sr - sl, bh, bh * 0.5f, with_alpha(0xffffffffu, 0.22f));
-    hud::drawlist::rect_rounded(f, bx + fw - bh, by - 2 * u, bh, bh + 4 * u, (bh + 4 * u) * 0.5f, with_alpha(ACCENT_HI, 0.35f));
-
-    hud::drawlist::TextStyle foot = style(20 * u, FAINT, 0.04f);
-    std::string note = "This only takes a moment";
-    float nw = text_width(foot, note);
-    hud::drawlist::text(f, cx - nw * 0.5f, by + 40 * u, foot, note);
+    // Darunter, was gerade passiert.
+    hud::drawlist::TextStyle status = style(22 * u, MUTED, 0.06f);
+    std::string line = progress.label();
+    float sw = text_width(status, line);
+    hud::drawlist::text(f, cx - sw * 0.5f, H - 74 * u, status, line);
 }
 
 void CoverScreen::step(const char *what, float fraction, float ceiling)
@@ -166,7 +239,7 @@ bool CoverScreen::setup()
     if (k == Kind::session) {
         json::Value v;
         bool tt = json::parse(text, v) && v["mode"].str() == "time_trial";
-        subtitle = tt ? "Starting a Time Trial" : "Starting a Grand Prix session";
+        subtitle = tt ? "Zeitfahren" : "Grand-Prix-Sitzung";
     }
     cover.arm(k == Kind::session ? SESSION_CAP_MS : CAP_MS);
     armed.store(true);
@@ -184,7 +257,17 @@ void CoverScreen::paint(hud::drawlist::Frame &f, uint64_t now)
             int sig = runtime::direct_start_cover_signal();
             last = sig < 0 ? Signal::failed : sig > 0 ? Signal::shown : Signal::waiting;
         } else {
+            // ERC-BEGIN netplay-cover-signal
+            // Unser Netplay-Weg beantwortet die Frage selbst; alles andere fragt den Sitzungsdienst.
             int sig = runtime::session_host_cover_signal();
+            if (runtime::netplay_room_requested()) {
+                switch (runtime::netplay_room::cover_signal()) {
+                case runtime::netplay_room::CoverSignal::failed: sig = -1; break;
+                case runtime::netplay_room::CoverSignal::shown: sig = 1; break;
+                default: sig = 0; break;
+                }
+            }
+            // ERC-END netplay-cover-signal
             last = sig < 0 ? Signal::failed : sig > 0 ? Signal::shown : Signal::waiting;
         }
     }

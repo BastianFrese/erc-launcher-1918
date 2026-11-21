@@ -9,6 +9,9 @@ use super::state::RoomLaunch;
 /// What the room's game asks of the room's session.
 pub(crate) trait RoomSession {
     fn launch_ask(&self) -> Option<LaunchAsk>;
+    /// Die Umgebung fürs Spiel (`SWOFTY_SESSION_ENV`): Platz und Grundport dieser Sitzung, sobald
+    /// beide stehen. Ohne sie wüsste der Kern nicht, wohin er weiterreicht.
+    fn netplay_env(&self) -> Option<String>;
     fn launched(&self);
     fn launch_failed(&self, why: &str);
 }
@@ -16,6 +19,14 @@ pub(crate) trait RoomSession {
 impl RoomSession for Session {
     fn launch_ask(&self) -> Option<LaunchAsk> {
         self.state().launch
+    }
+
+    fn netplay_env(&self) -> Option<String> {
+        let state = self.state();
+        let (self_member, base) = (state.self_member?, state.base?);
+        Some(swofty_core::online::multiplayer::bridge::launch_env(&format!(
+            "self={self_member};base={base}"
+        )))
     }
 
     fn launched(&self) {
@@ -77,9 +88,14 @@ impl RoomGame {
         self.ask_seq = ask.seq;
         self.seen = false;
         self.launching = true;
+        let Some(netplay) = session.netplay_env() else {
+            session.launch_failed("the server has not given this player a number and port yet");
+            return None;
+        };
         Some(RoomLaunch {
             row_ids,
             direct_start: ask.direct_start,
+            netplay,
         })
     }
 
@@ -185,6 +201,10 @@ mod tests {
             self.ask.clone()
         }
 
+        fn netplay_env(&self) -> Option<String> {
+            Some(swofty_core::online::multiplayer::bridge::launch_env("self=1;base=20000"))
+        }
+
         fn launched(&self) {
             self.said.borrow_mut().push("launched".into());
         }
@@ -205,6 +225,7 @@ mod tests {
         RoomLaunch {
             row_ids: None,
             direct_start: "lobby".into(),
+            netplay: swofty_core::online::multiplayer::bridge::launch_env("self=1;base=20000"),
         }
     }
 

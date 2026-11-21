@@ -13,6 +13,19 @@ use serde_json::{Value, json};
 
 use super::fingerprint::{self, Fingerprint};
 use super::types::{FixStep, GameStatus, RoomSettings, RoomSummary, SessionState};
+
+/// Der Schritt in der Form, die das Fenster liest.
+fn step_as(step: super::progress::Step) -> super::types::Step {
+    use super::progress::Step as From;
+    match step {
+        From::SigningIn => super::types::Step::SigningIn,
+        From::Joining => super::types::Step::Joining,
+        From::Connecting => super::types::Step::Connecting,
+        From::StartingGame => super::types::Step::StartingGame,
+        From::Loading => super::types::Step::Loading,
+        From::InLobby => super::types::Step::InLobby,
+    }
+}
 use crate::catalog::{self, Addon};
 use crate::game_folder::baseline::Identity;
 use crate::online::modules::library::{Hooks, Library};
@@ -550,8 +563,23 @@ impl Session {
     /// Unser Zustand, in der Form, die die Oberflaeche erwartet.
     pub fn state(&self) -> SessionState {
         let ours = self.inner.state();
+        let progress = super::progress::progress(&ours);
+        let problem = super::progress::problem(&ours);
         let value = serde_json::to_value(&ours).unwrap_or(Value::Null);
-        serde_json::from_value(value).unwrap_or_else(|_| SessionState::new(ours.host))
+        let mut state = serde_json::from_value(value).unwrap_or_else(|_| SessionState::new(ours.host));
+        // Schritt und Problem stehen nur im Speicher (serde-skip) und gehen bei der Umwandlung
+        // verloren: hier nachtragen, sonst zeigt die Seite immer „Connecting".
+        state.progress = Some(super::types::Progress {
+            step: step_as(progress.step),
+            label: progress.label,
+            percent: progress.percent,
+        });
+        state.problem = problem.map(|p| super::types::Problem {
+            text: p.text,
+            retry: p.retry,
+            detail: None,
+        });
+        state
     }
 
     pub fn fix_plan(&self) -> Vec<FixStep> {

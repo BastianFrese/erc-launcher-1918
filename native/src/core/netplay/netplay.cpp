@@ -1,4 +1,5 @@
 #include "../runtime/runtime.hpp"
+#include "../runtime/loader/host_api.hpp"
 #include "netplay_icons_logic.hpp"
 #include "netplay_keys_logic.hpp"
 #include "netplay_privilege_logic.hpp"
@@ -273,6 +274,14 @@ bool armed()
     return n > 0 && n < sizeof v;
 }
 
+// Beim Anhaengen ist `swofty::api` — der Zeiger, den die SDK-Addons benutzen — noch nicht gesetzt.
+// Der Kern loest dann ueber die Tabelle auf, die ihm der Loader gereicht hat.
+uintptr_t resolve_id(const char *id)
+{
+    const SwoftyApi *a = runtime::loader::api;
+    return a && a->resolve ? a->resolve(id) : 0;
+}
+
 void session_patches()
 {
     static const uint8_t open_gate[] = {0x90, 0x90, 0x90, 0x90, 0x90, 0x90};
@@ -327,11 +336,9 @@ std::vector<CoreMixins> netplay_icons_mixins()
     resolve_offered = true;
     if (!armed())
         return out;
-    if (!swofty::api->resolve(ICON_RESOLVER)) {
-        swofty::log("[netplay] driver platform icon keys left as they are: needs %s, which this build does not resolve",
-                    ICON_RESOLVER);
-        return out;
-    }
+    // Kein Vorab-Aufloesen: der Mixin-Verwalter loest die Kennung selbst auf und laesst den Satz
+    // fallen, wenn dieser Build sie nicht kennt (so haelt es career_mixins auch). Beim Anhaengen
+    // steht `swofty::api` noch nicht, ein Blick darauf waere ein Griff ins Nichts.
     resolve_bound = true;
     out.push_back({ICON_MIXIN, {{ICON_RESOLVER, SWOFTY_MIXIN_WRAP, 0, (void *)&resolve_entry, (void **)&resolve_orig}}});
     return out;
@@ -359,7 +366,7 @@ std::vector<CoreMixins> netplay_keys_mixins()
     // Ab 1.10 gibt es Game_OsService_SubmitRequest nicht mehr als Bindung; der Schluesselstoff
     // laeuft im Spiel ueber Game_SSL_FetchKeyMaterial. Unser Weg fallt damit weg — der Aufruf
     // oben protokolliert das ohnehin, hier bleibt nur der leere Satz.
-    keys_update = swofty::api->resolve(KEYS_UPDATE);
+    keys_update = resolve_id(KEYS_UPDATE);
     swofty::log("[netplay] key material left to the game's own fetch: %s and %s are not bound on this build", KEYS_SUBMIT,
                 KEYS_UPDATE);
     return out;

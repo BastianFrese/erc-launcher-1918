@@ -37,18 +37,37 @@ impl Tri {
 
 /// Klopft beim Relay an: antwortet es ueberhaupt? Die Zahl der offenen Lobbys kommt
 /// spaeter aus der Lobby-Seite; hier zaehlt nur, ob der Dienst steht.
+///
+/// Dieselbe Anfrage wie in der 1.4.4: `ERC-LOBBYS` an den Relay aus `ERC_RELAY`
+/// beziehungsweise `f1.erdi-erc.de:35501`. Die Antwort ist eine Kopfzeile und je
+/// Raum eine Zeile `code|name|spieler|kategorie`.
 fn relay_probe() -> Result<(Tri, usize), String> {
-    use std::net::UdpSocket;
-    let ziel = std::env::var("ERC_RELAY")
-        .ok()
-        .filter(|v| !v.trim().is_empty())
-        .unwrap_or_else(|| "raum.erdi-erc.de:8471".to_owned());
+    use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+    let adresse = swofty_core::online::multiplayer::relay::default_relay();
+    let mit_port = if adresse.contains(':') {
+        adresse
+    } else {
+        format!("{adresse}:35501")
+    };
+    let ziel: SocketAddr = match mit_port.to_socket_addrs().ok().and_then(|mut a| a.next()) {
+        Some(addr) => addr,
+        // Kein auflösbarer Name: derselbe rote Punkt wie ein stummer Relay.
+        None => return Ok((Tri::Rot, 0)),
+    };
     let s = UdpSocket::bind("0.0.0.0:0").map_err(|e| format!("Kein Sende-Socket: {e}"))?;
     s.set_read_timeout(Some(Duration::from_secs(4))).ok();
-    s.send_to(b"ERC-LOBBYS", &ziel).map_err(|e| format!("Die Anfrage ging nicht raus: {e}"))?;
+    s.send_to(b"ERC-LOBBYS", ziel).map_err(|e| format!("Die Anfrage ging nicht raus: {e}"))?;
     let mut puffer = [0u8; 8192];
     match s.recv_from(&mut puffer) {
-        Ok((n, _)) => Ok((Tri::Gruen, String::from_utf8_lossy(&puffer[..n]).lines().count())),
+        Ok((n, _)) => {
+            let text = String::from_utf8_lossy(&puffer[..n]);
+            let lobbys = text
+                .lines()
+                .skip(1)
+                .filter(|zeile| zeile.split('|').count() >= 3)
+                .count();
+            Ok((Tri::Gruen, lobbys))
+        }
         Err(_) => Ok((Tri::Rot, 0)),
     }
 }

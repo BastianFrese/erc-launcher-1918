@@ -407,6 +407,10 @@ pub struct LaunchAsk {
     pub base: u16,
     #[serde(skip)]
     pub name: Option<String>,
+    /// Die Anweisung, mit der das Spiel beim Start in den Raum geht (`swofty/direct_start.json`),
+    /// fertig gebaut — der Launcher schreibt sie nur noch weg.
+    #[serde(rename = "direct_start")]
+    pub direct_request: String,
 }
 
 impl LaunchAsk {
@@ -1181,7 +1185,7 @@ impl Worker {
                 ));
             }
             self.lent_applied = row_ids.clone();
-            self.launch = Some(LaunchAsk {
+            let mut ask = LaunchAsk {
                 seq: self.launch_seq,
                 row_ids,
                 id_addons,
@@ -1191,7 +1195,10 @@ impl Worker {
                 self_member,
                 base,
                 name,
-            });
+                direct_request: String::new(),
+            };
+            ask.direct_request = ask.direct_start(self.hosting());
+            self.launch = Some(ask);
         }
         Err(Halt::Game(if restart {
             "restart F1 25 for the room".into()
@@ -3454,6 +3461,7 @@ mod tests {
             self_member: 3,
             base: 41000,
             name: name.map(str::to_owned),
+            direct_request: String::new(),
         };
         let join: Value = serde_json::from_str(&ask(Some("Ana")).direct_start(false)).unwrap();
         assert_eq!(

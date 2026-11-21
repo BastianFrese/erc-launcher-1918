@@ -50,7 +50,9 @@ impl Tab {
             Self::Home => Page::News,
             Self::Library => Page::Addons,
             Self::Discover => Page::Browser,
-            Self::Online => Page::Online,
+            // Der Online-Reiter führt in die Lobby; die Time-Trial-Bestenlisten sind aus der
+            // Navigation genommen (die Seite selbst bleibt im Code).
+            Self::Online => Page::Multiplayer,
             Self::Store => Page::Store,
         }
     }
@@ -173,6 +175,12 @@ mod tests {
         for tab in Tab::ALL {
             assert_eq!(tab.home().tab(), Some(tab));
         }
+    }
+
+    /// Der Online-Reiter führt in die Lobby, nicht in fremde Bestenlisten.
+    #[test]
+    fn the_online_tab_opens_the_lobby() {
+        assert!(Tab::Online.home() == Page::Multiplayer);
     }
 
     #[test]

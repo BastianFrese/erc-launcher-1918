@@ -302,6 +302,16 @@ pub struct Library {
     unsaved_order: bool,
 }
 
+/// The name the launcher shows for an addon. The managed Team Simplified addon's
+/// manifest and About page still carry the other launcher's name, and an addon update
+/// puts it back, so the launcher maps it when it shows them.
+pub(crate) fn display_name(id: &str, name: &str) -> String {
+    match id == swofty_core::updates::managed::ID {
+        true => name.replace("Swofty", "ERC"),
+        false => name.to_owned(),
+    }
+}
+
 pub(crate) fn left_out_limit_line() -> String {
     swofty_i18n::trf!(
         "Left out: the game holds {room} tracks",
@@ -335,6 +345,8 @@ impl Library {
             .map(|m| {
                 let package = !m.is_builtin() && swofty_core::dbedit::package::is_package(store, &m.id);
                 let source = Source::of(store, m, package);
+                let mut manifest = m.clone();
+                manifest.name = display_name(&manifest.id, &manifest.name);
                 AddonItem {
                     enabled: enabled.contains(&m.id),
                     locked: registry.get(&m.id).is_some_and(|e| e.locked),
@@ -356,7 +368,7 @@ impl Library {
                             lines
                         }
                     },
-                    manifest: m.clone(),
+                    manifest,
                 }
             })
             .collect();
@@ -401,7 +413,7 @@ impl Library {
                     addons: p
                         .enabled()
                         .filter_map(|id| manifests.get(id))
-                        .map(|m| m.name.clone())
+                        .map(|m| display_name(&m.id, &m.name))
                         .collect(),
                     name,
                 }
@@ -476,7 +488,19 @@ mod tests {
     use swofty_core::store::Store;
     use swofty_core::view::{Icon, SectionSpec};
 
-    use super::{AddonIcon, AddonItem, Changes, SectionItem, Source, listed, section_icon, tracks_page};
+    use super::{
+        AddonIcon, AddonItem, Changes, SectionItem, Source, display_name, listed, section_icon,
+        tracks_page,
+    };
+
+    #[test]
+    fn the_managed_addon_is_shown_under_this_launcher() {
+        assert_eq!(
+            display_name(swofty_core::updates::managed::ID, "Simplified for Swofty"),
+            "Simplified for ERC"
+        );
+        assert_eq!(display_name("other.addon", "Swofty Mod"), "Swofty Mod");
+    }
 
     fn addon(id: &str, track: bool) -> AddonItem {
         let manifest = AddonManifest::parse(&format!(

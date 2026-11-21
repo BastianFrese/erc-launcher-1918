@@ -1,11 +1,31 @@
 {
   "Also update the addons that are off in your profile when Play updates addons. Turned off, only the addons that are on are updated.": "Обновлять и аддоны, выключенные в профиле, когда «Играть» обновляет аддоны. Если выключено, обновляются только включённые аддоны.",
   "Update turned-off addons": "Обновлять выключенные аддоны",
-  "{count} addon": ["{count} аддон", "{count} аддона", "{count} аддонов"],
-  "{count} changed setting": ["{count} изменённая настройка", "{count} изменённые настройки", "{count} изменённых настроек"],
-  "{count} minute ago": ["{count} минуту назад", "{count} минуты назад", "{count} минут назад"],
-  "{count} hour ago": ["{count} час назад", "{count} часа назад", "{count} часов назад"],
-  "{count} day ago": ["{count} день назад", "{count} дня назад", "{count} дней назад"],
+  "{count} addon": [
+    "{count} аддон",
+    "{count} аддона",
+    "{count} аддонов"
+  ],
+  "{count} changed setting": [
+    "{count} изменённая настройка",
+    "{count} изменённые настройки",
+    "{count} изменённых настроек"
+  ],
+  "{count} minute ago": [
+    "{count} минуту назад",
+    "{count} минуты назад",
+    "{count} минут назад"
+  ],
+  "{count} hour ago": [
+    "{count} час назад",
+    "{count} часа назад",
+    "{count} часов назад"
+  ],
+  "{count} day ago": [
+    "{count} день назад",
+    "{count} дня назад",
+    "{count} дней назад"
+  ],
   "just now": "только что",
   "{count} s": "{count} с",
   "{count} min": "{count} мин",
@@ -85,7 +105,7 @@
   "Language": "Язык",
   "Larger text and controls, for the couch or a handheld.": "Крупный текст и элементы управления для дивана или портативной консоли.",
   "Launch failed: {cause}": "Не удалось запустить: {cause}",
-  "Launcher options, and where Swofty keeps its files": "Параметры лаунчера и место хранения файлов Swofty",
+  "Launcher options, and where ERC keeps its files": "Параметры лаунчера и место хранения файлов Swofty",
   "Launcher saves could not be used, so F1 25 closed before loading a save": "Не удалось использовать сохранения лаунчера, поэтому F1 25 закрылась до загрузки сохранения",
   "Launching…": "Запуск…",
   "Letters, digits, - and _. Each profile keeps its own addons and saves.": "Буквы, цифры, - и _. У каждого профиля свои аддоны и сохранения.",
@@ -152,7 +172,7 @@
   "Storage": "Хранилище",
   "Switch the copy of F1 25 Play uses": "Выбрать копию F1 25 для кнопки «Играть»",
   "Switch to it": "Переключиться",
-  "ERC Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the Swofty Developments Discord so they can get back to you.": "ERC Launcher проверил, что оставила игра, но не распознал этот сбой. Отправьте журналы разработчикам и присоединитесь к Discord Swofty Developments, чтобы они могли вам ответить.",
+  "ERC Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the ERC Developments Discord so they can get back to you.": "ERC Launcher проверил, что оставила игра, но не распознал этот сбой. Отправьте журналы разработчикам и присоединитесь к Discord Swofty Developments, чтобы они могли вам ответить.",
   "TV mode": "Режим ТВ",
   "TV or handheld": "Телевизор или портативная консоль",
   "The launcher's own text. Text that isn't translated yet stays in English, and addons and F1 25 keep their own": "Текст самого лаунчера. Ещё не переведённый текст остаётся на английском, а у аддонов и F1 25 свой язык",
@@ -267,8 +287,6 @@
   "Accept": "Принять",
   "Accept and launch": "Принять и запустить",
   "Accepted": "Принято",
-  "Access to #f1-supporter-leaks": "Доступ к #f1-supporter-leaks",
-  "Access to private betatesting": "Доступ к закрытому бета-тестированию",
   "Activity": "Активность",
   "Add and play this copy": "Добавить и играть в эту копию",
   "Add another folder": "Добавить другую папку",
@@ -295,7 +313,6 @@
   "All": "Все",
   "All addons": "Все аддоны",
   "All changes ({n})": "Все изменения ({n})",
-  "All of Supporter": "Всё из уровня Supporter",
   "All rows": "Все строки",
   "All seasons": "Все сезоны",
   "All tables": "Все таблицы",
@@ -374,8 +391,6 @@
   "Checking…": "Проверка…",
   "Choose": "Выбрать",
   "Choose the folder…": "Выбрать папку…",
-  "Claim": "Получить",
-  "Claim previous donation": "Привязать прошлое пожертвование",
   "Clear all": "Очистить всё",
   "Clear filters": "Сбросить фильтры",
   "Clear finished": "Убрать завершённые",
@@ -397,7 +412,6 @@
   "Config": "Конфигурация",
   "Confirm ban": "Подтвердить блокировку",
   "Controller": "Геймпад",
-  "Converts to whole months of a tier": "Конвертируется в целые месяцы уровня",
   "Copied": "Скопировано",
   "Copied from another profile": "Скопировано из другого профиля",
   "Copied from {from}": "Скопировано из {from}",
@@ -469,8 +483,6 @@
   "Discard": "Сбросить",
   "Discard changes": "Отменить изменения",
   "Discard {changes}?": "Отменить {changes}?",
-  "Discord embed links and external emoji permissions": "Права на встраивание ссылок и внешние эмодзи в Discord",
-  "Discord name & avatar": "Имя и аватар Discord",
   "Discover": "Обзор",
   "Done": "Готово",
   "Download complete": "Загрузка завершена",
@@ -501,8 +513,6 @@
   "End of the ranking": "Конец рейтинга",
   "English text": "Английский текст",
   "Enter a number of MB.": "Введите число МБ.",
-  "Enter an amount in dollars, like 20.": "Введите сумму в долларах, например 20.",
-  "Enter both the email and the payment ID.": "Введите и email, и ID платежа.",
   "Error": "Ошибка",
   "Every DB Editor addon on in {profile}": "Все аддоны редактора БД, включённые в {profile}",
   "Every effect a config can use, with its options. Copy puts the effect's table in your clipboard with every option at its default, ready to paste into a config.": "Все эффекты, которые может использовать конфигурация, с их параметрами. «Копировать» помещает таблицу эффекта в буфер обмена со всеми параметрами по умолчанию, готовую для вставки в конфигурацию.",
@@ -550,7 +560,11 @@
   "Flagged": "Помечено",
   "Folder": "Папка",
   "Folder name": "Имя папки",
-  "Found {count} conflict": ["Найден {count} конфликт", "Найдено {count} конфликта", "Найдено {count} конфликтов"],
+  "Found {count} conflict": [
+    "Найден {count} конфликт",
+    "Найдено {count} конфликта",
+    "Найдено {count} конфликтов"
+  ],
   "From a file…": "Из файла…",
   "From the clipboard": "Из буфера обмена",
   "From {source} · read-only": "Из {source} · только чтение",
@@ -659,7 +673,6 @@
   "Made for game build {made_for} (yours: {b})": "Создан для сборки игры {made_for} (у вас: {b})",
   "Made the folder {name}": "Папка {name} создана",
   "Make folder": "Создать папку",
-  "Making a Swofty addon?": "Создаёте аддон Swofty?",
   "Menu": "Меню",
   "Missing": "Отсутствует",
   "Missing requirements": "Не хватает зависимостей",
@@ -667,7 +680,11 @@
   "Modded play runs offline": "Игра с модами работает офлайн",
   "Modded sessions run F1 25 without EA AntiCheat so the loader and addons can work. Everything is undone when the game exits.": "В сессиях с модами F1 25 запускается без EA AntiCheat, чтобы загрузчик и аддоны могли работать. После выхода из игры всё возвращается как было.",
   "Moderation": "Модерация",
-  "Mods like this one go through the Simplified Importer, which turns them into addons.": ["Моды вроде этого проходят через Simplified Importer, который превращает их в аддоны.", "Моды вроде этих проходят через Simplified Importer, который превращает их в аддоны.", "Моды вроде этих проходят через Simplified Importer, который превращает их в аддоны."],
+  "Mods like this one go through the Simplified Importer, which turns them into addons.": [
+    "Моды вроде этого проходят через Simplified Importer, который превращает их в аддоны.",
+    "Моды вроде этих проходят через Simplified Importer, который превращает их в аддоны.",
+    "Моды вроде этих проходят через Simplified Importer, который превращает их в аддоны."
+  ],
   "More": "Ещё",
   "More from {name}": "Ещё от {name}",
   "Most downloads": "Больше всего загрузок",
@@ -676,7 +693,11 @@
   "Most stars": "Больше всего звёзд",
   "Move down": "Переместить вниз",
   "Move up": "Переместить вверх",
-  "Moved {names} out of its folder so the order holds": ["Перемещено из своей папки, чтобы сохранить порядок: {names}", "Перемещены из своих папок, чтобы сохранить порядок: {names}", "Перемещены из своих папок, чтобы сохранить порядок: {names}"],
+  "Moved {names} out of its folder so the order holds": [
+    "Перемещено из своей папки, чтобы сохранить порядок: {names}",
+    "Перемещены из своих папок, чтобы сохранить порядок: {names}",
+    "Перемещены из своих папок, чтобы сохранить порядок: {names}"
+  ],
   "Multiplayer is unavailable and cannot be enabled. The component is downloaded automatically and verified against pinned SHA-256 digests.": "Мультиплеер недоступен, и его нельзя включить. Компонент скачивается автоматически и проверяется по закреплённым хешам SHA-256.",
   "My times": "Мои времена",
   "NAME": "НАЗВАНИЕ",
@@ -767,7 +788,11 @@
   "Off": "Выкл.",
   "Off in {vanilla}": "Выключено в {vanilla}",
   "Offline · no addons saved yet": "Нет сети · сохранённых аддонов пока нет",
-  "Offline · showing the {count} addon saved last time": ["Нет сети · показан {count} аддон, сохранённый в прошлый раз", "Нет сети · показаны {count} аддона, сохранённые в прошлый раз", "Нет сети · показаны {count} аддонов, сохранённых в прошлый раз"],
+  "Offline · showing the {count} addon saved last time": [
+    "Нет сети · показан {count} аддон, сохранённый в прошлый раз",
+    "Нет сети · показаны {count} аддона, сохранённые в прошлый раз",
+    "Нет сети · показаны {count} аддонов, сохранённых в прошлый раз"
+  ],
   "Offline · showing {addons} from {host}": "Нет сети · показано {addons} с {host}",
   "Offline · {shown}": "Нет сети · {shown}",
   "Old backup": "Старая резервная копия",
@@ -794,7 +819,6 @@
   "PROBLEMS": "ПРОБЛЕМЫ",
   "PROFILES": "ПРОФИЛИ",
   "PUBLISHED BY": "ОПУБЛИКОВАЛ",
-  "Paid on Stripe outside the launcher? Enter the email you paid with and the invoice or payment ID to get your tier and Discord role.": "Оплатили через Stripe вне лаунчера? Введите email, с которым платили, и номер счёта или ID платежа, чтобы получить свой уровень и роль в Discord.",
   "Pass": "Пройдено",
   "Paused · jump to latest": "Пауза · перейти к последним",
   "Pending": "Ожидает",
@@ -813,7 +837,7 @@
   "Preview": "Предпросмотр",
   "Publisher": "Издатель",
   "Put this lap's replay into the game's Theatre": "Добавить повтор этого круга в Theatre игры",
-  "Putting back the files Swofty changed…": "Возврат файлов, изменённых Swofty…",
+  "Putting back the files ERC changed…": "Возврат файлов, изменённых Swofty…",
   "P{position}": "P{position}",
   "Queued": "В очереди",
   "Queued · View downloads": "В очереди · Открыть загрузки",
@@ -839,7 +863,11 @@
   "Removed {name}": "Удалено: {name}",
   "Rename folder": "Переименовать папку",
   "Renamed the folder to {name}": "Папка переименована в {name}",
-  "Reordered {count} addon": ["Переставлен {count} аддон", "Переставлено {count} аддона", "Переставлено {count} аддонов"],
+  "Reordered {count} addon": [
+    "Переставлен {count} аддон",
+    "Переставлено {count} аддона",
+    "Переставлено {count} аддонов"
+  ],
   "Report a bug on Discord": "Сообщить об ошибке в Discord",
   "Request current version": "Запросить текущую версию",
   "Requires": "Требует",
@@ -886,7 +914,6 @@
   "Saved to {path}": "Сохранено в {path}",
   "Saved {name}": "{name} сохранён",
   "Saved {name} and turned it on in {profile}": "{name} сохранён и включён в {profile}",
-  "Saved.": "Сохранено.",
   "Saves a .zip with the game's database file, changed by the addons you pick.": "Сохраняет .zip с файлом базы данных игры, изменённым выбранными вами аддонами.",
   "Saving": "Сохранение",
   "Search": "Поиск",
@@ -915,18 +942,19 @@
   "Show fewer": "Показать меньше",
   "Show in All tables": "Показать во «Всех таблицах»",
   "Show me": "Показать",
-  "Show me as": "Показывать меня как",
   "Show more laps": "Показать больше кругов",
   "Show profiles": "Показать профили",
-  "Show the Swofty boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "Показывать таблицы Swofty и призраков соперников в заезде на время для сезонов из аддонов. Экспериментально.",
+  "Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "Показывать таблицы Swofty и призраков соперников в заезде на время для сезонов из аддонов. Экспериментально.",
   "Show the car setup": "Показать настройки машины",
-  "Show the latest Swofty video in the bottom right of the F1 25 home screen. A change shows the next time you press Play.": "Показывать последнее видео Swofty в правом нижнем углу главного экрана F1 25. Изменение вступит в силу при следующем нажатии «Играть».",
+  "Show the latest ERC video in the bottom right of the F1 25 home screen. A change shows the next time you press Play.": "Показывать последнее видео Swofty в правом нижнем углу главного экрана F1 25. Изменение вступит в силу при следующем нажатии «Играть».",
   "Show the log in the file manager": "Показать журнал в файловом менеджере",
-  "Show {count} older version": ["Показать {count} более старую версию", "Показать {count} более старые версии", "Показать {count} более старых версий"],
+  "Show {count} older version": [
+    "Показать {count} более старую версию",
+    "Показать {count} более старые версии",
+    "Показать {count} более старых версий"
+  ],
   "Sign in from Settings with Discord.": "Войдите через Discord в настройках.",
-  "Sign in to claim": "Войдите, чтобы получить",
   "Sign in to see the Time Trial boards": "Войдите, чтобы увидеть таблицы заезда на время",
-  "Sign in with Discord to subscribe.": "Войдите через Discord, чтобы оформить подписку.",
   "Signing in…": "Вход…",
   "Simplified": "Simplified",
   "Source": "Источник",
@@ -949,23 +977,9 @@
   "Stock: {s}": "Стандартное: {s}",
   "Stop F1 25?": "Остановить F1 25?",
   "Stop game": "Остановить игру",
-  "Supporting a free and open-source launcher": "Поддержка бесплатного лаунчера с открытым исходным кодом",
-  "No ads in the launcher": "Без рекламы в лаунчере",
-  "Early access": "Ранний доступ",
-  "Early access to addons in testing": "Ранний доступ к аддонам на тестировании",
-  "You must be Supporter+ to install": "Для установки нужен Supporter+",
-  "Back the launcher and lose the ads": "Поддержите лаунчер и забудьте о рекламе",
-  "Play new addons before anyone else": "Играйте в новые аддоны раньше всех",
-  "Your tier": "Ваш уровень",
-  "Subscribe": "Подписаться",
-  "One-time donation": "Разовое пожертвование",
-  "Donate": "Пожертвовать",
-  "View in Discord": "Открыть в Discord",
-  "Your listing": "Ваша запись",
-  "Edit your listing": "Изменить запись",
   "Switch away from {vanilla} to use addons": "Переключитесь с {vanilla}, чтобы использовать аддоны",
-  "Swofty Developments": "Swofty Developments",
-  "Swofty stops after the file it is on and puts the game files back. Your profile and addons stay as they are, and the next Play builds again.": "Swofty остановится после текущего файла и вернёт файлы игры. Ваш профиль и аддоны останутся как есть, а при следующем нажатии «Играть» сборка начнётся заново.",
+  "ERC Developments": "Swofty Developments",
+  "ERC stops after the file it is on and puts the game files back. Your profile and addons stay as they are, and the next Play builds again.": "Swofty остановится после текущего файла и вернёт файлы игры. Ваш профиль и аддоны останутся как есть, а при следующем нажатии «Играть» сборка начнётся заново.",
   "Synced stars": "Звёзды синхронизированы",
   "Syncing stars…": "Синхронизация звёзд…",
   "TYPE": "ТИП",
@@ -975,8 +989,6 @@
   "Team Simplified": "Team Simplified",
   "Text & UI": "Текст и интерфейс",
   "That isn't a Steam save folder. Pick the one named remote under userdata.": "Это не папка сохранений Steam. Выберите папку remote внутри userdata.",
-  "That isn't a Swofty addon": ["Это не аддон Swofty", "Это не аддоны Swofty", "Это не аддоны Swofty"],
-  "The #f1-supporter-general chat": "Чат #f1-supporter-general",
   "The DB Editor draft could not be read": "Не удалось прочитать черновик редактора БД",
   "The DB Editor reads the game's database. Show the launcher where F1 25 is installed.": "Редактор БД читает базу данных игры. Укажите лаунчеру, где установлена F1 25.",
   "The EA app has F1 25 in another folder": "В приложении EA игра F1 25 находится в другой папке",
@@ -995,7 +1007,11 @@
   "The game folder is not known": "Папка игры неизвестна",
   "The install failed": "Не удалось установить",
   "The last sync failed: {error}\nLast synced: {when}\nClick to try again.": "Последняя синхронизация не удалась: {error}\nСинхронизировано: {when}\nНажмите, чтобы попробовать снова.",
-  "The launcher can't install this file as an addon:": ["Лаунчер не может установить этот файл как аддон:", "Лаунчер не может установить эти файлы как аддоны:", "Лаунчер не может установить эти файлы как аддоны:"],
+  "The launcher can't install this file as an addon:": [
+    "Лаунчер не может установить этот файл как аддон:",
+    "Лаунчер не может установить эти файлы как аддоны:",
+    "Лаунчер не может установить эти файлы как аддоны:"
+  ],
   "The limit must be at least 1 MB.": "Лимит должен быть не менее 1 МБ.",
   "The load order still has problems for {names}": "В порядке загрузки всё ещё есть проблемы: {names}",
   "The most space, in MB, the saved versions may take. The oldest unpinned versions go first.": "Максимальный объём в МБ, который могут занимать сохранённые версии. Первыми удаляются самые старые незакреплённые версии.",
@@ -1032,7 +1048,7 @@
   "Time Trial": "Заезд на время",
   "Time Trial boards": "Таблицы заезда на время",
   "Time Trial laps show up here once they are uploaded.": "Круги из заезда на время появятся здесь после загрузки.",
-  "Tools that make or edit Swofty addons": "Инструменты для создания и изменения аддонов Swofty",
+  "Tools that make or edit ERC addons": "Инструменты для создания и изменения аддонов Swofty",
   "Track can't be used": "Трассу нельзя использовать",
   "Track: {count} picked": "Трасса: выбрано {count}",
   "Track: {name}": "Трасса: {name}",
@@ -1047,7 +1063,11 @@
   "Turn on {name}": "Включить {name}",
   "Turn {name} off": "Выключить {name}",
   "Turn {name} on": "Включить {name}",
-  "Turned off {count} addon": ["Выключен {count} аддон", "Выключено {count} аддона", "Выключено {count} аддонов"],
+  "Turned off {count} addon": [
+    "Выключен {count} аддон",
+    "Выключено {count} аддона",
+    "Выключено {count} аддонов"
+  ],
   "Turning it off warns about your saves.": "При его выключении появится предупреждение о сохранениях.",
   "Turns on {features} while it's on": "Включает {features}, пока он включён",
   "Type": "Тип",
@@ -1062,13 +1082,16 @@
   "Update failed": "Не удалось обновить",
   "Updated 1 of 1 addon": "Обновлён 1 из 1 аддона",
   "Updated Project Halo 0.1.2": "Обновлено: Project Halo 0.1.2",
-  "Updated {done} of {count} addon": ["Обновлено {done} из {count} аддона", "Обновлено {done} из {count} аддонов", "Обновлено {done} из {count} аддонов"],
+  "Updated {done} of {count} addon": [
+    "Обновлено {done} из {count} аддона",
+    "Обновлено {done} из {count} аддонов",
+    "Обновлено {done} из {count} аддонов"
+  ],
   "Updated {names}": "Обновлено: {names}",
   "Updated {name} {version}": "Обновлено: {name} {version}",
   "Updated {when}": "Обновлено {when}",
   "Updating {names}.": "Обновление: {names}.",
   "Updating {percent}": "Обновление {percent}",
-  "Upload your Time Trial laps to the Swofty leaderboards. Ranked laps load a closed-source integrity module from Swofty's server.": "Загружайте свои круги из заезда на время в таблицы лидеров Swofty. Для рейтинговых кругов с сервера Swofty загружается модуль проверки целостности с закрытым исходным кодом.",
   "Use": "Использовать",
   "Use folder": "Использовать папку",
   "Use {name}": "Использовать {name}",
@@ -1127,19 +1150,20 @@
   "You have {changes}.": "У вас {changes}.",
   "You lose": "Вы потеряете",
   "You starred this. Click to unstar it.": "Вы отметили это звездой. Нажмите, чтобы снять отметку.",
-  "You're {tier}: {months} months left (expires {date})": "У вас {tier}: осталось месяцев: {months} (истекает {date})",
   "You: #{rank}": "Вы: #{rank}",
   "Your DB Editor changes are deleted and it is taken out of every profile. To keep them, use Share addon (.zip) in the DB Editor's Export menu first.": "Ваши изменения в редакторе БД будут удалены, и аддон будет убран из всех профилей. Чтобы сохранить их, сначала используйте «Поделиться аддоном (.zip)» в меню «Экспорт» редактора БД.",
   "Your Discord username": "Ваше имя пользователя в Discord",
   "Your Steam save": "Ваше сохранение Steam",
-  "Your account is banned from SwoftyLauncher": "Ваш аккаунт заблокирован в SwoftyLauncher",
   "Your careers have their own saves now": "Теперь у ваших карьер свои сохранения",
   "Your changes are not saved to the draft until the damaged draft file is moved: {error}": "Ваши изменения не сохраняются в черновик, пока повреждённый файл черновика не перемещён: {error}",
   "Your changes could not be saved to the draft: {e}": "Не удалось сохранить ваши изменения в черновик: {e}",
-  "Your line next to your name in the supporter list": "Ваша подпись рядом с именем в списке поддержавших",
   "Your name": "Ваше имя",
   "Yours": "Ваша",
-  "a file Swofty did not put in the game folder is in the way": ["мешает файл, который Swofty не добавлял в папку игры", "мешают файлы, которые Swofty не добавлял в папку игры", "мешают файлы, которые Swofty не добавлял в папку игры"],
+  "a file ERC did not put in the game folder is in the way": [
+    "мешает файл, который Swofty не добавлял в папку игры",
+    "мешают файлы, которые Swofty не добавлял в папку игры",
+    "мешают файлы, которые Swofty не добавлял в папку игры"
+  ],
   "also installed {names}": "также установлено: {names}",
   "an antivirus removed mod files, so F1 25 was not started": "антивирус удалил файлы модов, поэтому F1 25 не была запущена",
   "and {count} more": "и ещё {count}",
@@ -1185,7 +1209,6 @@
   "r, g, b, a": "r, g, b, a",
   "reading the answer to GET {path}: {error}": "чтение ответа на GET {path}: {error}",
   "removed": "удалено",
-  "role granted in Discord": "роль выдана в Discord",
   "rule {n}": "правило {n}",
   "showing the news saved last time": "показаны новости, сохранённые в прошлый раз",
   "showing the news that came with this version": "показаны новости, поставляемые с этой версией",
@@ -1224,48 +1247,192 @@
   "{changes} {verb} an addon, turned on in {profile}.": "{changes} {verb} аддоном, включённым в {profile}.",
   "{changes} · {size} · saved to {path}": "{changes} · {size} · сохранено в {path}",
   "{changes}, saved or not": "{changes}, сохранённые или нет",
-  "{count} addon installed": ["{count} аддон установлен", "{count} аддона установлено", "{count} аддонов установлено"],
-  "{count} addon loads in the wrong order": ["{count} аддон загружается в неправильном порядке", "{count} аддона загружаются в неправильном порядке", "{count} аддонов загружаются в неправильном порядке"],
-  "{count} addon needs attention": ["{count} аддон требует внимания", "{count} аддона требуют внимания", "{count} аддонов требуют внимания"],
-  "{count} addon update": ["{count} обновление аддонов", "{count} обновления аддонов", "{count} обновлений аддонов"],
-  "{count} addon update available": ["Доступно {count} обновление аддонов", "Доступно {count} обновления аддонов", "Доступно {count} обновлений аддонов"],
-  "{count} career": ["{count} карьера", "{count} карьеры", "{count} карьер"],
-  "{count} career is missing from {whose}: {names}. It was last in the save on {when}. Restoring that version brings it back; the restore shows what else changes first.": ["{count} карьера отсутствует в {whose}: {names}. Последний раз она была в сохранении от {when}. Восстановление той версии вернёт её; перед этим будет показано, что ещё изменится.", "{count} карьеры отсутствуют в {whose}: {names}. Последний раз они были в сохранении от {when}. Восстановление той версии вернёт их; перед этим будет показано, что ещё изменится.", "{count} карьер отсутствуют в {whose}: {names}. Последний раз они были в сохранении от {when}. Восстановление той версии вернёт их; перед этим будет показано, что ещё изменится."],
-  "{count} change": ["{count} изменение", "{count} изменения", "{count} изменений"],
-  "{count} change sent": ["{count} изменение отправлено", "{count} изменения отправлено", "{count} изменений отправлено"],
-  "{count} change waiting": ["{count} изменение ожидает", "{count} изменения ожидают", "{count} изменений ожидают"],
-  "{count} creator publishing to the registry, most downloaded first": ["{count} автор публикует в реестре, сначала самые скачиваемые", "{count} автора публикуют в реестре, сначала самые скачиваемые", "{count} авторов публикуют в реестре, сначала самые скачиваемые"],
-  "{count} database setting changed since the last build · the next launch rebuilds {name}": ["{count} настройка базы данных изменилась после последней сборки · при следующем запуске {name} будет пересобран", "{count} настройки базы данных изменились после последней сборки · при следующем запуске {name} будет пересобран", "{count} настроек базы данных изменилось после последней сборки · при следующем запуске {name} будет пересобран"],
-  "{count} download": ["{count} загрузка", "{count} загрузки", "{count} загрузок"],
-  "{count} driver": ["{count} пилот", "{count} пилота", "{count} пилотов"],
-  "{count} entry": ["{count} запись", "{count} записи", "{count} записей"],
-  "{count} field": ["{count} поле", "{count} поля", "{count} полей"],
+  "{count} addon installed": [
+    "{count} аддон установлен",
+    "{count} аддона установлено",
+    "{count} аддонов установлено"
+  ],
+  "{count} addon loads in the wrong order": [
+    "{count} аддон загружается в неправильном порядке",
+    "{count} аддона загружаются в неправильном порядке",
+    "{count} аддонов загружаются в неправильном порядке"
+  ],
+  "{count} addon needs attention": [
+    "{count} аддон требует внимания",
+    "{count} аддона требуют внимания",
+    "{count} аддонов требуют внимания"
+  ],
+  "{count} addon update": [
+    "{count} обновление аддонов",
+    "{count} обновления аддонов",
+    "{count} обновлений аддонов"
+  ],
+  "{count} addon update available": [
+    "Доступно {count} обновление аддонов",
+    "Доступно {count} обновления аддонов",
+    "Доступно {count} обновлений аддонов"
+  ],
+  "{count} career": [
+    "{count} карьера",
+    "{count} карьеры",
+    "{count} карьер"
+  ],
+  "{count} career is missing from {whose}: {names}. It was last in the save on {when}. Restoring that version brings it back; the restore shows what else changes first.": [
+    "{count} карьера отсутствует в {whose}: {names}. Последний раз она была в сохранении от {when}. Восстановление той версии вернёт её; перед этим будет показано, что ещё изменится.",
+    "{count} карьеры отсутствуют в {whose}: {names}. Последний раз они были в сохранении от {when}. Восстановление той версии вернёт их; перед этим будет показано, что ещё изменится.",
+    "{count} карьер отсутствуют в {whose}: {names}. Последний раз они были в сохранении от {when}. Восстановление той версии вернёт их; перед этим будет показано, что ещё изменится."
+  ],
+  "{count} change": [
+    "{count} изменение",
+    "{count} изменения",
+    "{count} изменений"
+  ],
+  "{count} change sent": [
+    "{count} изменение отправлено",
+    "{count} изменения отправлено",
+    "{count} изменений отправлено"
+  ],
+  "{count} change waiting": [
+    "{count} изменение ожидает",
+    "{count} изменения ожидают",
+    "{count} изменений ожидают"
+  ],
+  "{count} creator publishing to the registry, most downloaded first": [
+    "{count} автор публикует в реестре, сначала самые скачиваемые",
+    "{count} автора публикуют в реестре, сначала самые скачиваемые",
+    "{count} авторов публикуют в реестре, сначала самые скачиваемые"
+  ],
+  "{count} database setting changed since the last build · the next launch rebuilds {name}": [
+    "{count} настройка базы данных изменилась после последней сборки · при следующем запуске {name} будет пересобран",
+    "{count} настройки базы данных изменились после последней сборки · при следующем запуске {name} будет пересобран",
+    "{count} настроек базы данных изменилось после последней сборки · при следующем запуске {name} будет пересобран"
+  ],
+  "{count} download": [
+    "{count} загрузка",
+    "{count} загрузки",
+    "{count} загрузок"
+  ],
+  "{count} driver": [
+    "{count} пилот",
+    "{count} пилота",
+    "{count} пилотов"
+  ],
+  "{count} entry": [
+    "{count} запись",
+    "{count} записи",
+    "{count} записей"
+  ],
+  "{count} field": [
+    "{count} поле",
+    "{count} поля",
+    "{count} полей"
+  ],
   "{count} imported": "Импортировано: {count}",
-  "{count} item": ["{count} элемент", "{count} элемента", "{count} элементов"],
-  "{count} lap": ["{count} круг", "{count} круга", "{count} кругов"],
-  "{count} line": ["{count} строка", "{count} строки", "{count} строк"],
-  "{count} link": ["{count} ссылка", "{count} ссылки", "{count} ссылок"],
+  "{count} item": [
+    "{count} элемент",
+    "{count} элемента",
+    "{count} элементов"
+  ],
+  "{count} lap": [
+    "{count} круг",
+    "{count} круга",
+    "{count} кругов"
+  ],
+  "{count} line": [
+    "{count} строка",
+    "{count} строки",
+    "{count} строк"
+  ],
+  "{count} link": [
+    "{count} ссылка",
+    "{count} ссылки",
+    "{count} ссылок"
+  ],
   "{count} ms": "{count} мс",
-  "{count} new version since yours": ["{count} новая версия после вашей", "{count} новые версии после вашей", "{count} новых версий после вашей"],
-  "{count} option": ["{count} параметр", "{count} параметра", "{count} параметров"],
-  "{count} pass": ["{count} проход", "{count} прохода", "{count} проходов"],
-  "{count} player": ["{count} игрок", "{count} игрока", "{count} игроков"],
-  "{count} problem": ["{count} проблема", "{count} проблемы", "{count} проблем"],
-  "{count} record": ["{count} запись", "{count} записи", "{count} записей"],
+  "{count} new version since yours": [
+    "{count} новая версия после вашей",
+    "{count} новые версии после вашей",
+    "{count} новых версий после вашей"
+  ],
+  "{count} option": [
+    "{count} параметр",
+    "{count} параметра",
+    "{count} параметров"
+  ],
+  "{count} pass": [
+    "{count} проход",
+    "{count} прохода",
+    "{count} проходов"
+  ],
+  "{count} player": [
+    "{count} игрок",
+    "{count} игрока",
+    "{count} игроков"
+  ],
+  "{count} problem": [
+    "{count} проблема",
+    "{count} проблемы",
+    "{count} проблем"
+  ],
+  "{count} record": [
+    "{count} запись",
+    "{count} записи",
+    "{count} записей"
+  ],
   "{count} releases": "Выпусков: {count}",
-  "{count} removal": ["{count} удаление", "{count} удаления", "{count} удалений"],
-  "{count} result": ["{count} результат", "{count} результата", "{count} результатов"],
-  "{count} row": ["{count} строка", "{count} строки", "{count} строк"],
+  "{count} removal": [
+    "{count} удаление",
+    "{count} удаления",
+    "{count} удалений"
+  ],
+  "{count} result": [
+    "{count} результат",
+    "{count} результата",
+    "{count} результатов"
+  ],
+  "{count} row": [
+    "{count} строка",
+    "{count} строки",
+    "{count} строк"
+  ],
   "{count} skipped:": "Пропущено ({count}):",
-  "{count} star change waiting": ["{count} изменение звёзд ожидает", "{count} изменения звёзд ожидают", "{count} изменений звёзд ожидают"],
+  "{count} star change waiting": [
+    "{count} изменение звёзд ожидает",
+    "{count} изменения звёзд ожидают",
+    "{count} изменений звёзд ожидают"
+  ],
   "{count} starred by you · client {client}…\nClick to sync now.": "Отмечено вами: {count} · клиент {client}…\nНажмите, чтобы синхронизировать сейчас.",
   "{count} this month": "{count} за этот месяц",
-  "{count} top-level part": ["{count} часть верхнего уровня", "{count} части верхнего уровня", "{count} частей верхнего уровня"],
-  "{count} track": ["{count} трасса", "{count} трассы", "{count} трасс"],
-  "{count} track addon is on the Tracks page": ["{count} аддон трассы находится на странице «Трассы»", "{count} аддона трасс находятся на странице «Трассы»", "{count} аддонов трасс находятся на странице «Трассы»"],
-  "{count} unsaved change": ["{count} несохранённое изменение", "{count} несохранённых изменения", "{count} несохранённых изменений"],
-  "{count} version": ["{count} версия", "{count} версии", "{count} версий"],
-  "{count} warning": ["{count} предупреждение", "{count} предупреждения", "{count} предупреждений"],
+  "{count} top-level part": [
+    "{count} часть верхнего уровня",
+    "{count} части верхнего уровня",
+    "{count} частей верхнего уровня"
+  ],
+  "{count} track": [
+    "{count} трасса",
+    "{count} трассы",
+    "{count} трасс"
+  ],
+  "{count} track addon is on the Tracks page": [
+    "{count} аддон трассы находится на странице «Трассы»",
+    "{count} аддона трасс находятся на странице «Трассы»",
+    "{count} аддонов трасс находятся на странице «Трассы»"
+  ],
+  "{count} unsaved change": [
+    "{count} несохранённое изменение",
+    "{count} несохранённых изменения",
+    "{count} несохранённых изменений"
+  ],
+  "{count} version": [
+    "{count} версия",
+    "{count} версии",
+    "{count} версий"
+  ],
+  "{count} warning": [
+    "{count} предупреждение",
+    "{count} предупреждения",
+    "{count} предупреждений"
+  ],
   "{done} of {size} · {percent}": "{done} из {size} · {percent}",
   "{error}\nIt was kept as {path}": "{error}\nФайл сохранён как {path}",
   "{error} · Already installed: {names}": "{error} · Уже установлено: {names}",
@@ -1285,7 +1452,6 @@
   "{line} · {amount}": "{line} · {amount}",
   "{matched} of {total}": "{matched} из {total}",
   "{min} or more": "{min} или больше",
-  "{months} months left (expires {date})": "Осталось месяцев: {months} (истекает {date})",
   "{named} (loads first)": "{named} (загружается первым)",
   "{named} (not installed)": "{named} (не установлен)",
   "{named} (off)": "{named} (выключен)",
@@ -1335,9 +1501,13 @@
   "Too many tracks": "Слишком много трасс",
   "Left out: the game holds {room} tracks": "Исключено: в игре помещается {room} трасс",
   "{shown} and {more} more": "{shown} и ещё {more}",
-  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": ["В игре помещается {room} трасс, поэтому {count} трасса не попадает в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на ней.", "В игре помещается {room} трасс, поэтому {count} трассы не попадают в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на них.", "В игре помещается {room} трасс, поэтому {count} трасс не попадают в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на них."],
-  "The launcher couldn't reach Swofty's server in time.": "Лаунчер не смог вовремя связаться с сервером Swofty.",
-  "Swofty's server didn't offer it to you.": "Сервер Swofty не предложил его вам.",
+  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": [
+    "В игре помещается {room} трасс, поэтому {count} трасса не попадает в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на ней.",
+    "В игре помещается {room} трасс, поэтому {count} трассы не попадают в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на них.",
+    "В игре помещается {room} трасс, поэтому {count} трасс не попадают в эту сборку: {list}. Выключите часть аддонов трасс, чтобы играть на них."
+  ],
+  "The launcher couldn't reach ERC's server in time.": "Лаунчер не смог вовремя связаться с сервером Swofty.",
+  "ERC's server didn't offer it to you.": "Сервер Swofty не предложил его вам.",
   "The download failed its safety check.": "Загрузка не прошла проверку безопасности.",
   "Time Trial laps you drive this session won't be sealed, so they won't rank on the boards. Everything else works as usual. To try again, close the game and press Play.": "Круги заезда на время в этой сессии не будут запечатаны, поэтому не попадут в таблицы лидеров. Всё остальное работает как обычно. Чтобы попробовать снова, закройте игру и нажмите «Играть».",
   "Details: {why}": "Подробности: {why}",
@@ -1368,13 +1538,17 @@
   "Right-click {path}, open Properties > Compatibility and untick \"Run this program as an administrator\", also under \"Change settings for all users\". Then press Play again.": "Щёлкните правой кнопкой мыши по {path}, откройте «Свойства» > «Совместимость» и снимите флажок «Запускать эту программу от имени администратора», а также в разделе «Изменить параметры для всех пользователей». Затем снова нажмите «Играть».",
   "These files are set to run as administrator, so Windows won't start them for an EA app session (error 740):\n{paths}": "Эти файлы настроены на запуск от имени администратора, поэтому Windows не запустит их для сеанса через приложение EA (ошибка 740):\n{paths}",
   "For each one, right-click it, open Properties > Compatibility and untick \"Run this program as an administrator\", also under \"Change settings for all users\". Then press Play again.": "Щёлкните правой кнопкой мыши по каждому из них, откройте «Свойства» > «Совместимость» и снимите флажок «Запускать эту программу от имени администратора», а также в разделе «Изменить параметры для всех пользователей». Затем снова нажмите «Играть».",
-  "The EA app starts F1 25 without administrator rights, so running Swofty Launcher as administrator doesn't help.": "Приложение EA запускает F1 25 без прав администратора, поэтому запуск ERC Launcher от имени администратора не поможет.",
+  "The EA app starts F1 25 without administrator rights, so running ERC Launcher as administrator doesn't help.": "Приложение EA запускает F1 25 без прав администратора, поэтому запуск ERC Launcher от имени администратора не поможет.",
   "Restore waits for Play": "Восстановление ждёт «Играть»",
   "A restore is waiting. The game applies it the next time you press Play.": "Восстановление ожидает. Игра применит его при следующем нажатии «Играть».",
   "{mode} comes back from the saved copy the next time you press Play.": "{mode} вернётся из сохранённой копии при следующем нажатии «Играть».",
   "The career was not restored: {error}": "Карьера не восстановлена: {error}",
   "Careers missing from the save the game read: {names}. Saved copy: {at}": "Карьеры отсутствуют в сохранении, прочитанном игрой: {names}. Сохранённая копия: {at}",
-  "{count} career is in the last save a launcher session wrote but not in the save the game read since: {names}. The launcher's saved copy from {when} still has it. Restore puts it back the next time you press Play.": ["{count} карьера есть в последнем сохранении, записанном сессией лаунчера, но отсутствует в сохранении, которое игра прочитала после этого: {names}. В сохранённой копии лаунчера от {when} она ещё есть. «Восстановить» вернёт её при следующем нажатии «Играть».", "{count} карьеры есть в последнем сохранении, записанном сессией лаунчера, но отсутствуют в сохранении, которое игра прочитала после этого: {names}. В сохранённой копии лаунчера от {when} они ещё есть. «Восстановить» вернёт их при следующем нажатии «Играть».", "{count} карьер есть в последнем сохранении, записанном сессией лаунчера, но отсутствуют в сохранении, которое игра прочитала после этого: {names}. В сохранённой копии лаунчера от {when} они ещё есть. «Восстановить» вернёт их при следующем нажатии «Играть»."],
+  "{count} career is in the last save a launcher session wrote but not in the save the game read since: {names}. The launcher's saved copy from {when} still has it. Restore puts it back the next time you press Play.": [
+    "{count} карьера есть в последнем сохранении, записанном сессией лаунчера, но отсутствует в сохранении, которое игра прочитала после этого: {names}. В сохранённой копии лаунчера от {when} она ещё есть. «Восстановить» вернёт её при следующем нажатии «Играть».",
+    "{count} карьеры есть в последнем сохранении, записанном сессией лаунчера, но отсутствуют в сохранении, которое игра прочитала после этого: {names}. В сохранённой копии лаунчера от {when} они ещё есть. «Восстановить» вернёт их при следующем нажатии «Играть».",
+    "{count} карьер есть в последнем сохранении, записанном сессией лаунчера, но отсутствуют в сохранении, которое игра прочитала после этого: {names}. В сохранённой копии лаунчера от {when} они ещё есть. «Восстановить» вернёт их при следующем нажатии «Играть»."
+  ],
   "{whose} kept F1 25 on Loading... after Press any button in {count} session(s). The launcher left it as it is and kept a copy. The version from {when} loaded before; Restore puts it back, and the save as it is stays in Versions.": "{whose}: F1 25 завис на экране «Загрузка…» после «Нажмите любую кнопку» в сессиях: {count}. Лаунчер оставил сохранение как есть и сохранил копию. Версия от {when} раньше загружалась; «Восстановить» вернёт её, а сохранение в нынешнем виде останется в «Версиях».",
   "{whose} kept F1 25 on Loading... after Press any button in {count} session(s). The launcher left it as it is and kept a copy, and holds no earlier version to restore.": "{whose}: F1 25 завис на экране «Загрузка…» после «Нажмите любую кнопку» в сессиях: {count}. Лаунчер оставил сохранение как есть и сохранил копию; более ранней версии для восстановления у него нет.",
   "The save of profile {profile}": "Сохранение профиля {profile}",

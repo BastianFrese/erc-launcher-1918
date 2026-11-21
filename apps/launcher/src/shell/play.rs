@@ -74,9 +74,9 @@ impl Launching {
                 _ if not_stock.is_some() => not_stock.unwrap_or_default(),
                 Some(b) if b.ours() => trn(
                     b.files.len(),
-                    "a file an earlier Swofty session left in the game folder is in the way; Restore game \
+                    "a file an earlier ERC session left in the game folder is in the way; Restore game \
                      folder clears it",
-                    "{count} files an earlier Swofty session left in the game folder are in the way; \
+                    "{count} files an earlier ERC session left in the game folder are in the way; \
                      Restore game folder clears them",
                 ),
                 Some(b) => trn(
@@ -491,8 +491,12 @@ impl Launching {
             host.prompt(Prompt::Notice(low), window, cx);
         }
         let (launching, needs) = host.split();
-        let armed = (room.is_some() || needs.online).then(|| {
-            swofty_core::online::multiplayer::client::launch_env_value(&needs.store.root, SESSION_MODULE_WAIT)
+        let armed = (room.is_some() || needs.online).then(|| match room.as_ref() {
+            // Für einen Raum trägt die Anfrage die Sitzung mit: Platz und Grundport dieser Runde.
+            Some(ask) => ask.netplay.clone(),
+            None => {
+                swofty_core::online::multiplayer::client::launch_env_value(&needs.store.root, SESSION_MODULE_WAIT)
+            }
         });
         match Launch::start(
             needs.store,

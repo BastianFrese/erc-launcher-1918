@@ -47,6 +47,15 @@ pub const STARTERS: &[&str] = &[
     "swofty-launcher.exe",
 ];
 
+/// `reg.exe` schreibt den Namen des Standardwerts in der Sprache des Systems —
+/// `(Standard)` auf Deutsch, `(Default)` auf Englisch. Nach außen gilt immer letztere Schreibweise.
+fn default_name(name: &str) -> &str {
+    match name {
+        "(Standard)" | "(Default)" | "(Défaut)" | "(Predeterminado)" => "(Default)",
+        other => other,
+    }
+}
+
 /// The string values `reg query <key>` lists, as (name, data).
 pub fn parse_reg_query(out: &str) -> Vec<(String, String)> {
     out.lines()
@@ -55,7 +64,7 @@ pub fn parse_reg_query(out: &str) -> Vec<(String, String)> {
             ["    REG_SZ", "    REG_EXPAND_SZ"].iter().find_map(|ty| {
                 let (name, data) = rest.split_once(ty)?;
                 let data = data.strip_prefix("    ").or(data.is_empty().then_some(""))?;
-                Some((name.to_owned(), data.to_owned()))
+                Some((default_name(name).to_owned(), data.to_owned()))
             })
         })
         .collect()

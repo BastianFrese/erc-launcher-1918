@@ -29,7 +29,7 @@ use swofty_i18n::{tr, trf};
 
 pub(crate) const RISK: &str = "Because of how ERC Launcher hooks the game's engine, which lets addons run \
                                their own engine code, it is highly risky to change the game with any outside \
-                               tool that doesn't explicitly support Swofty Addons.";
+                               tool that doesn't explicitly support ERC Addons.";
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Step {
@@ -242,20 +242,20 @@ impl SetupWizard {
                     .on_click(cx.listener(|w, _, _, cx| w.answer(true, cx))))
                     .child(choice(
                         "setup-mods-no",
-                        "No, only Swofty's",
+                        "No, only ERC's",
                         match (self.install.source, self.checks) {
                             (Source::Steam, Some(true)) => {
-                                "Swofty checks every game file against Steam's own list when you launch."
+                                "ERC checks every game file against Steam's own list when you launch."
                             }
                             (Source::Steam, Some(false)) => {
-                                "Swofty can't read Steam's file list for this copy, so you'll verify the game \
+                                "ERC can't read Steam's file list for this copy, so you'll verify the game \
                                  files once."
                             }
                             (Source::EaApp, _) => {
-                                "Swofty can't check the EA app's game files itself, so you'll repair the game \
+                                "ERC can't check the EA app's game files itself, so you'll repair the game \
                                  once."
                             }
-                            _ => "Swofty checks the game files once, so it starts from a clean copy of F1 25.",
+                            _ => "ERC checks the game files once, so it starts from a clean copy of F1 25.",
                         },
                         self.other_mods == Some(false),
                         p,
@@ -270,29 +270,29 @@ impl SetupWizard {
         let repair = crate::dialogs::game_edited::repair(self.install.source);
         let intro = match (self.install.source, self.other_mods) {
             (Source::Unknown, _) => {
-                "Swofty put back the files it changed and records the game's original files \
+                "ERC put back the files it changed and records the game's original files \
                                      again from what is in the game folder next."
                     .to_owned()
             }
             (_, Some(true)) => format!(
-                "Swofty put back the files it changed and records the game's original files again. {} now \
+                "ERC put back the files it changed and records the game's original files again. {} now \
                  replaces the other mods with the game's own files.",
                 repair.restores
             ),
-            _ if self.skips_verify() => "Swofty put back the files it changed. The launch checks every game file \
+            _ if self.skips_verify() => "ERC put back the files it changed. The launch checks every game file \
                                          against Steam's own list, so there's nothing to verify."
                 .to_owned(),
-            (Source::EaApp, _) => "Swofty put back the files it changed. It can't check the EA app's game \
+            (Source::EaApp, _) => "ERC put back the files it changed. It can't check the EA app's game \
                                    files itself, so repairing the game is the only way to be sure they're the \
                                    game's own."
                 .to_owned(),
             (Source::Steam, _) if self.checks == Some(false) => {
-                "Swofty put back the files it changed. It can't read Steam's file list for this copy, so \
+                "ERC put back the files it changed. It can't read Steam's file list for this copy, so \
                  verifying is the only way to be sure the game files are Steam's own."
                     .to_owned()
             }
             _ => format!(
-                "Swofty put back the files it changed and records the game's original files again. {} makes \
+                "ERC put back the files it changed and records the game's original files again. {} makes \
                  sure every game file is the store's own copy.",
                 repair.restores
             ),
@@ -306,7 +306,7 @@ impl SetupWizard {
             Source::EaApp => (repair.title, "EA app > Library > F1 25 > Manage > Repair."),
             Source::Unknown => (
                 "Play a copy from Steam or the EA app",
-                "This copy isn't from Steam or the EA app, so Swofty can't play it modded. Swofty runs only \
+                "This copy isn't from Steam or the EA app, so ERC can't play it modded. ERC runs only \
                  on a copy you own on Steam or the EA app.",
             ),
         };
@@ -334,7 +334,7 @@ impl SetupWizard {
                             3
                         },
                         "Come back and continue",
-                        "Swofty then builds your addons and starts F1 25.",
+                        "ERC then builds your addons and starts F1 25.",
                         p,
                     )),
             )
@@ -342,7 +342,7 @@ impl SetupWizard {
                 d.child(callout(
                     IconName::Info,
                     format!(
-                        "Swofty couldn't put every file back from its old record ({why}). {} puts them back.",
+                        "ERC couldn't put every file back from its old record ({why}). {} puts them back.",
                         repair.restores
                     ),
                     p,
@@ -532,20 +532,20 @@ fn welcome(p: Palette) -> Div {
                 .child(numbered_step(
                     1,
                     "Tell us about your game folder",
-                    "Whether it already holds mods Swofty didn't add.",
+                    "Whether it already holds mods ERC didn't add.",
                     p,
                 ))
                 .child(numbered_step(
                     2,
                     "Check your game files",
-                    "Steam's file list checks them, or you verify or repair them once, so Swofty starts \
+                    "Steam's file list checks them, or you verify or repair them once, so ERC starts \
                      from a clean copy of F1 25.",
                     p,
                 ))
                 .child(numbered_step(
                     3,
                     "Play",
-                    "Swofty builds your addons and starts the game.",
+                    "ERC builds your addons and starts the game.",
                     p,
                 )),
         )

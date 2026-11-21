@@ -24,8 +24,6 @@
   "Accept": "Aceitar",
   "Accept and launch": "Aceitar e iniciar",
   "Accepted": "Aceito",
-  "Access to #f1-supporter-leaks": "Acesso ao #f1-supporter-leaks",
-  "Access to private betatesting": "Acesso aos testes beta privados",
   "Activity": "Atividade",
   "Add and play this copy": "Adicionar e jogar nesta cópia",
   "Add another folder": "Adicionar outra pasta",
@@ -57,7 +55,6 @@
   "All": "Tudo",
   "All addons": "Todos os complementos",
   "All changes ({n})": "Todas as alterações ({n})",
-  "All of Supporter": "Tudo do Supporter",
   "All rows": "Todas as linhas",
   "All seasons": "Todas as temporadas",
   "All tables": "Todas as tabelas",
@@ -155,8 +152,6 @@
   "Choose a folder…": "Escolher uma pasta…",
   "Choose the folder…": "Escolher a pasta…",
   "Choose your language": "Escolha seu idioma",
-  "Claim": "Resgatar",
-  "Claim previous donation": "Resgatar doação anterior",
   "Cleanup": "Limpeza",
   "Clear": "Limpar",
   "Clear all": "Limpar tudo",
@@ -191,14 +186,17 @@
   "Config": "Configuração",
   "Confirm ban": "Confirmar banimento",
   "Controller": "Controle",
-  "Converts to whole months of a tier": "É convertido em meses inteiros de um nível",
   "Copied": "Copiado",
   "Copied from another profile": "Copiado de outro perfil",
   "Copied from {from}": "Copiado de {from}",
   "Copied from {profile}": "Copiado de {profile}",
   "Copied rows": "Linhas copiadas",
   "Copied the save of {from} to {to}.": "O save de {from} foi copiado para {to}.",
-  "Copied {count} line": ["{count} linha copiada", "{count} de linhas copiadas", "{count} linhas copiadas"],
+  "Copied {count} line": [
+    "{count} linha copiada",
+    "{count} de linhas copiadas",
+    "{count} linhas copiadas"
+  ],
   "Copied: {s}": "Copiado: {s}",
   "Copy": "Copiar",
   "Copy all": "Copiar tudo",
@@ -283,8 +281,6 @@
   "Discard": "Descartar",
   "Discard changes": "Descartar alterações",
   "Discard {changes}?": "Descartar {changes}?",
-  "Discord embed links and external emoji permissions": "Permissões do Discord para links incorporados e emojis externos",
-  "Discord name & avatar": "Nome e avatar do Discord",
   "Discord server": "Servidor do Discord",
   "Discover": "Descobrir",
   "Dismiss": "Dispensar",
@@ -328,8 +324,6 @@
   "English": "Inglês",
   "English text": "Texto em inglês",
   "Enter a number of MB.": "Digite um número de MB.",
-  "Enter an amount in dollars, like 20.": "Digite um valor em dólares, como 20.",
-  "Enter both the email and the payment ID.": "Digite o e-mail e o ID do pagamento.",
   "Error": "Erro",
   "Every DB Editor addon on in {profile}": "Todos os complementos do Editor de BD ativados em {profile}",
   "Every effect a config can use, with its options. Copy puts the effect's table in your clipboard with every option at its default, ready to paste into a config.": "Todos os efeitos que uma configuração pode usar, com suas opções. Copiar coloca a tabela do efeito na área de transferência com todas as opções no valor padrão, pronta para colar em uma configuração.",
@@ -358,7 +352,7 @@
   "F1 25 from another folder is running": "O F1 25 de outra pasta está em execução",
   "F1 25 from the EA app is running": "O F1 25 do EA app está em execução",
   "F1 25 got stuck": "O F1 25 travou",
-  "F1 25 is installed in {folder}, a folder Windows lets only administrators change, so Swofty can't add your mods there.\n\nRestart ERC Launcher as administrator to play with mods, or move F1 25 to a folder outside Program Files{hint}.": "O F1 25 está instalado em {folder}, uma pasta que o Windows só deixa administradores alterarem, então o Swofty não consegue adicionar seus mods ali.\n\nReinicie o ERC Launcher como administrador para jogar com mods ou mova o F1 25 para uma pasta fora de Arquivos de Programas{hint}.",
+  "F1 25 is installed in {folder}, a folder Windows lets only administrators change, so ERC can't add your mods there.\n\nRestart ERC Launcher as administrator to play with mods, or move F1 25 to a folder outside Program Files{hint}.": "O F1 25 está instalado em {folder}, uma pasta que o Windows só deixa administradores alterarem, então o Swofty não consegue adicionar seus mods ali.\n\nReinicie o ERC Launcher como administrador para jogar com mods ou mova o F1 25 para uma pasta fora de Arquivos de Programas{hint}.",
   "F1 25 is launching": "O F1 25 está iniciando",
   "F1 25 is open, so it restarts for this room. Unsaved progress is lost.": "O F1 25 está aberto, então ele será reiniciado para esta sala. O progresso não salvo será perdido.",
   "F1 25 is open. It restarts for this session.": "O F1 25 está aberto. Ele será reiniciado para esta sessão.",
@@ -395,7 +389,11 @@
   "Folder": "Pasta",
   "Folder name": "Nome da pasta",
   "Folder not found": "Pasta não encontrada",
-  "Found {count} conflict": ["{count} conflito encontrado", "{count} de conflitos encontrados", "{count} conflitos encontrados"],
+  "Found {count} conflict": [
+    "{count} conflito encontrado",
+    "{count} de conflitos encontrados",
+    "{count} conflitos encontrados"
+  ],
   "Free there": "Livre ali",
   "From": "De",
   "From a file…": "De um arquivo…",
@@ -494,7 +492,7 @@
   "Language": "Idioma",
   "Larger text and controls, for the couch or a handheld.": "Texto e controles maiores, para o sofá ou um portátil.",
   "Launch failed: {cause}": "Falha ao iniciar: {cause}",
-  "Launcher options, and where Swofty keeps its files": "Opções do launcher e onde o Swofty guarda seus arquivos",
+  "Launcher options, and where ERC keeps its files": "Opções do launcher e onde o Swofty guarda seus arquivos",
   "Launcher save is empty · import from Steam on the Saves page": "O save do launcher está vazio · importe da Steam na página Saves",
   "Launcher saves could not be used, so F1 25 closed before loading a save": "Não foi possível usar os saves do launcher, então o F1 25 fechou antes de carregar um save",
   "Launcher start": "Início do launcher",
@@ -544,7 +542,6 @@
   "Made for game build {made_for} (yours: {b})": "Feito para a build {made_for} do jogo (a sua: {b})",
   "Made the folder {name}": "Pasta {name} criada",
   "Make folder": "Criar pasta",
-  "Making a Swofty addon?": "Está criando um complemento para o Swofty?",
   "Measuring…": "Medindo…",
   "Menu": "Menu",
   "Missing": "Ausente",
@@ -553,7 +550,11 @@
   "Modded play runs offline": "Jogar com mods é offline",
   "Modded sessions run F1 25 without EA AntiCheat so the loader and addons can work. Everything is undone when the game exits.": "As sessões com mods executam o F1 25 sem o EA AntiCheat para que o loader e os complementos funcionem. Tudo é desfeito quando o jogo fecha.",
   "Moderation": "Moderação",
-  "Mods like this one go through the Simplified Importer, which turns them into addons.": ["Mods como este passam pelo Simplified Importer, que os transforma em complementos.", "Mods como estes passam pelo Simplified Importer, que os transforma em complementos.", "Mods como estes passam pelo Simplified Importer, que os transforma em complementos."],
+  "Mods like this one go through the Simplified Importer, which turns them into addons.": [
+    "Mods como este passam pelo Simplified Importer, que os transforma em complementos.",
+    "Mods como estes passam pelo Simplified Importer, que os transforma em complementos.",
+    "Mods como estes passam pelo Simplified Importer, que os transforma em complementos."
+  ],
   "More": "Mais",
   "More from {name}": "Mais de {name}",
   "Most downloads": "Mais downloads",
@@ -565,7 +566,11 @@
   "Move here": "Mover para cá",
   "Move up": "Mover para cima",
   "Move your addons and saves?": "Mover seus complementos e saves?",
-  "Moved {names} out of its folder so the order holds": ["{names} foi tirado da pasta para manter a ordem", "{names} foram tirados das pastas para manter a ordem", "{names} foram tirados das pastas para manter a ordem"],
+  "Moved {names} out of its folder so the order holds": [
+    "{names} foi tirado da pasta para manter a ordem",
+    "{names} foram tirados das pastas para manter a ordem",
+    "{names} foram tirados das pastas para manter a ordem"
+  ],
   "Move…": "Mover…",
   "Moving your addons and saves": "Movendo seus complementos e saves",
   "Multiplayer": "Multijogador",
@@ -679,7 +684,11 @@
   "Off in {vanilla}": "Desativado em {vanilla}",
   "Off: needs {addon} on": "Desativado: precisa de {addon} ativado",
   "Offline · no addons saved yet": "Offline · nenhum complemento salvo ainda",
-  "Offline · showing the {count} addon saved last time": ["Offline · mostrando o {count} complemento salvo da última vez", "Offline · mostrando os {count} complementos salvos da última vez", "Offline · mostrando os {count} complementos salvos da última vez"],
+  "Offline · showing the {count} addon saved last time": [
+    "Offline · mostrando o {count} complemento salvo da última vez",
+    "Offline · mostrando os {count} complementos salvos da última vez",
+    "Offline · mostrando os {count} complementos salvos da última vez"
+  ],
   "Offline · showing {addons} from {host}": "Offline · mostrando {addons} de {host}",
   "Offline · {shown}": "Offline · {shown}",
   "Old backup": "Backup antigo",
@@ -718,7 +727,6 @@
   "PROBLEMS": "PROBLEMAS",
   "PROFILES": "PERFIS",
   "PUBLISHED BY": "PUBLICADO POR",
-  "Paid on Stripe outside the launcher? Enter the email you paid with and the invoice or payment ID to get your tier and Discord role.": "Pagou pelo Stripe fora do launcher? Digite o e-mail usado no pagamento e o ID da fatura ou do pagamento para receber seu nível e seu cargo no Discord.",
   "Pass": "Aprovado",
   "Paused · jump to latest": "Em pausa · ir para o mais recente",
   "Pending": "Pendente",
@@ -752,7 +760,7 @@
   "Profiles": "Perfis",
   "Publisher": "Publicador",
   "Put this lap's replay into the game's Theatre": "Colocar o replay desta volta no Cinema do jogo",
-  "Putting back the files Swofty changed…": "Devolvendo os arquivos que o Swofty alterou…",
+  "Putting back the files ERC changed…": "Devolvendo os arquivos que o Swofty alterou…",
   "P{position}": "P{position}",
   "Queued": "Na fila",
   "Queued · View downloads": "Na fila · Ver downloads",
@@ -785,7 +793,11 @@
   "Rename folder": "Renomear pasta",
   "Rename profile": "Renomear perfil",
   "Renamed the folder to {name}": "Pasta renomeada para {name}",
-  "Reordered {count} addon": ["{count} complemento reordenado", "{count} de complementos reordenados", "{count} complementos reordenados"],
+  "Reordered {count} addon": [
+    "{count} complemento reordenado",
+    "{count} de complementos reordenados",
+    "{count} complementos reordenados"
+  ],
   "Report a bug on Discord": "Relatar um bug no Discord",
   "Request current version": "Solicitar a versão atual",
   "Requires": "Requer",
@@ -844,7 +856,6 @@
   "Saved to {path}": "Salvo em {path}",
   "Saved {name}": "{name} salvo",
   "Saved {name} and turned it on in {profile}": "{name} foi salvo e ativado em {profile}",
-  "Saved.": "Salvo.",
   "Saves": "Saves",
   "Saves a .zip with the game's database file, changed by the addons you pick.": "Salva um .zip com o arquivo do banco de dados do jogo, alterado pelos complementos que você escolher.",
   "Saving": "Salvando",
@@ -862,7 +873,11 @@
   "See all": "Ver tudo",
   "Send logs": "Enviar logs",
   "Sends your logs to the developers on Discord, so they can see what went wrong.": "Envia seus logs aos desenvolvedores no Discord para que eles vejam o que deu errado.",
-  "Sent in {count} part — thanks!": ["Enviado em {count} parte — obrigado!", "Enviado em {count} partes — obrigado!", "Enviado em {count} partes — obrigado!"],
+  "Sent in {count} part — thanks!": [
+    "Enviado em {count} parte — obrigado!",
+    "Enviado em {count} partes — obrigado!",
+    "Enviado em {count} partes — obrigado!"
+  ],
   "Sent — thanks!": "Enviado — obrigado!",
   "Session logs": "Logs de sessão",
   "Set all": "Definir todas",
@@ -880,20 +895,21 @@
   "Show fewer": "Mostrar menos",
   "Show in All tables": "Mostrar em Todas as tabelas",
   "Show me": "Mostrar",
-  "Show me as": "Mostrar meu nome como",
   "Show more laps": "Mostrar mais voltas",
   "Show profiles": "Mostrar perfis",
-  "Show the Swofty boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "Mostra as classificações do Swofty e os fantasmas dos rivais dentro do Contrarrelógio para temporadas de complementos. Experimental.",
+  "Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "Mostra as classificações do Swofty e os fantasmas dos rivais dentro do Contrarrelógio para temporadas de complementos. Experimental.",
   "Show the car setup": "Mostrar o acerto do carro",
-  "Show the latest Swofty video in the bottom right of the F1 25 home screen. A change shows the next time you press Play.": "Mostra o vídeo mais recente do Swofty no canto inferior direito da tela inicial do F1 25. A alteração aparece na próxima vez que você pressionar Jogar.",
+  "Show the latest ERC video in the bottom right of the F1 25 home screen. A change shows the next time you press Play.": "Mostra o vídeo mais recente do Swofty no canto inferior direito da tela inicial do F1 25. A alteração aparece na próxima vez que você pressionar Jogar.",
   "Show the log in the file manager": "Mostrar o log no gerenciador de arquivos",
   "Show the room in the list again": "Mostrar a sala na lista de novo",
-  "Show {count} older version": ["Mostrar {count} versão anterior", "Mostrar {count} versões anteriores", "Mostrar {count} versões anteriores"],
+  "Show {count} older version": [
+    "Mostrar {count} versão anterior",
+    "Mostrar {count} versões anteriores",
+    "Mostrar {count} versões anteriores"
+  ],
   "Shows the Tools page with the swofty dev actions": "Mostra a página Ferramentas com as ações de desenvolvimento do swofty",
   "Sign in from Settings with Discord.": "Entre com o Discord nas Configurações.",
-  "Sign in to claim": "Entre para resgatar",
   "Sign in to see the Time Trial boards": "Entre para ver as classificações de Contrarrelógio",
-  "Sign in with Discord to subscribe.": "Entre com o Discord para assinar.",
   "Sign-in failed: {e}": "Falha ao entrar: {e}",
   "Signed in as {name}": "Conectado como {name}",
   "Signed out {name}": "{name} saiu da conta",
@@ -930,30 +946,16 @@
   "Stop F1 25?": "Parar o F1 25?",
   "Stop game": "Parar jogo",
   "Storage": "Armazenamento",
-  "Supporting a free and open-source launcher": "Apoiar um launcher gratuito e de código aberto",
-  "No ads in the launcher": "Sem anúncios no launcher",
-  "Early access": "Acesso antecipado",
-  "Early access to addons in testing": "Acesso antecipado a addons em teste",
-  "You must be Supporter+ to install": "Você precisa ser Supporter+ para instalar",
-  "Back the launcher and lose the ads": "Apoie o launcher e diga adeus aos anúncios",
-  "Play new addons before anyone else": "Jogue os novos addons antes de todo mundo",
-  "Your tier": "Seu nível",
-  "Subscribe": "Assinar",
-  "One-time donation": "Doação única",
-  "Donate": "Doar",
-  "View in Discord": "Ver no Discord",
-  "Your listing": "Sua entrada",
-  "Edit your listing": "Editar sua entrada",
   "Switch away from {vanilla} to use addons": "Saia de {vanilla} para usar complementos",
   "Switch the copy of F1 25 Play uses": "Trocar a cópia do F1 25 que o Jogar usa",
   "Switch to it": "Mudar para ela",
-  "Swofty Developments": "Swofty Developments",
+  "ERC Developments": "Swofty Developments",
   "ERC Launcher": "ERC Launcher",
   "ERC Launcher locks while it copies and restarts when it is done. Your addons and saves stay where they are until the copy checks out.": "O ERC Launcher fica bloqueado enquanto copia e reinicia quando termina. Seus complementos e saves ficam onde estão até a cópia ser conferida.",
-  "ERC Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the Swofty Developments Discord so they can get back to you.": "O ERC Launcher analisou o que o jogo deixou para trás e não reconheceu este fechamento inesperado. Envie seus logs aos desenvolvedores e depois entre no Discord da Swofty Developments para que eles possam responder você.",
+  "ERC Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the ERC Developments Discord so they can get back to you.": "O ERC Launcher analisou o que o jogo deixou para trás e não reconheceu este fechamento inesperado. Envie seus logs aos desenvolvedores e depois entre no Discord da Swofty Developments para que eles possam responder você.",
   "ERC Launcher {version} is available. {reason}. You have {current}.": "O ERC Launcher {version} está disponível. {reason}. Você tem a {current}.",
-  "Swofty couldn't put the game folder back: {e}": "O Swofty não conseguiu devolver a pasta do jogo ao estado original: {e}",
-  "Swofty stops after the file it is on and puts the game files back. Your profile and addons stay as they are, and the next Play builds again.": "O Swofty para depois do arquivo em que está e devolve os arquivos do jogo. Seu perfil e seus complementos ficam como estão, e o próximo Jogar compila de novo.",
+  "ERC couldn't put the game folder back: {e}": "O Swofty não conseguiu devolver a pasta do jogo ao estado original: {e}",
+  "ERC stops after the file it is on and puts the game files back. Your profile and addons stay as they are, and the next Play builds again.": "O Swofty para depois do arquivo em que está e devolve os arquivos do jogo. Seu perfil e seus complementos ficam como estão, e o próximo Jogar compila de novo.",
   "Synced stars": "Estrelas sincronizadas",
   "Syncing stars…": "Sincronizando estrelas…",
   "TV mode": "Modo TV",
@@ -965,8 +967,6 @@
   "Team Simplified": "Team Simplified",
   "Text & UI": "Texto e interface",
   "That isn't a Steam save folder. Pick the one named remote under userdata.": "Essa não é uma pasta de saves da Steam. Escolha a que se chama remote dentro de userdata.",
-  "That isn't a Swofty addon": ["Isso não é um complemento do Swofty", "Esses não são complementos do Swofty", "Esses não são complementos do Swofty"],
-  "The #f1-supporter-general chat": "O chat #f1-supporter-general",
   "The DB Editor draft could not be read": "Não foi possível ler o rascunho do Editor de BD",
   "The DB Editor reads the game's database. Show the launcher where F1 25 is installed.": "O Editor de BD lê o banco de dados do jogo. Mostre ao launcher onde o F1 25 está instalado.",
   "The EA app has F1 25 in another folder": "O EA app tem o F1 25 em outra pasta",
@@ -985,11 +985,19 @@
   "The game folder could not be read.": "Não foi possível ler a pasta do jogo.",
   "The game folder is not known": "A pasta do jogo não é conhecida",
   "The game folder matches the original game files.": "A pasta do jogo corresponde aos arquivos originais do jogo.",
-  "The game folder matches the original game files. {count} file was moved to {folder}.": ["A pasta do jogo corresponde aos arquivos originais do jogo. {count} arquivo foi movido para {folder}.", "A pasta do jogo corresponde aos arquivos originais do jogo. {count} arquivos foram movidos para {folder}.", "A pasta do jogo corresponde aos arquivos originais do jogo. {count} arquivos foram movidos para {folder}."],
+  "The game folder matches the original game files. {count} file was moved to {folder}.": [
+    "A pasta do jogo corresponde aos arquivos originais do jogo. {count} arquivo foi movido para {folder}.",
+    "A pasta do jogo corresponde aos arquivos originais do jogo. {count} arquivos foram movidos para {folder}.",
+    "A pasta do jogo corresponde aos arquivos originais do jogo. {count} arquivos foram movidos para {folder}."
+  ],
   "The host's launcher hasn't listed its addons.": "O launcher do anfitrião não listou seus complementos.",
   "The install failed": "A instalação falhou",
   "The last sync failed: {error}\nLast synced: {when}\nClick to try again.": "A última sincronização falhou: {error}\nÚltima sincronização: {when}\nClique para tentar de novo.",
-  "The launcher can't install this file as an addon:": ["O launcher não consegue instalar este arquivo como complemento:", "O launcher não consegue instalar estes arquivos como complementos:", "O launcher não consegue instalar estes arquivos como complementos:"],
+  "The launcher can't install this file as an addon:": [
+    "O launcher não consegue instalar este arquivo como complemento:",
+    "O launcher não consegue instalar estes arquivos como complementos:",
+    "O launcher não consegue instalar estes arquivos como complementos:"
+  ],
   "The launcher's own text. Text that isn't translated yet stays in English, and addons and F1 25 keep their own": "O texto do próprio launcher. O que ainda não foi traduzido fica em inglês, e os complementos e o F1 25 mantêm o idioma deles",
   "The limit must be at least 1 MB.": "O limite precisa ser de pelo menos 1 MB.",
   "The load order still has problems for {names}": "A ordem de carregamento ainda tem problemas com {names}",
@@ -1035,7 +1043,7 @@
   "Time Trial laps show up here once they are uploaded.": "As voltas de Contrarrelógio aparecem aqui depois de enviadas.",
   "To": "Para",
   "Tools": "Ferramentas",
-  "Tools that make or edit Swofty addons": "Ferramentas que criam ou editam complementos do Swofty",
+  "Tools that make or edit ERC addons": "Ferramentas que criam ou editam complementos do Swofty",
   "Track can't be used": "A pista não pode ser usada",
   "Track: {count} picked": "Pista: {count} escolhidas",
   "Track: {name}": "Pista: {name}",
@@ -1050,7 +1058,11 @@
   "Turn on {name}": "Ativar {name}",
   "Turn {name} off": "Desativar {name}",
   "Turn {name} on": "Ativar {name}",
-  "Turned off {count} addon": ["{count} complemento desativado", "{count} de complementos desativados", "{count} complementos desativados"],
+  "Turned off {count} addon": [
+    "{count} complemento desativado",
+    "{count} de complementos desativados",
+    "{count} complementos desativados"
+  ],
   "Turning it off warns about your saves.": "Desativar avisa sobre seus saves.",
   "Turns on {features} while it's on": "Ativa {features} enquanto está ativado",
   "Type": "Tipo",
@@ -1071,7 +1083,11 @@
   "Update turned-off addons": "Atualizar complementos desativados",
   "Updated 1 of 1 addon": "1 de 1 complemento atualizado",
   "Updated Project Halo 0.1.2": "Project Halo 0.1.2 atualizado",
-  "Updated {done} of {count} addon": ["{done} de {count} complemento atualizado", "{done} de {count} complementos atualizados", "{done} de {count} complementos atualizados"],
+  "Updated {done} of {count} addon": [
+    "{done} de {count} complemento atualizado",
+    "{done} de {count} complementos atualizados",
+    "{done} de {count} complementos atualizados"
+  ],
   "Updated {names}": "{names} atualizado",
   "Updated {name} {version}": "{name} {version} atualizado",
   "Updated {versions}. Restarting the launcher…": "{versions} atualizado. Reiniciando o launcher…",
@@ -1084,7 +1100,6 @@
   "Updating {versions}.": "Atualizando {versions}.",
   "Updating {versions}. Keep the launcher open; it restarts when it's done.": "Atualizando {versions}. Mantenha o launcher aberto; ele reinicia quando terminar.",
   "Updating…": "Atualizando…",
-  "Upload your Time Trial laps to the Swofty leaderboards. Ranked laps load a closed-source integrity module from Swofty's server.": "Envie suas voltas de Contrarrelógio para as classificações do Swofty. As voltas ranqueadas carregam um módulo de integridade de código fechado do servidor do Swofty.",
   "Usage": "Uso",
   "Use": "Usar",
   "Use folder": "Usar pasta",
@@ -1156,7 +1171,11 @@
   "X": "X",
   "YOU": "VOCÊ",
   "YOUR CONFIGS": "SUAS CONFIGURAÇÕES",
-  "You are missing or have off {lacking} of {count} addon.": ["Falta ou está desativado {lacking} de {count} complemento.", "Faltam ou estão desativados {lacking} de {count} complementos.", "Faltam ou estão desativados {lacking} de {count} complementos."],
+  "You are missing or have off {lacking} of {count} addon.": [
+    "Falta ou está desativado {lacking} de {count} complemento.",
+    "Faltam ou estão desativados {lacking} de {count} complementos.",
+    "Faltam ou estão desativados {lacking} de {count} complementos."
+  ],
   "You can also send your logs manually for debugging.": "Você também pode enviar seus logs manualmente para depuração.",
   "You can change it later in Settings.": "Você pode mudar isso depois nas Configurações.",
   "You can send your logs manually for debugging.": "Você pode enviar seus logs manualmente para depuração.",
@@ -1170,13 +1189,11 @@
   "You starred this. Click to unstar it.": "Você deu uma estrela. Clique para tirar.",
   "You're all set": "Tudo pronto",
   "You're the host": "Você é o anfitrião",
-  "You're {tier}: {months} months left (expires {date})": "Você é {tier}: restam {months} meses (expira em {date})",
   "You: #{rank}": "Você: #{rank}",
   "Your DB Editor changes are deleted and it is taken out of every profile. To keep them, use Share addon (.zip) in the DB Editor's Export menu first.": "Suas alterações do Editor de BD são excluídas e ele é retirado de todos os perfis. Para mantê-las, use antes Compartilhar complemento (.zip) no menu Exportar do Editor de BD.",
   "Your Discord username": "Seu nome de usuário do Discord",
   "Your Steam save": "Seu save da Steam",
   "Your account has been granted access to: Multiplayer": "Sua conta recebeu acesso a: Multijogador",
-  "Your account is banned from SwoftyLauncher": "Sua conta está banida do SwoftyLauncher",
   "Your addons and saves": "Seus complementos e saves",
   "Your addons and saves are already moving": "Seus complementos e saves já estão sendo movidos",
   "Your addons and saves are back. They are in {to}": "Seus complementos e saves estão de volta. Eles estão em {to}",
@@ -1189,10 +1206,13 @@
   "Your changes are not saved to the draft until the damaged draft file is moved: {error}": "Suas alterações não são salvas no rascunho até que o arquivo de rascunho danificado seja movido: {error}",
   "Your changes could not be saved to the draft: {e}": "Não foi possível salvar suas alterações no rascunho: {e}",
   "Your game files were edited": "Seus arquivos do jogo foram modificados",
-  "Your line next to your name in the supporter list": "Sua frase ao lado do seu nome na lista de apoiadores",
   "Your name": "Seu nome",
   "Yours": "Suas",
-  "a file Swofty did not put in the game folder is in the way": ["um arquivo que o Swofty não colocou na pasta do jogo está no caminho", "arquivos que o Swofty não colocou na pasta do jogo estão no caminho", "arquivos que o Swofty não colocou na pasta do jogo estão no caminho"],
+  "a file ERC did not put in the game folder is in the way": [
+    "um arquivo que o Swofty não colocou na pasta do jogo está no caminho",
+    "arquivos que o Swofty não colocou na pasta do jogo estão no caminho",
+    "arquivos que o Swofty não colocou na pasta do jogo estão no caminho"
+  ],
   "addon files": "arquivos de complementos",
   "also installed {names}": "também instalado: {names}",
   "an antivirus removed mod files, so F1 25 was not started": "um antivírus removeu arquivos de mods, então o F1 25 não foi iniciado",
@@ -1246,7 +1266,6 @@
   "reading the answer to GET {path}: {error}": "ao ler a resposta de GET {path}: {error}",
   "reading the log…": "lendo o log…",
   "removed": "removido",
-  "role granted in Discord": "cargo concedido no Discord",
   "rule {n}": "regra {n}",
   "showing the news saved last time": "mostrando as notícias salvas da última vez",
   "showing the news that came with this version": "mostrando as notícias que vieram com esta versão",
@@ -1290,60 +1309,228 @@
   "{changes} {verb} an addon, turned on in {profile}.": "{changes} {verb} um complemento, ativado em {profile}.",
   "{changes} · {size} · saved to {path}": "{changes} · {size} · salvo em {path}",
   "{changes}, saved or not": "{changes}, salvas ou não",
-  "{count} addon": ["{count} complemento", "{count} de complementos", "{count} complementos"],
-  "{count} addon installed": ["{count} complemento instalado", "{count} de complementos instalados", "{count} complementos instalados"],
-  "{count} addon loads in the wrong order": ["{count} complemento é carregado na ordem errada", "{count} de complementos são carregados na ordem errada", "{count} complementos são carregados na ordem errada"],
-  "{count} addon needs attention": ["{count} complemento precisa de atenção", "{count} de complementos precisam de atenção", "{count} complementos precisam de atenção"],
-  "{count} addon update": ["{count} atualização de complemento", "{count} de atualizações de complementos", "{count} atualizações de complementos"],
-  "{count} addon update available": ["{count} atualização de complemento disponível", "{count} de atualizações de complementos disponíveis", "{count} atualizações de complementos disponíveis"],
-  "{count} career": ["{count} carreira", "{count} de carreiras", "{count} carreiras"],
-  "{count} career is missing from {whose}: {names}. It was last in the save on {when}. Restoring that version brings it back; the restore shows what else changes first.": ["Falta {count} carreira em {whose}: {names}. Ela esteve no save pela última vez em {when}. Restaurar essa versão a traz de volta; a restauração mostra antes o que mais muda.", "Faltam {count} carreiras em {whose}: {names}. Elas estiveram no save pela última vez em {when}. Restaurar essa versão as traz de volta; a restauração mostra antes o que mais muda.", "Faltam {count} carreiras em {whose}: {names}. Elas estiveram no save pela última vez em {when}. Restaurar essa versão as traz de volta; a restauração mostra antes o que mais muda."],
-  "{count} career uses addons; loading it in {profile} can lose its progress.": ["{count} carreira usa complementos; carregá-la em {profile} pode fazer o progresso dela se perder.", "{count} de carreiras usam complementos; carregá-las em {profile} pode fazer o progresso delas se perder.", "{count} carreiras usam complementos; carregá-las em {profile} pode fazer o progresso delas se perder."],
-  "{count} change": ["{count} alteração", "{count} de alterações", "{count} alterações"],
-  "{count} change sent": ["{count} alteração enviada", "{count} de alterações enviadas", "{count} alterações enviadas"],
-  "{count} change waiting": ["{count} alteração pendente", "{count} de alterações pendentes", "{count} alterações pendentes"],
-  "{count} changed setting": ["{count} configuração alterada", "{count} de configurações alteradas", "{count} configurações alteradas"],
-  "{count} creator publishing to the registry, most downloaded first": ["{count} criador publicando no registro, os mais baixados primeiro", "{count} de criadores publicando no registro, os mais baixados primeiro", "{count} criadores publicando no registro, os mais baixados primeiro"],
-  "{count} database setting changed since the last build · the next launch rebuilds {name}": ["{count} configuração do banco de dados mudou desde a última compilação · a próxima inicialização recompila {name}", "{count} de configurações do banco de dados mudaram desde a última compilação · a próxima inicialização recompila {name}", "{count} configurações do banco de dados mudaram desde a última compilação · a próxima inicialização recompila {name}"],
-  "{count} day ago": ["há {count} dia", "há {count} de dias", "há {count} dias"],
-  "{count} download": ["{count} download", "{count} de downloads", "{count} downloads"],
-  "{count} driver": ["{count} piloto", "{count} de pilotos", "{count} pilotos"],
-  "{count} entry": ["{count} entrada", "{count} de entradas", "{count} entradas"],
+  "{count} addon": [
+    "{count} complemento",
+    "{count} de complementos",
+    "{count} complementos"
+  ],
+  "{count} addon installed": [
+    "{count} complemento instalado",
+    "{count} de complementos instalados",
+    "{count} complementos instalados"
+  ],
+  "{count} addon loads in the wrong order": [
+    "{count} complemento é carregado na ordem errada",
+    "{count} de complementos são carregados na ordem errada",
+    "{count} complementos são carregados na ordem errada"
+  ],
+  "{count} addon needs attention": [
+    "{count} complemento precisa de atenção",
+    "{count} de complementos precisam de atenção",
+    "{count} complementos precisam de atenção"
+  ],
+  "{count} addon update": [
+    "{count} atualização de complemento",
+    "{count} de atualizações de complementos",
+    "{count} atualizações de complementos"
+  ],
+  "{count} addon update available": [
+    "{count} atualização de complemento disponível",
+    "{count} de atualizações de complementos disponíveis",
+    "{count} atualizações de complementos disponíveis"
+  ],
+  "{count} career": [
+    "{count} carreira",
+    "{count} de carreiras",
+    "{count} carreiras"
+  ],
+  "{count} career is missing from {whose}: {names}. It was last in the save on {when}. Restoring that version brings it back; the restore shows what else changes first.": [
+    "Falta {count} carreira em {whose}: {names}. Ela esteve no save pela última vez em {when}. Restaurar essa versão a traz de volta; a restauração mostra antes o que mais muda.",
+    "Faltam {count} carreiras em {whose}: {names}. Elas estiveram no save pela última vez em {when}. Restaurar essa versão as traz de volta; a restauração mostra antes o que mais muda.",
+    "Faltam {count} carreiras em {whose}: {names}. Elas estiveram no save pela última vez em {when}. Restaurar essa versão as traz de volta; a restauração mostra antes o que mais muda."
+  ],
+  "{count} career uses addons; loading it in {profile} can lose its progress.": [
+    "{count} carreira usa complementos; carregá-la em {profile} pode fazer o progresso dela se perder.",
+    "{count} de carreiras usam complementos; carregá-las em {profile} pode fazer o progresso delas se perder.",
+    "{count} carreiras usam complementos; carregá-las em {profile} pode fazer o progresso delas se perder."
+  ],
+  "{count} change": [
+    "{count} alteração",
+    "{count} de alterações",
+    "{count} alterações"
+  ],
+  "{count} change sent": [
+    "{count} alteração enviada",
+    "{count} de alterações enviadas",
+    "{count} alterações enviadas"
+  ],
+  "{count} change waiting": [
+    "{count} alteração pendente",
+    "{count} de alterações pendentes",
+    "{count} alterações pendentes"
+  ],
+  "{count} changed setting": [
+    "{count} configuração alterada",
+    "{count} de configurações alteradas",
+    "{count} configurações alteradas"
+  ],
+  "{count} creator publishing to the registry, most downloaded first": [
+    "{count} criador publicando no registro, os mais baixados primeiro",
+    "{count} de criadores publicando no registro, os mais baixados primeiro",
+    "{count} criadores publicando no registro, os mais baixados primeiro"
+  ],
+  "{count} database setting changed since the last build · the next launch rebuilds {name}": [
+    "{count} configuração do banco de dados mudou desde a última compilação · a próxima inicialização recompila {name}",
+    "{count} de configurações do banco de dados mudaram desde a última compilação · a próxima inicialização recompila {name}",
+    "{count} configurações do banco de dados mudaram desde a última compilação · a próxima inicialização recompila {name}"
+  ],
+  "{count} day ago": [
+    "há {count} dia",
+    "há {count} de dias",
+    "há {count} dias"
+  ],
+  "{count} download": [
+    "{count} download",
+    "{count} de downloads",
+    "{count} downloads"
+  ],
+  "{count} driver": [
+    "{count} piloto",
+    "{count} de pilotos",
+    "{count} pilotos"
+  ],
+  "{count} entry": [
+    "{count} entrada",
+    "{count} de entradas",
+    "{count} entradas"
+  ],
   "{count} failed": "{count} falharam",
-  "{count} field": ["{count} campo", "{count} de campos", "{count} campos"],
+  "{count} field": [
+    "{count} campo",
+    "{count} de campos",
+    "{count} campos"
+  ],
   "{count} game sessions kept. Clearing keeps the newest {sessions} and everything from the last {days} days.": "{count} sessões de jogo mantidas. A limpeza mantém as {sessions} mais recentes e tudo dos últimos {days} dias.",
-  "{count} hour ago": ["há {count} hora", "há {count} de horas", "há {count} horas"],
+  "{count} hour ago": [
+    "há {count} hora",
+    "há {count} de horas",
+    "há {count} horas"
+  ],
   "{count} imported": "{count} importados",
   "{count} in the lobby": "{count} no lobby",
-  "{count} item": ["{count} item", "{count} de itens", "{count} itens"],
-  "{count} lap": ["{count} volta", "{count} de voltas", "{count} voltas"],
-  "{count} line": ["{count} linha", "{count} de linhas", "{count} linhas"],
-  "{count} link": ["{count} link", "{count} de links", "{count} links"],
+  "{count} item": [
+    "{count} item",
+    "{count} de itens",
+    "{count} itens"
+  ],
+  "{count} lap": [
+    "{count} volta",
+    "{count} de voltas",
+    "{count} voltas"
+  ],
+  "{count} line": [
+    "{count} linha",
+    "{count} de linhas",
+    "{count} linhas"
+  ],
+  "{count} link": [
+    "{count} link",
+    "{count} de links",
+    "{count} links"
+  ],
   "{count} min": "{count} min",
-  "{count} minute ago": ["há {count} minuto", "há {count} de minutos", "há {count} minutos"],
+  "{count} minute ago": [
+    "há {count} minuto",
+    "há {count} de minutos",
+    "há {count} minutos"
+  ],
   "{count} ms": "{count} ms",
-  "{count} new version since yours": ["{count} versão nova desde a sua", "{count} de versões novas desde a sua", "{count} versões novas desde a sua"],
-  "{count} option": ["{count} opção", "{count} de opções", "{count} opções"],
-  "{count} pass": ["{count} passe", "{count} de passes", "{count} passes"],
-  "{count} player": ["{count} jogador", "{count} de jogadores", "{count} jogadores"],
-  "{count} problem": ["{count} problema", "{count} de problemas", "{count} problemas"],
-  "{count} record": ["{count} registro", "{count} de registros", "{count} registros"],
+  "{count} new version since yours": [
+    "{count} versão nova desde a sua",
+    "{count} de versões novas desde a sua",
+    "{count} versões novas desde a sua"
+  ],
+  "{count} option": [
+    "{count} opção",
+    "{count} de opções",
+    "{count} opções"
+  ],
+  "{count} pass": [
+    "{count} passe",
+    "{count} de passes",
+    "{count} passes"
+  ],
+  "{count} player": [
+    "{count} jogador",
+    "{count} de jogadores",
+    "{count} jogadores"
+  ],
+  "{count} problem": [
+    "{count} problema",
+    "{count} de problemas",
+    "{count} problemas"
+  ],
+  "{count} record": [
+    "{count} registro",
+    "{count} de registros",
+    "{count} registros"
+  ],
   "{count} releases": "{count} versões",
-  "{count} removal": ["{count} remoção", "{count} de remoções", "{count} remoções"],
-  "{count} result": ["{count} resultado", "{count} de resultados", "{count} resultados"],
-  "{count} row": ["{count} linha", "{count} de linhas", "{count} linhas"],
+  "{count} removal": [
+    "{count} remoção",
+    "{count} de remoções",
+    "{count} remoções"
+  ],
+  "{count} result": [
+    "{count} resultado",
+    "{count} de resultados",
+    "{count} resultados"
+  ],
+  "{count} row": [
+    "{count} linha",
+    "{count} de linhas",
+    "{count} linhas"
+  ],
   "{count} s": "{count} s",
   "{count} skipped": "{count} ignorados",
   "{count} skipped:": "{count} ignorados:",
-  "{count} star change waiting": ["{count} alteração de estrela pendente", "{count} de alterações de estrela pendentes", "{count} alterações de estrela pendentes"],
+  "{count} star change waiting": [
+    "{count} alteração de estrela pendente",
+    "{count} de alterações de estrela pendentes",
+    "{count} alterações de estrela pendentes"
+  ],
   "{count} starred by you · client {client}…\nClick to sync now.": "{count} com sua estrela · cliente {client}…\nClique para sincronizar agora.",
   "{count} this month": "{count} neste mês",
-  "{count} top-level part": ["{count} parte de nível superior", "{count} de partes de nível superior", "{count} partes de nível superior"],
-  "{count} track": ["{count} pista", "{count} de pistas", "{count} pistas"],
-  "{count} track addon is on the Tracks page": ["{count} complemento de pista está na página Pistas", "{count} de complementos de pistas estão na página Pistas", "{count} complementos de pistas estão na página Pistas"],
-  "{count} unsaved change": ["{count} alteração não salva", "{count} de alterações não salvas", "{count} alterações não salvas"],
-  "{count} version": ["{count} versão", "{count} de versões", "{count} versões"],
-  "{count} warning": ["{count} aviso", "{count} de avisos", "{count} avisos"],
+  "{count} top-level part": [
+    "{count} parte de nível superior",
+    "{count} de partes de nível superior",
+    "{count} partes de nível superior"
+  ],
+  "{count} track": [
+    "{count} pista",
+    "{count} de pistas",
+    "{count} pistas"
+  ],
+  "{count} track addon is on the Tracks page": [
+    "{count} complemento de pista está na página Pistas",
+    "{count} de complementos de pistas estão na página Pistas",
+    "{count} complementos de pistas estão na página Pistas"
+  ],
+  "{count} unsaved change": [
+    "{count} alteração não salva",
+    "{count} de alterações não salvas",
+    "{count} alterações não salvas"
+  ],
+  "{count} version": [
+    "{count} versão",
+    "{count} de versões",
+    "{count} versões"
+  ],
+  "{count} warning": [
+    "{count} aviso",
+    "{count} de avisos",
+    "{count} avisos"
+  ],
   "{count}, {total}, {used}": "{count}, {total}, {used}",
   "{done} of {size} · {percent}": "{done} de {size} · {percent}",
   "{done} of {total} done": "{done} de {total} concluídos",
@@ -1369,7 +1556,6 @@
   "{line} · {amount}": "{line} · {amount}",
   "{matched} of {total}": "{matched} de {total}",
   "{min} or more": "{min} ou mais",
-  "{months} months left (expires {date})": "restam {months} meses (expira em {date})",
   "{named} (loads first)": "{named} (carrega primeiro)",
   "{named} (not installed)": "{named} (não instalado)",
   "{named} (off)": "{named} (desativado)",
@@ -1378,7 +1564,7 @@
   "{name} changed on disk and was reloaded.": "{name} mudou no disco e foi recarregado.",
   "{name} changed on disk and was reloaded. Your unsaved changes are kept on top.": "{name} mudou no disco e foi recarregado. Suas alterações não salvas foram mantidas por cima.",
   "{name} details": "Detalhes de {name}",
-  "{name} is an addon by Team Simplified. Its Simplified Importer turns mods made for the game folder into Swofty addons. The launcher downloads it from GitHub.": "{name} é um complemento da Team Simplified. O Simplified Importer dele transforma mods feitos para a pasta do jogo em complementos do Swofty. O launcher o baixa do GitHub.",
+  "{name} is an addon by Team Simplified. Its Simplified Importer turns mods made for the game folder into ERC addons. The launcher downloads it from GitHub.": "{name} é um complemento da Team Simplified. O Simplified Importer dele transforma mods feitos para a pasta do jogo em complementos do Swofty. O launcher o baixa do GitHub.",
   "{name} is not a number": "{name} não é um número",
   "{name} is off in {name2}.": "{name} está desativado em {name2}.",
   "{name} is the active profile": "{name} é o perfil ativo",
@@ -1425,9 +1611,13 @@
   "Too many tracks": "Pistas demais",
   "Left out: the game holds {room} tracks": "Deixada de fora: o jogo comporta {room} pistas",
   "{shown} and {more} more": "{shown} e mais {more}",
-  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": ["O jogo comporta {room} pistas, então {count} pista fica de fora desta compilação: {list}. Desative alguns complementos de pistas para jogá-la.", "O jogo comporta {room} pistas, então {count} pistas ficam de fora desta compilação: {list}. Desative alguns complementos de pistas para jogá-las.", "O jogo comporta {room} pistas, então {count} pistas ficam de fora desta compilação: {list}. Desative alguns complementos de pistas para jogá-las."],
-  "The launcher couldn't reach Swofty's server in time.": "O launcher não conseguiu acessar o servidor do Swofty a tempo.",
-  "Swofty's server didn't offer it to you.": "O servidor do Swofty não o ofereceu para você.",
+  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": [
+    "O jogo comporta {room} pistas, então {count} pista fica de fora desta compilação: {list}. Desative alguns complementos de pistas para jogá-la.",
+    "O jogo comporta {room} pistas, então {count} pistas ficam de fora desta compilação: {list}. Desative alguns complementos de pistas para jogá-las.",
+    "O jogo comporta {room} pistas, então {count} pistas ficam de fora desta compilação: {list}. Desative alguns complementos de pistas para jogá-las."
+  ],
+  "The launcher couldn't reach ERC's server in time.": "O launcher não conseguiu acessar o servidor do Swofty a tempo.",
+  "ERC's server didn't offer it to you.": "O servidor do Swofty não o ofereceu para você.",
   "The download failed its safety check.": "O download não passou na verificação de segurança.",
   "Time Trial laps you drive this session won't be sealed, so they won't rank on the boards. Everything else works as usual. To try again, close the game and press Play.": "As voltas de Contrarrelógio que você fizer nesta sessão não serão seladas, então não vão entrar nas classificações. Todo o resto funciona normalmente. Para tentar de novo, feche o jogo e clique em Jogar.",
   "Details: {why}": "Detalhes: {why}",
@@ -1458,13 +1648,17 @@
   "Right-click {path}, open Properties > Compatibility and untick \"Run this program as an administrator\", also under \"Change settings for all users\". Then press Play again.": "Clique com o botão direito em {path}, abra Propriedades > Compatibilidade e desmarque “Executar este programa como administrador”, também em “Alterar configurações para todos os usuários”. Depois clique em Jogar de novo.",
   "These files are set to run as administrator, so Windows won't start them for an EA app session (error 740):\n{paths}": "Estes arquivos estão configurados para ser executados como administrador, então o Windows não vai iniciá-los em uma sessão do EA app (erro 740):\n{paths}",
   "For each one, right-click it, open Properties > Compatibility and untick \"Run this program as an administrator\", also under \"Change settings for all users\". Then press Play again.": "Clique com o botão direito em cada um, abra Propriedades > Compatibilidade e desmarque “Executar este programa como administrador”, também em “Alterar configurações para todos os usuários”. Depois clique em Jogar de novo.",
-  "The EA app starts F1 25 without administrator rights, so running Swofty Launcher as administrator doesn't help.": "O EA app inicia o F1 25 sem direitos de administrador, então executar o ERC Launcher como administrador não adianta.",
+  "The EA app starts F1 25 without administrator rights, so running ERC Launcher as administrator doesn't help.": "O EA app inicia o F1 25 sem direitos de administrador, então executar o ERC Launcher como administrador não adianta.",
   "Restore waits for Play": "A restauração espera o Jogar",
   "A restore is waiting. The game applies it the next time you press Play.": "Há uma restauração em espera. O jogo a aplica na próxima vez que você pressionar Jogar.",
   "{mode} comes back from the saved copy the next time you press Play.": "{mode} volta da cópia guardada na próxima vez que você pressionar Jogar.",
   "The career was not restored: {error}": "A carreira não foi restaurada: {error}",
   "Careers missing from the save the game read: {names}. Saved copy: {at}": "Carreiras ausentes do save que o jogo leu: {names}. Cópia guardada: {at}",
-  "{count} career is in the last save a launcher session wrote but not in the save the game read since: {names}. The launcher's saved copy from {when} still has it. Restore puts it back the next time you press Play.": ["{count} carreira está no último save que uma sessão do launcher gravou, mas não no save que o jogo leu depois: {names}. A cópia guardada do launcher de {when} ainda a tem. Restaurar a coloca de volta na próxima vez que você pressionar Jogar.", "{count} de carreiras estão no último save que uma sessão do launcher gravou, mas não no save que o jogo leu depois: {names}. A cópia guardada do launcher de {when} ainda as tem. Restaurar as coloca de volta na próxima vez que você pressionar Jogar.", "{count} carreiras estão no último save que uma sessão do launcher gravou, mas não no save que o jogo leu depois: {names}. A cópia guardada do launcher de {when} ainda as tem. Restaurar as coloca de volta na próxima vez que você pressionar Jogar."],
+  "{count} career is in the last save a launcher session wrote but not in the save the game read since: {names}. The launcher's saved copy from {when} still has it. Restore puts it back the next time you press Play.": [
+    "{count} carreira está no último save que uma sessão do launcher gravou, mas não no save que o jogo leu depois: {names}. A cópia guardada do launcher de {when} ainda a tem. Restaurar a coloca de volta na próxima vez que você pressionar Jogar.",
+    "{count} de carreiras estão no último save que uma sessão do launcher gravou, mas não no save que o jogo leu depois: {names}. A cópia guardada do launcher de {when} ainda as tem. Restaurar as coloca de volta na próxima vez que você pressionar Jogar.",
+    "{count} carreiras estão no último save que uma sessão do launcher gravou, mas não no save que o jogo leu depois: {names}. A cópia guardada do launcher de {when} ainda as tem. Restaurar as coloca de volta na próxima vez que você pressionar Jogar."
+  ],
   "{whose} kept F1 25 on Loading... after Press any button in {count} session(s). The launcher left it as it is and kept a copy. The version from {when} loaded before; Restore puts it back, and the save as it is stays in Versions.": "{whose}: o F1 25 ficou em “Carregando…” depois de “Pressione qualquer botão” em {count} sessão(ões). O launcher deixou o save como está e guardou uma cópia. A versão de {when} carregou antes; Restaurar a coloca de volta, e o save como está fica em Versões.",
   "{whose} kept F1 25 on Loading... after Press any button in {count} session(s). The launcher left it as it is and kept a copy, and holds no earlier version to restore.": "{whose}: o F1 25 ficou em “Carregando…” depois de “Pressione qualquer botão” em {count} sessão(ões). O launcher deixou o save como está e guardou uma cópia, e não tem nenhuma versão anterior para restaurar.",
   "The save of profile {profile}": "O save do perfil {profile}",

@@ -146,9 +146,11 @@ int Runtime::attach(SwoftyApi *a)
     mixins().read_manifest(dir);
     publish_addon_api(a);
     mixins().add_core_sets(runtime::career_mixins());
+    // ERC-BEGIN netplay-mixins
     mixins().add_core_sets(runtime::netplay_icons_mixins());
     mixins().add_core_sets(runtime::netplay_keys_mixins());
     mixins().add_core_sets(runtime::netplay_privilege_mixins());
+    // ERC-END netplay-mixins
     loader::api->log(perf::STEP_LINE, steps.lap_ms(), "attach addon api");
     set.build.sha = scanner().exe_sha256(exe, scanner().caches(dir) + L"exe-sha256.tsv", exe_size, running_stamp);
     loader::api->log(perf::STEP_LINE, steps.lap_ms(), "attach exe sha256");

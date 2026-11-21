@@ -1,430 +1,332 @@
 use gpui_kit::assets::IconName;
-use gpui_kit::component::button::Button;
-use gpui_kit::component::input::{Input, InputState};
-use gpui_kit::component::{Icon, Sizable, h_flex, v_flex};
+use gpui_kit::component::button::{Button, ButtonVariants};
+use gpui_kit::component::{Icon, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use std::time::Duration;
-use swofty_core::online::server::support::{Kind, format_date, tier_name};
-use swofty_i18n::{tr, trf};
+use swofty_core::online::server::support::{Goal, Supporter};
+use swofty_i18n::tr;
 
 use super::StorePage;
 use super::parts::*;
 use crate::features::time_trial::Load;
 use crate::shell::Shell;
+use crate::ui::PageHeader;
 use crate::ui::scale::px;
-use crate::ui::theme::Palette;
+use crate::ui::theme::{Palette, ScrollArea};
 use crate::ui::tokens::space::GUTTER;
 
-const ROW_GAP: f32 = 16.;
-const TIERS_MAX: f32 = 1120.;
-const CHIP_ROW: f32 = 20.;
-const ACTION_W: f32 = 220.;
-const ACTION_H: f32 = 34.;
-const FIGURE_H: f32 = 48.;
+const LIST_WIDTH: f32 = 470.;
 
-fn perk_row(icon: IconName, text: &'static str, hot: bool, accent: Hsla, p: Palette) -> Div {
-    h_flex()
-        .items_start()
-        .gap(px(10.))
-        .when(hot, |d| {
-            d.mx(px(-8.))
-                .px(px(8.))
-                .py(px(3.))
-                .my(px(-3.))
-                .rounded(px(6.))
-                .bg(accent.opacity(0.16))
-        })
-        .child(
-            Icon::new(icon)
-                .size(px(16.))
-                .mt(px(2.))
-                .flex_shrink_0()
-                .text_color(accent),
-        )
-        .child(
-            div()
-                .min_w_0()
-                .text_size(px(14.))
-                .line_height(px(20.))
-                .text_color(if hot { accent } else { p.text })
-                .when(hot, |d| d.font_weight(FontWeight::BOLD))
-                .child(text),
-        )
+fn money(cents: u64) -> String {
+    match cents % 100 {
+        0 => format!("${}", cents / 100),
+        c => format!("${}.{c:02}", cents / 100),
+    }
 }
 
-/// The top of a store column: its chip row, icon and name, a figure row of fixed height, and one muted line.
-fn column_head(
-    chips: Div,
-    icon: IconName,
-    name: impl Into<SharedString>,
-    accent: Hsla,
-    figure: impl IntoElement,
-    tagline: &'static str,
-    p: Palette,
-) -> Div {
-    v_flex()
-        .items_center()
-        .child(chips.h(px(CHIP_ROW)).justify_center().gap(px(6.)))
-        .child(
-            h_flex()
-                .mt(px(10.))
-                .gap(px(6.))
-                .child(Icon::new(icon).size(px(15.)).text_color(accent))
-                .child(
-                    div()
-                        .text_size(px(15.))
-                        .font_weight(FontWeight::BOLD)
-                        .text_color(accent)
-                        .child(name.into()),
-                ),
-        )
-        .child(
-            h_flex()
-                .mt(px(8.))
-                .h(px(FIGURE_H))
-                .w_full()
-                .justify_center()
-                .items_center()
-                .child(figure),
-        )
-        .child(
-            div()
-                .mt(px(6.))
-                .max_w(px(280.))
-                .text_center()
-                .text_size(px(12.))
-                .line_height(px(16.))
-                .text_color(p.text_muted)
-                .child(tagline),
-        )
-}
-
-/// A tier's price: the amount large, its period small beside it.
-fn price(amount: &'static str, color: Hsla, p: Palette) -> Div {
-    h_flex()
-        .items_end()
-        .gap(px(4.))
-        .child(
-            div()
-                .text_size(px(40.))
-                .line_height(px(42.))
-                .font_weight(FontWeight::EXTRA_BOLD)
-                .text_color(color)
-                .child(amount),
-        )
-        .child(
-            div()
-                .pb(px(7.))
-                .text_size(px(13.))
-                .text_color(p.text_muted)
-                .child(tr("/ month")),
-        )
-}
-
-/// A column's main button: full width up to the action size, pinned under the column's content.
-fn action(id: &'static str) -> Stateful<Div> {
+fn heading(text: impl Into<SharedString>) -> Div {
     div()
-        .id(id)
-        .relative()
-        .overflow_hidden()
-        .flex_shrink_0()
-        .flex()
-        .items_center()
-        .justify_center()
-        .gap(px(8.))
-        .h(px(ACTION_H))
-        .w_full()
-        .max_w(px(ACTION_W))
-        .rounded(px(8.))
-        .text_size(px(14.))
-        .font_weight(FontWeight::BOLD)
+        .text_size(px(15.))
+        .font_weight(FontWeight::SEMIBOLD)
+        .child(text.into())
 }
 
 impl Shell {
     pub(crate) fn store_page(
         &mut self,
         p: Palette,
-        window: &mut Window,
+        _window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
-        let (bio, amount, email, payment) = StorePage::inputs(self, window, cx);
-        if !self.store_page.bio_synced
-            && let Load::Ready(me) = &self.store_page.me
-        {
-            let text = me.bio.clone().unwrap_or_default();
-            bio.update(cx, |s, cx| s.set_value(text, window, cx));
-            self.store_page.bio_synced = true;
-        }
-        let claim = self
-            .store_page
-            .claim_open
-            .then(|| self.store_claim_modal(email, payment, p, cx));
-        let listing = self
-            .store_page
-            .listing_open
-            .then(|| self.store_listing_modal(bio, p, cx))
-            .flatten();
-        let tiers = self.store_tiers(amount, p, cx);
-        let top = h_flex()
-            .flex_shrink_0()
-            .items_stretch()
-            .gap(px(ROW_GAP))
-            .child(tiers)
-            .children(self.store_previews(p));
+        let refresh = Button::new("support-refresh")
+            .ghost()
+            .icon(IconName::ArrowRightLeft)
+            .on_click(cx.listener(|this, _, _, cx| StorePage::reload(this, cx)));
+        let list = self.support_list(p);
+        let main = self.support_main(p);
         v_flex()
             .relative()
             .size_full()
             .child(
-                v_flex()
-                    .size_full()
-                    .px(px(GUTTER))
-                    .pt(px(12.))
-                    .pb(px(16.))
-                    .gap(px(ROW_GAP))
-                    .child(top)
-                    .child(self.store_supporters(p)),
+                PageHeader::new(tr("Support"))
+                    .subtitle(tr("Keep ERC Launcher free and open source"))
+                    .actions(h_flex().gap(px(8.)).items_center().child(refresh)),
             )
-            .children(claim)
-            .children(listing)
+            .child(
+                h_flex()
+                    .flex_1()
+                    .min_h_0()
+                    .gap(px(24.))
+                    .px(px(GUTTER))
+                    .pb(px(16.))
+                    .child(list)
+                    .child(main),
+            )
             .into_any_element()
     }
 
-    /// The donation column: a one-time gift of any amount, claiming an earlier one, and the supporter's own status.
-    fn store_account(&self, amount: Entity<InputState>, p: Palette, cx: &mut Context<Self>) -> Div {
-        let busy = self.store_page.busy;
-        let typed = amount.read(cx).value().to_string();
-        let donate = action("store-onetime")
-            .bg(rgb(YELLOW))
-            .text_color(rgb(0x1a1400))
-            .when(busy, |d| d.opacity(0.6))
-            .when(!busy, |d| d.cursor_pointer().hover(|d| d.opacity(0.9)))
-            .child(tr("Donate"))
-            .child(
-                Icon::new(IconName::ArrowRight)
-                    .size(px(15.))
-                    .text_color(rgb(0x1a1400)),
-            )
-            .on_click(cx.listener(move |this, _, _, cx| {
-                StorePage::checkout(this, Kind::OneTime, Some(typed.clone()), cx)
-            }));
-        let claim = Button::new("store-claim-open")
-            .outline()
-            .icon(IconName::ReceiptText)
-            .label(tr("Claim previous donation"))
-            .on_click(cx.listener(|this, _, _, cx| {
-                this.store_page.claim_open = true;
-                this.store_page.notice = None;
-                cx.notify();
-            }));
-        let active = matches!(&self.store_page.me, Load::Ready(me) if me.active);
-        let status = match &self.store_page.me {
-            _ if self.account.session.is_none() => Some(
-                muted(tr("Sign in with Discord to subscribe."), p)
-                    .text_size(px(12.))
-                    .text_center(),
-            ),
-            Load::Ready(me) if me.active => {
-                let plus = me.tier.as_deref() == Some("supporter_plus");
-                let when = me.expires_at.as_ref().map(format_date).unwrap_or_default();
-                Some(
-                    v_flex()
-                        .items_center()
-                        .gap(px(4.))
-                        .child(badge("store-me-glint", plus))
-                        .child(
-                            div()
-                                .text_center()
-                                .text_size(px(12.))
-                                .text_color(p.text_muted)
-                                .child(trf!(
-                                    "{months} months left (expires {date})",
-                                    months = me.months_left.unwrap_or(0),
-                                    date = when
-                                )),
-                        ),
-                )
+    fn support_list(&self, p: Palette) -> AnyElement {
+        let frame = || v_flex().w(px(LIST_WIDTH)).flex_shrink_0().h_full().min_h_0();
+        let note = |text: String| {
+            frame()
+                .text_size(px(13.))
+                .text_color(p.text_muted)
+                .child(text)
+                .into_any_element()
+        };
+        let supporters = match &self.store_page.supporters {
+            Load::Idle | Load::Loading => return note(tr("Loading supporters…").to_owned()),
+            Load::Failed(e) => return note(e.clone()),
+            Load::Ready(s) if s.is_empty() => {
+                return note(tr("No supporters yet. Be the first.").to_owned());
             }
-            _ => None,
+            Load::Ready(s) => s,
         };
-        let edit = active.then(|| {
-            Button::new("store-listing-open")
-                .outline()
-                .small()
-                .icon(IconName::Pencil)
-                .label(tr("Edit your listing"))
-                .on_click(cx.listener(|this, _, _, cx| {
-                    this.store_page.listing_open = true;
-                    this.store_page.notice = None;
-                    cx.notify();
-                }))
-        });
-        let note = self
-            .store_page
-            .notice
-            .as_ref()
-            .filter(|_| !self.store_page.claim_open && !self.store_page.listing_open)
-            .map(|(ok, text)| notice(*ok, text.clone(), p).text_size(px(12.)).text_center());
-        v_flex()
-            .flex_1()
-            .min_w_0()
-            .items_center()
-            .px(px(20.))
-            .child(column_head(
-                h_flex(),
-                IconName::Gift,
-                tr("One-time donation"),
-                hue(YELLOW),
-                div().w(px(ACTION_W)).child(
-                    Input::new(&amount)
-                        .large()
-                        .prefix(div().text_color(p.text_muted).child("$")),
-                ),
-                tr("Converts to whole months of a tier"),
-                p,
-            ))
+        let rows: Vec<AnyElement> = supporters
+            .iter()
+            .enumerate()
+            .map(|(i, s)| self.supporter_row(i, s, p))
+            .collect();
+        frame()
             .child(
-                v_flex()
-                    .flex_grow_1()
-                    .w_full()
-                    .max_w(px(ACTION_W))
-                    .mt(px(20.))
+                h_flex()
+                    .pb(px(6.))
+                    .gap(px(8.))
                     .items_center()
-                    .child(claim)
-                    .children(status.map(|s| s.mt(px(10.))))
-                    .children(edit.map(|e| div().mt(px(8.)).child(e)))
-                    .children(note.map(|n| n.mt(px(10.)))),
+                    .child(heading(tr("Supporters")))
+                    .child(muted(supporters.len().to_string(), p)),
             )
-            .child(donate.mt(px(22.)))
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .scroll_y("support-list")
+                    .child(h_flex().flex_wrap().items_start().pr(px(8.)).children(rows)),
+            )
+            .into_any_element()
     }
 
-    fn store_tiers(&self, amount: Entity<InputState>, p: Palette, cx: &mut Context<Self>) -> Div {
-        let current = match &self.store_page.me {
-            Load::Ready(me) if me.active => me.tier.as_deref(),
-            _ => None,
+    fn supporter_row(&self, i: usize, s: &Supporter, p: Palette) -> AnyElement {
+        let name = match (&s.display.name, s.display.anonymous) {
+            (Some(n), false) => n.clone(),
+            _ => tr("Anonymous").to_owned(),
         };
-        let basic = vec![
-            (IconName::MegaphoneOff, tr("No ads in the launcher"), false),
-            (IconName::KeyRound, tr("Access to #f1-supporter-leaks"), false),
-            (
-                IconName::MessageCircle,
-                tr("The #f1-supporter-general chat"),
-                false,
-            ),
-            (
-                IconName::Link,
-                tr("Discord embed links and external emoji permissions"),
-                false,
-            ),
-            (
-                IconName::Code,
-                tr("Supporting a free and open-source launcher"),
-                false,
-            ),
-        ];
-        let plus = vec![
-            (IconName::Layers, tr("All of Supporter"), false),
-            (IconName::Rocket, tr("Early access to addons in testing"), true),
-            (IconName::Beaker, tr("Access to private betatesting"), false),
-        ];
-        let divider = || div().flex_shrink_0().w(px(1.)).my(px(8.)).bg(p.border_variant);
-        v_flex().flex_1().min_w_0().items_center().child(
-            h_flex()
-                .w_full()
-                .max_w(px(TIERS_MAX))
-                .items_stretch()
-                .child(self.store_account(amount, p, cx))
-                .child(divider())
-                .child(self.tier_column(Kind::Supporter, basic, current == Some("supporter"), p, cx))
-                .child(divider())
-                .child(self.tier_column(
-                    Kind::SupporterPlus,
-                    plus,
-                    current == Some("supporter_plus"),
-                    p,
-                    cx,
-                )),
-        )
-    }
-
-    /// One tier as a centred column: its head and perks over its Subscribe button, which sits level with its neighbours'.
-    fn tier_column(
-        &self,
-        kind: Kind,
-        perks: Vec<(IconName, &'static str, bool)>,
-        current: bool,
-        p: Palette,
-        cx: &mut Context<Self>,
-    ) -> Div {
-        let plus = kind == Kind::SupporterPlus;
-        let (amount, tagline) = match plus {
-            true => ("$20", tr("Play new addons before anyone else")),
-            false => ("$5", tr("Back the launcher and lose the ads")),
+        let face = match (&s.display.name, s.display.anonymous) {
+            (Some(n), false) => self.face(n, s.display.avatar_url.as_deref(), 36., p),
+            _ => div()
+                .size(px(36.))
+                .flex_shrink_0()
+                .flex()
+                .items_center()
+                .justify_center()
+                .rounded_full()
+                .bg(p.surface)
+                .child(Icon::new(IconName::User).size(px(18.)).text_color(p.text_muted)),
         };
-        let accent = hue(if plus { PLUS_NAME } else { PINK });
-        let chips = h_flex().when(current, |d| {
-            d.child(chip(tr("Your tier"), hue(GREEN).opacity(0.16), hue(GREEN)))
-        });
-        v_flex()
-            .flex_1()
-            .min_w_0()
+        let plus = s.plus();
+        let face = face.when(plus, |d| d.border_2().border_color(rgb(PURPLE)));
+        let bio = s.bio.clone().filter(|b| !b.trim().is_empty());
+        h_flex()
+            .id(SharedString::from(format!("supporter-{i}")))
+            .w(relative(0.5))
+            .py(px(8.))
+            .pr(px(8.))
+            .gap(px(10.))
             .items_center()
-            .px(px(20.))
-            .child(column_head(
-                chips,
-                if plus { IconName::Crown } else { IconName::Heart },
-                tier_name(if plus { "supporter_plus" } else { "supporter" }),
-                accent,
-                price(amount, if plus { accent } else { p.text }, p),
-                tagline,
-                p,
-            ))
+            .child(face)
             .child(
                 v_flex()
-                    .flex_grow_1()
-                    .max_w_full()
-                    .mt(px(20.))
+                    .flex_1()
+                    .min_w_0()
+                    .gap(px(3.))
+                    .child(
+                        h_flex()
+                            .gap(px(8.))
+                            .items_center()
+                            .child(
+                                div()
+                                    .min_w_0()
+                                    .truncate()
+                                    .text_size(px(14.))
+                                    .font_weight(FontWeight::BOLD)
+                                    .text_color(rgb(if plus { PLUS_NAME } else { PINK }))
+                                    .child(name),
+                            )
+                            .child(badge(SharedString::from(format!("supporter-glint-{i}")), plus)),
+                    )
+                    .children(bio.map(|b| muted(b, p))),
+            )
+            .into_any_element()
+    }
+
+    fn support_main(&mut self, p: Palette) -> AnyElement {
+        let body: AnyElement = match &self.store_page.goal {
+            Load::Idle | Load::Loading => muted(tr("Loading the goal…"), p).into_any_element(),
+            Load::Failed(e) => muted(e.clone(), p).into_any_element(),
+            Load::Ready(g) => {
+                let donate = g.donate_url.clone().filter(|u| u.starts_with("https://"));
+                v_flex()
+                    .items_center()
+                    .gap(px(18.))
+                    .child(goal_body(g, p))
+                    .children(donate.map(|url| donate_button(&url, p)))
+                    .into_any_element()
+            }
+        };
+        div()
+            .flex_1()
+            .min_w_0()
+            .h_full()
+            .min_h_0()
+            .scroll_y("support-main")
+            .child(v_flex().gap(px(26.)).pr(px(4.)).child(body))
+            .into_any_element()
+    }
+}
+
+fn donate_button(url: &str, p: Palette) -> AnyElement {
+    let url = url.to_owned();
+    v_flex()
+        .items_center()
+        .gap(px(8.))
+        .child(
+            div()
+                .id("support-donate")
+                .relative()
+                .overflow_hidden()
+                .flex()
+                .items_center()
+                .justify_center()
+                .h(px(52.))
+                .px(px(44.))
+                .rounded_full()
+                .text_size(px(16.))
+                .font_weight(FontWeight::EXTRA_BOLD)
+                .text_color(hue(WHITE))
+                .bg(gradient())
+                .child(glint("support-donate-glint", Duration::from_millis(2600)))
+                .cursor_pointer()
+                .hover(|d| d.opacity(0.9))
+                .child(tr("DONATE"))
+                .on_click(move |_, _, cx| cx.open_url(&url)),
+        )
+        .child(muted(tr("Opens in your browser"), p))
+        .into_any_element()
+}
+
+fn goal_body(g: &Goal, p: Palette) -> Div {
+    let filled = g.fraction();
+    // Thin lines that drift up and fade above the filled part of the bar.
+    let floats = (0..9usize).map(|i| {
+        let at = filled * ((i as f32 * 0.137 + 0.05) % 1.);
+        let wide = 10. + (i % 4) as f32 * 7.;
+        let period = Duration::from_millis(2200 + (i as u64 * 430) % 1900);
+        div()
+            .absolute()
+            .left(relative(at))
+            .h(px(2.))
+            .w(px(wide))
+            .rounded_full()
+            .bg(rgb(if i % 2 == 0 { HOT_PINK } else { PURPLE }))
+            .with_animation(
+                SharedString::from(format!("goal-float-{i}")),
+                Animation::new(period).repeat(),
+                move |el, t| {
+                    let t = (t + i as f32 * 0.21) % 1.;
+                    el.top(px(30. - 30. * t))
+                        .ml(px(18. * t))
+                        .opacity((t * std::f32::consts::PI).sin() * 0.8)
+                },
+            )
+    });
+    // Bright sparks that run along the filled part.
+    let sparks = (0..3usize).map(|i| {
+        let half = |from: u32, to: u32| {
+            div().h_full().w(px(22.)).bg(linear_gradient(
+                90.,
+                linear_color_stop(rgba(from), 0.),
+                linear_color_stop(rgba(to), 1.),
+            ))
+        };
+        h_flex()
+            .absolute()
+            .top_0()
+            .bottom_0()
+            .child(half(0xffffff00, 0xffffffcc))
+            .child(half(0xffffffcc, 0xffffff00))
+            .with_animation(
+                SharedString::from(format!("goal-spark-{i}")),
+                Animation::new(Duration::from_millis(1700 + i as u64 * 650)).repeat(),
+                move |el, t| el.left(relative(((t + i as f32 * 0.37) % 1.) * 1.3 - 0.2)),
+            )
+    });
+    v_flex()
+        .gap(px(6.))
+        .when(g.goal_cents > 0, |d| {
+            d.child(
+                div()
+                    .text_size(px(12.))
+                    .font_weight(FontWeight::BOLD)
+                    .text_color(rgb(PINK))
+                    .child(tr("Monthly goal").to_uppercase()),
+            )
+            .child(
+                h_flex()
+                    .items_end()
                     .gap(px(10.))
-                    .children(
-                        perks
-                            .into_iter()
-                            .map(|(icon, text, hot)| perk_row(icon, text, hot, accent, p)),
+                    .child(
+                        div()
+                            .text_size(px(44.))
+                            .line_height(px(46.))
+                            .font_weight(FontWeight::EXTRA_BOLD)
+                            .child(money(g.raised_cents)),
+                    )
+                    .child(
+                        div()
+                            .pb(px(6.))
+                            .text_size(px(16.))
+                            .text_color(p.text_muted)
+                            .child(format!("{} {} {}", tr("of"), money(g.goal_cents), tr("/ month"))),
                     ),
             )
-            .child(self.subscribe_button(kind, cx).mt(px(22.)))
-    }
-
-    fn subscribe_button(&self, kind: Kind, cx: &mut Context<Self>) -> Stateful<Div> {
-        let plus = kind == Kind::SupporterPlus;
-        let busy = self.store_page.busy;
-        let signed_in = self.account.session.is_some();
-        action(if plus {
-            "store-subscribe-plus"
-        } else {
-            "store-subscribe"
+            .child(div().relative().h(px(32.)).w_full().children(floats))
+            .child(
+                div()
+                    .h(px(20.))
+                    .w_full()
+                    .rounded_full()
+                    .bg(p.border_variant)
+                    .overflow_hidden()
+                    .child(
+                        div()
+                            .relative()
+                            .overflow_hidden()
+                            .h_full()
+                            .w(relative(filled))
+                            .rounded_full()
+                            .bg(gradient())
+                            .children(sparks),
+                    ),
+            )
         })
-        .text_color(hue(WHITE))
-        .map(|d| match plus {
-            true => d
-                .bg(gradient())
-                .child(glint("store-plus-glint", Duration::from_millis(2600))),
-            false => d.bg(rgb(PINK)),
+        .when(!g.costs.is_empty(), |d| {
+            d.child(
+                h_flex()
+                    .w_full()
+                    .pt(px(12.))
+                    .justify_center()
+                    .flex_wrap()
+                    .gap_x(px(28.))
+                    .gap_y(px(6.))
+                    .children(g.costs.iter().map(|c| {
+                        h_flex()
+                            .gap(px(10.))
+                            .items_center()
+                            .text_size(px(15.))
+                            .child(div().size(px(6.)).rounded_full().bg(rgb(PINK)))
+                            .child(c.clone())
+                    })),
+            )
         })
-        .when(busy, |d| d.opacity(0.6))
-        .when(!busy, |d| d.cursor_pointer().hover(|d| d.opacity(0.9)))
-        .child(tr("Subscribe"))
-        .child(
-            Icon::new(IconName::ArrowRight)
-                .size(px(15.))
-                .text_color(hue(WHITE)),
-        )
-        .on_click(cx.listener(move |this, _, _, cx| {
-            if signed_in {
-                StorePage::checkout(this, kind, None, cx);
-            } else {
-                this.store_page.notice = Some((false, tr("Sign in with Discord to subscribe.").to_owned()));
-                cx.notify();
-            }
-        }))
-    }
 }

@@ -39,6 +39,9 @@ pub(crate) struct RoomLaunch {
     /// The direct start request the game reads at boot, as `swofty\direct_start.json`: the room target, this
     /// player's role, the host's address and the room configuration (`LaunchAsk::direct_start`).
     pub(crate) direct_start: String,
+    /// Die Spiel-Umgebung für den Raum (`SWOFTY_SESSION_ENV`): Platz und Grundport dieser Sitzung,
+    /// damit der Kern beim Anhängen weiß, wohin er weiterreicht.
+    pub(crate) netplay: String,
 }
 
 pub(crate) struct Multiplayer {

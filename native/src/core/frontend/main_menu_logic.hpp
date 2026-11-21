@@ -283,7 +283,8 @@ inline std::string with_separators(long long n)
     return (n < 0 ? "-" : "") + out;
 }
 
-constexpr const char *OFFLINE_TEXT = "Launched with Swofty Launcher";
+// Das Hauptmenue traegt keine Zeile des Launchers mehr (so in der 1.4.4).
+constexpr const char *OFFLINE_TEXT = "";
 
 inline std::string online_line(long long n) { return n <= 0 ? "" : with_separators(n) + " currently playing"; }
 

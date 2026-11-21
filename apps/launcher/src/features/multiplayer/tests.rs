@@ -190,11 +190,11 @@ fn gives_each_room_one_status() {
 fn a_room_differs_in_its_list_only_where_its_view_shows_a_difference() {
     let hosts = [
         ("kizi.ai-driver-behaviour", "AI Driver Behaviour"),
-        ("swofty.core", "SwoftyMod"),
+        ("swofty.core", "ERCMod"),
         ("swofty.lap1-ai", "Lap 1 Realistic AI"),
         ("swofty.swofty-seasons-2011", "SWOFTY 2011"),
         ("swofty.swofty-seasons-2011-real", "SWOFTY 2011 Real Liveries"),
-        ("teamsimplified.mods", "Simplified for Swofty"),
+        ("teamsimplified.mods", "Simplified for ERC"),
     ];
     let mut room = room(1, 8, Some("sha256:dde0b6530ef0753d"));
     room.addons = Some(RoomAddons {

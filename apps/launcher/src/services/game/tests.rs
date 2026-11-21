@@ -76,7 +76,7 @@ fn a_cli_that_does_not_start_says_so_in_the_launch_log() {
     std::fs::create_dir_all(root.join("state")).unwrap();
     let store = Store::new(&root);
     let log = root.join("state/launcher-run.log");
-    let cli = Path::new(r"C:\Swofty\bin\swofty.exe");
+    let cli = Path::new(r"C:\ERC\bin\swofty.exe");
     let missing = std::io::Error::from_raw_os_error(2);
     assert_eq!(not_started(&store, &log, cli, &missing), missing.to_string());
     let written = std::fs::read_to_string(&log).unwrap();
@@ -226,7 +226,7 @@ fn a_wrapper_failure_leads_with_its_innermost_cause() {
         "Permission denied (os error 13) (installing profile default: /games/F1 25/swofty/x.erp)"
     );
     for kept in [
-        r"the wrapper exited (exit code: 1) before the game started without output; see C:\Swofty\state\wrapper-run.log",
+        r"the wrapper exited (exit code: 1) before the game started without output; see C:\ERC\state\wrapper-run.log",
         "the wrapper did not start within 10 min; check the Steam launch option (swofty doctor)",
         "building profile default: reading x: missing",
         "an antivirus removed mod files, so F1 25 was not started",
@@ -240,7 +240,7 @@ fn an_addon_that_needs_a_newer_game_shows_the_update() {
     let outdated = "Classic Seasons needs F1 25 1.0.145.2472, the latest update. Your F1 25 is 1.0.136.6820. \
                     Update F1 25 in Steam or the EA app, then press Play again.";
     let log = format!(
-        "[info] launching F1 25 directly; waiting for the wrapper, output in C:\\Swofty\\state/wrapper-run.log\n\
+        "[info] launching F1 25 directly; waiting for the wrapper, output in C:\\ERC\\state/wrapper-run.log\n\
          [wrapper] [info] installing profile default\n\
          swofty: the wrapper exited (exit code: 1) before the game started: {outdated}\n\
          (applying swofty.classic-seasons: eaid://ui_package/databases/overrides.uidb: \

@@ -23,7 +23,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 use windows::core::{PCWSTR, w};
 
-const CLASS: PCWSTR = w!("SwoftyLauncherAdSlot");
+const CLASS: PCWSTR = w!("ERCLauncherAdSlot");
 
 pub(super) struct Backend {
     owner: isize,

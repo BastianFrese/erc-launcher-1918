@@ -58,10 +58,12 @@ const LOCH_VERSUCHE: u32 = 15;
 const DIREKT_LEBEN: Duration = Duration::from_secs(10);
 const DIREKT_TOT: Duration = Duration::from_secs(30);
 
-/// Direktverbindung nur auf Wunsch: `ERC_DIREKT=1`. Ohne den Schalter läuft alles
-/// wie bisher über den Relay. Siehe docs/plan-2026-11-18-direktverbindung.md.
+/// Direktverbindung ist die Vorgabe: die Spieler verhandeln ihre Wege selbst (der Relay hilft nur
+/// beim Aushandeln), damit die Rennlast nicht über den Relay am Host-Anschluss laufen muss. Bleibt
+/// ein Direktweg stumm (`DIREKT_LEBEN`/`DIREKT_TOT`), geht es für diesen Teilnehmer zurück über den
+/// Relay. `ERC_DIREKT=0` schaltet sie ab, etwa für eine Probe.
 fn direkt_erlaubt() -> bool {
-    std::env::var("ERC_DIREKT").ok().as_deref() == Some("1")
+    std::env::var("ERC_DIREKT").ok().as_deref() != Some("0")
 }
 
 /// Was der Relay über die anderen sagt und was sich davon bewährt hat.

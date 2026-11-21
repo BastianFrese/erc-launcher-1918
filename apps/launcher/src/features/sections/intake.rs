@@ -294,7 +294,7 @@ impl Shell {
                 .title(trn(
                     count,
                     "That isn't an ERC addon",
-                    "Those aren't Swofty addons",
+                    "Those aren't ERC addons",
                 ))
                 .description(files)
                 .child(

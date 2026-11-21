@@ -83,6 +83,10 @@ cp "$OUT/version.dll" "$DIST/version.dll"
 cp "$OUT/swofty_core.dll" "$DIST/swofty/addons/core/swofty_core.dll"
 cp "$OUT/swofty_gamelog.dll" "$DIST/swofty/addons/core/swofty_gamelog.dll"
 cp src/gamelog/log_channels.tsv "$DIST/swofty/addons/core/log_channels.tsv"
+# ERC-BEGIN cover-copy
+# Das Deckblatt der Raum- und Sitzungsanzeige: das ERC-Bild aus der Boxengasse.
+cp assets/cover.png "$DIST/swofty/addons/core/cover.png"
+# ERC-END cover-copy
 
 for f in "$DIST/version.dll" "$DIST/swofty/addons/core/swofty_core.dll" "$DIST/swofty/addons/core/swofty_gamelog.dll"; do
     echo "== $f"

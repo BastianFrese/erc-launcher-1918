@@ -278,6 +278,7 @@ void session_host_exit();
 int session_host_cover_signal();
 void net_trace_setup();
 void udp_ids_setup();
+// ERC-BEGIN netplay-decls
 // Der eigene Mehrspieler-Weg (native/src/core/netplay/): Bruecke ueber Dateien, Raum-Aufbau und
 // die Anzeige-Namen. Eigener Unterordner, damit ein fremder Umbau ihn nicht mitreisst.
 void netplay_setup();
@@ -299,6 +300,7 @@ std::vector<CoreMixins> netplay_keys_mixins();
 void netplay_keys_commit();
 std::vector<CoreMixins> netplay_privilege_mixins();
 void netplay_privilege_commit();
+// ERC-END netplay-decls
 // Notes an added track's statId for the Swofty Track telemetry packet (udp_ids.cpp).
 void udp_track(int64_t stat_id, const std::string &addon, const std::string &code);
 // The test agent (native/src/core/testing/agent/agent.cpp): armed only by `swofty test`'s run token.

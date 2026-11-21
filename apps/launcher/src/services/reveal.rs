@@ -182,12 +182,12 @@ mod tests {
     #[test]
     fn explorer_selects_the_quoted_path() {
         assert_eq!(
-            explorer_arg(Path::new(r"C:\Users\Naël Smith\AppData\Local\Swofty\logs\x.zip")),
-            r#"/select,"C:\Users\Naël Smith\AppData\Local\Swofty\logs\x.zip""#
+            explorer_arg(Path::new(r"C:\Users\Naël Smith\AppData\Local\ERC\logs\x.zip")),
+            r#"/select,"C:\Users\Naël Smith\AppData\Local\ERC\logs\x.zip""#
         );
         assert_eq!(
-            explorer_arg(Path::new("D:/Swofty data/logs/x.zip")),
-            r#"/select,"D:\Swofty data\logs\x.zip""#
+            explorer_arg(Path::new("D:/ERC data/logs/x.zip")),
+            r#"/select,"D:\ERC data\logs\x.zip""#
         );
     }
 

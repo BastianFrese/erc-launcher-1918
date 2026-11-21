@@ -17,7 +17,7 @@ use swofty_i18n::{tr, trf};
 
 const HEIGHT: f32 = 470.;
 const TITLE: &str = "EA app support is experimental";
-const WHY: &str = "Swofty works best with the Steam version of F1 25. The EA app's copy of the game \
+const WHY: &str = "ERC works best with the Steam version of F1 25. The EA app's copy of the game \
      is harder to work with, so modded play on it is new and may have bugs. You can play now; if \
      something breaks, let us know on our Discord. This only shows once.";
 

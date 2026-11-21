@@ -1,4 +1,5 @@
 use super::SPLIT_AT;
+use crate::services::library::display_name;
 use crate::shell::notices::{Notification, Notify};
 use crate::shell::{Page, Shell};
 use crate::ui::label;
@@ -81,7 +82,11 @@ impl Shell {
                 for r in results {
                     match r {
                         Ok((left_out, m)) => {
-                            let text = trf!("Installed {name} {version}", name = m.name, version = m.version);
+                            let text = trf!(
+                                "Installed {name} {version}",
+                                name = display_name(&m.id, &m.name),
+                                version = m.version
+                            );
                             let (shell, id) = (cx.entity().downgrade(), m.id.clone());
                             window.notify(
                                 Notification::success(text).action(tr("Turn on"), move |window, cx| {

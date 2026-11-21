@@ -54,7 +54,7 @@ pub(crate) fn run() {
                 window_min_size: Some(size(px(600.), px(500.))),
                 app_id: Some("net.swofty.NativeChartsDemo".into()),
                 titlebar: Some(TitlebarOptions {
-                    title: Some("Swofty — Native charts".into()),
+                    title: Some("ERC — Native charts".into()),
                     ..TitleBar::title_bar_options()
                 }),
                 ..TitleBar::window_options()

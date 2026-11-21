@@ -14,6 +14,7 @@ use swofty_core::profile::VANILLA;
 use swofty_core::updates::managed;
 
 use crate::features::sections::{Reporter, Shared};
+use crate::services::library::display_name;
 use crate::shell::{Page, Shell};
 use crate::ui::theme::Palette;
 
@@ -45,10 +46,10 @@ impl Shell {
         let adding = self.updates.adding;
         let (title, body, button) = if !installed {
             (
-                trf!("Install {name}", name = managed::NAME),
+                trf!("Install {name}", name = display_name(managed::ID, managed::NAME)),
                 trf!(
-                    "{name} is an addon by Team Simplified. Its Simplified Importer turns mods made for the game folder into Swofty addons. The launcher downloads it from GitHub.",
-                    name = managed::NAME
+                    "{name} is an addon by Team Simplified. Its Simplified Importer turns mods made for the game folder into ERC addons. The launcher downloads it from GitHub.",
+                    name = display_name(managed::ID, managed::NAME)
                 ),
                 Button::new("importer-install")
                     .primary()
@@ -64,10 +65,10 @@ impl Shell {
             )
         } else {
             (
-                trf!("Turn on {name}", name = managed::NAME),
+                trf!("Turn on {name}", name = display_name(managed::ID, managed::NAME)),
                 trf!(
                     "{name} is off in {name2}.",
-                    name = managed::NAME,
+                    name = display_name(managed::ID, managed::NAME),
                     name2 = self.library.profile.name
                 ),
                 Button::new("importer-on")
@@ -161,7 +162,7 @@ impl Shell {
                         window.notify(
                             Notification::success(trf!(
                                 "Installed {name} {version}",
-                                name = managed::NAME,
+                                name = display_name(managed::ID, managed::NAME),
                                 version = version
                             )),
                             cx,
@@ -173,7 +174,10 @@ impl Shell {
                             .failed(&e);
                         window.notify(
                             Notification::error(e)
-                                .title(trf!("Could not install {name}", name = managed::NAME)),
+                                .title(trf!(
+                                    "Could not install {name}",
+                                    name = display_name(managed::ID, managed::NAME)
+                                )),
                             cx,
                         )
                     }

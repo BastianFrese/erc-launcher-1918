@@ -171,6 +171,11 @@ pub(super) fn download() -> Result<String, (Trouble, String)> {
         .call()
         .map_err(|e| (Trouble::Offline, format!("{FEED_URL}: {e}")))?;
     let status = response.status().as_u16();
+    // Liegt auf unserem Server noch keine Nachrichtendatei, gilt der mitgelieferte
+    // Stand — ohne Fehlerzeile im Fenster.
+    if status == 404 {
+        return Ok("{\"posts\":[]}".to_owned());
+    }
     if status >= 400 {
         return Err((
             Trouble::Failed,

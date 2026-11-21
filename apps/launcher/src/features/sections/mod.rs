@@ -360,13 +360,35 @@ impl AddonViews {
 
     /// Takes built views, skipping any a newer fetch has already replaced.
     pub(crate) fn took_views(&mut self, generation: u64, views: Vec<(String, Result<View, String>)>) {
+        let about = format!("{}/about", swofty_core::updates::managed::ID);
         for (key, view) in views {
             if self.generations.get(&key).is_some_and(|g| *g > generation) {
                 continue;
             }
+            let view = view.map(|mut view| {
+                if key == about {
+                    erc_about(&mut view);
+                }
+                view
+            });
             self.generations.insert(key.clone(), generation);
             self.views.insert(key, view.map(Arc::new));
         }
+    }
+}
+
+/// The managed addon's About page comes from its helper and still names the other
+/// launcher. Map it when it arrives, so an addon update can't put it back.
+fn erc_about(view: &mut View) {
+    let Ok(json) = serde_json::to_string(view) else {
+        return;
+    };
+    let branded = json
+        .replace("Simplified for Swofty", "Simplified for ERC")
+        .replace("a Swofty", "an ERC")
+        .replace("Swofty", "ERC");
+    if let Ok(branded) = serde_json::from_str(&branded) {
+        *view = branded;
     }
 }
 
@@ -476,8 +498,9 @@ impl Shell {
 
 #[cfg(test)]
 mod tests {
-    use super::AddonViews;
+    use super::{AddonViews, erc_about};
     use core::prelude::v1::test;
+    use swofty_core::view::{Block, Body, Tone, View};
 
     #[test]
     fn an_older_fetch_does_not_replace_a_newer_view() {
@@ -487,5 +510,36 @@ mod tests {
         assert!(matches!(views.views.get("t.addon/main"), Some(Err(e)) if e == "new"));
         views.took_views(3, vec![("t.addon/main".into(), Err("newer".into()))]);
         assert!(matches!(views.views.get("t.addon/main"), Some(Err(e)) if e == "newer"));
+    }
+
+    #[test]
+    fn the_managed_about_page_names_this_launcher() {
+        let mut view = View {
+            subtitle: "Team Simplified's addon for Swofty Launcher.".into(),
+            actions: Vec::new(),
+            notices: Vec::new(),
+            body: Body::Blocks(vec![Block::Text {
+                text: "Simplified for Swofty turns a mod into a Swofty addon.".into(),
+                tone: Tone::default(),
+            }]),
+            footer: Some("Based on the Simplified Suite by Team Simplified.".into()),
+            tick: false,
+        };
+        erc_about(&mut view);
+        assert_eq!(view.subtitle, "Team Simplified's addon for ERC Launcher.");
+        let Body::Blocks(blocks) = &view.body else {
+            panic!("the about page keeps its blocks");
+        };
+        assert_eq!(
+            blocks,
+            &[Block::Text {
+                text: "Simplified for ERC turns a mod into an ERC addon.".into(),
+                tone: Tone::default(),
+            }]
+        );
+        assert_eq!(
+            view.footer.as_deref(),
+            Some("Based on the Simplified Suite by Team Simplified.")
+        );
     }
 }

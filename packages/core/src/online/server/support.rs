@@ -10,6 +10,32 @@ use crate::online::timetrial::boards::Rows;
 pub const BIO_MAX: usize = 140;
 pub const FALLBACK_URL: &str = "https://donate.swofty.net/";
 
+/// The monthly donation goal the support page shows.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct Goal {
+    #[serde(default)]
+    pub goal_cents: u64,
+    #[serde(default)]
+    pub raised_cents: u64,
+    #[serde(default)]
+    pub since: String,
+    #[serde(default)]
+    pub costs: Vec<String>,
+    /// Where the donate button goes. Our server sets it; it is not compiled in,
+    /// so the address can change without a new launcher build.
+    #[serde(default)]
+    pub donate_url: Option<String>,
+}
+
+impl Goal {
+    pub fn fraction(&self) -> f32 {
+        match self.goal_cents {
+            0 => 0.,
+            g => (self.raised_cents as f32 / g as f32).clamp(0., 1.),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Me {
     #[serde(default)]
@@ -168,6 +194,10 @@ pub fn dollars_to_cents(text: &str) -> Option<u64> {
 }
 
 impl Api {
+    pub fn support_goal(&self) -> Result<Goal, ApiError> {
+        self.get_json("/v1/support/goal")
+    }
+
     pub fn support_me(&self) -> Result<Me, ApiError> {
         self.get_json("/v1/support/me")
     }
@@ -224,6 +254,20 @@ impl Api {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_goal_fills_up_to_full() {
+        let goal = |goal_cents: u64, raised_cents: u64| Goal {
+            goal_cents,
+            raised_cents,
+            since: String::new(),
+            costs: Vec::new(),
+            donate_url: None,
+        };
+        assert_eq!(goal(50_000, 12_500).fraction(), 0.25);
+        assert_eq!(goal(100, 400).fraction(), 1.);
+        assert_eq!(goal(0, 400).fraction(), 0.);
+    }
 
     #[test]
     fn dollars_become_cents() {

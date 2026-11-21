@@ -57,12 +57,6 @@ fn filled_icon(icon: IconName, cx: &App) -> Option<Arc<[u8]>> {
 }
 
 impl Shell {
-    /// Online steht jedem offen: der Raumserver nimmt auch einen Spieler ohne Anmeldung,
-    /// unter dem eigenen Schlüssel dieser Installation.
-    pub(crate) fn nav_mp(&self) -> bool {
-        true
-    }
-
     pub(crate) fn sub_nav(&self, layout_width: f32) -> Option<SubNav> {
         let tab = self.navigation.page.tab();
         let (links, fixed) = match tab {
@@ -76,10 +70,10 @@ impl Shell {
                 (links, 3)
             }
             Some(Tab::Online) => {
-                let mut links = vec![Link::new(Page::Online, None)];
-                if self.nav_mp() {
-                    links.push(Link::new(Page::Multiplayer, None));
-                }
+                // Keine fremden Time-Trial-Bestenlisten im Online-Reiter: nur die Lobby.
+                // Sie steht jedem offen — der Raumserver nimmt auch einen Spieler ohne
+                // Anmeldung, unter dem eigenen Schlüssel dieser Installation.
+                let mut links = vec![Link::new(Page::Multiplayer, None)];
                 if self.tt_admin() {
                     links.push(Link::new(Page::Moderation, None));
                 }
