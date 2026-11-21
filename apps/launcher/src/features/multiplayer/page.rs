@@ -10,7 +10,6 @@ use super::model::{RoomFocus, shows_ad};
 /// The drivers of the global ranking the Multiplayer page's rail lists above the player's own place.
 const RAIL_RANKS: usize = 5;
 use crate::features::ads::Unit;
-use crate::features::online::{Online, RankFit};
 use crate::shell::Shell;
 use crate::shell::tabs::{OnlineTab, rooms_label};
 use crate::ui::label;
@@ -64,11 +63,9 @@ impl Shell {
                 let width = self.online_main_width();
                 let column = self.room_column(width, p, cx);
                 let ad = self.page_ad(self.rooms.form_open(), width, p);
-                let card = self.trial_card(p, cx);
-                Online::rank_ensure(self, "all", cx);
-                let ranking = self.rank_compact("all", tr("GLOBAL RANKING"), RAIL_RANKS, p, cx);
+                // Nur die Raeume: die fremden Bestenlisten haben im Online-Reiter nichts zu suchen.
                 let main = v_flex().gap(px(20.)).child(column).children(ad);
-                self.online_frame("online-rooms", main, Some(card), ranking, RankFit::Own)
+                self.online_flat("online-rooms", main)
             }
         };
         v_flex()

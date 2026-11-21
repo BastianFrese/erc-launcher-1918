@@ -34,6 +34,18 @@ impl Shell {
     }
 
     /// `main` with the rail beside it, or below it on a narrow window with the card first.
+    /// Eine Online-Seite ohne fremde Seitenspalte: nur der Inhalt, gleiche Ränder wie schmal.
+    pub(crate) fn online_flat(&self, id: &'static str, main: impl IntoElement) -> AnyElement {
+        v_flex()
+            .flex_1()
+            .min_h_0()
+            .scroll_y(id)
+            .px(px(SIDE))
+            .pb(px(28.))
+            .child(main)
+            .into_any_element()
+    }
+
     pub(crate) fn online_frame(
         &self,
         id: &'static str,

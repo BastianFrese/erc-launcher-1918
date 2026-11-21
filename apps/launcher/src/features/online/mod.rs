@@ -13,7 +13,7 @@ mod tracks;
 mod trial;
 mod widgets;
 
-pub(crate) use frame::{RankFit, open_link, preview_card};
+pub(crate) use frame::{open_link, preview_card};
 
 use crate::shell::Shell;
 use crate::shell::host::{Host, Hosted, reports_nothing};
