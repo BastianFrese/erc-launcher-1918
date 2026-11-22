@@ -20,6 +20,7 @@
 #include "core/apply/content/box_options.hpp"
 #include "core/apply/content/tyre_change.hpp"
 #include "core/apply/content/tyre_warmers.hpp"
+#include "core/apply/content/vehicle_override.hpp"
 #include "core/apply/content/weekend.hpp"
 #include "core/apply/tracks/boot.hpp"
 #include "core/apply/tracks/box.hpp"
@@ -1250,6 +1251,7 @@ void register_appliers()
         register_box_ui();
         tracks::register_appliers();
         tracks::register_box_appliers();
+        register_vehicle_override();
         set_up_dresser();
     });
 }
