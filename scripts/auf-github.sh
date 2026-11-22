@@ -34,8 +34,10 @@ if [ "${1:-}" = "--tag" ]; then
 fi
 text=${1:-"Stand $(date +%Y-%m-%d)"}
 
-# 1. Sauberer Arbeitsbaum ist Voraussetzung: sonst spiegelt der Lauf die halbe Arbeit.
-[ -z "$(git status --porcelain)" ] || die "Arbeitsbaum ist nicht sauber — erst committen"
+# 1. Keine uncommitteten Aenderungen an verfolgten Dateien: sonst spiegelt der Lauf die
+#    halbe Arbeit. Unverfolgte Reste (alte Namen aus frueheren Merges) stoeren den Spiegel
+#    nicht, der nur verfolgte Inhalte uebernimmt.
+[ -z "$(git status --porcelain --untracked-files=no)" ] || die "Arbeitsbaum ist nicht sauber — erst committen"
 
 git rev-parse --verify --quiet "$ARBEIT" >/dev/null || die "Zweig $ARBEIT fehlt"
 git rev-parse --verify --quiet "$OEFFENTLICH" >/dev/null || die "Zweig $OEFFENTLICH fehlt"
