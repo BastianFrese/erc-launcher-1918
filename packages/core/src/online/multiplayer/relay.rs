@@ -19,6 +19,7 @@ use std::time::{Duration, Instant};
 
 use sha2::{Digest, Sha256};
 
+use super::diag;
 use super::direct::timed_out;
 use super::transport::{MAX_DATAGRAM, Transport};
 
@@ -478,6 +479,7 @@ impl RelayUdp {
         }
 
         let mut raus: Vec<SocketAddr> = Vec::new();
+        let mut tot_geworden: Vec<u8> = Vec::new();
         {
             let mut wege = self.wege.write().unwrap_or_else(|e| e.into_inner());
 
@@ -520,6 +522,7 @@ impl RelayUdp {
             for kennung in tot {
                 wege.direkt.remove(&kennung);
                 wege.versuch.remove(&kennung);
+                tot_geworden.push(kennung);
             }
             let leben_faellig = wege
                 .gelebt
@@ -535,6 +538,11 @@ impl RelayUdp {
             }
         }
 
+        for kennung in tot_geworden {
+            diag::line(format!(
+                "direct path to member {kennung}: silent, back over the relay"
+            ));
+        }
         for adresse in raus {
             let _ = self.socket.send_to(&self.frame(PING), adresse);
         }
@@ -583,8 +591,15 @@ impl RelayUdp {
         if wege.tabelle.get(&kennung) == Some(&from)
             || wege.direkt.get(&kennung).map(|(a, _)| *a) == Some(from)
         {
+            // Nur der Wechsel wird geschrieben, nicht jedes Paket: der Test von Hand
+            // soll im Protokoll sehen, ob zwei Anschluesse direkt zueinander kommen.
+            let neu = !wege.direkt.contains_key(&kennung);
             wege.direkt.insert(kennung, (from, Instant::now()));
             wege.versuch.remove(&kennung);
+            drop(wege);
+            if neu {
+                diag::line(format!("direct path to member {kennung}: {from}"));
+            }
         }
     }
 }
@@ -879,6 +894,8 @@ mod tests {
         );
         assert!(wege.tabelle.get(&3).is_some(), "IPv6 fehlt");
         assert!(wege.tabelle.get(&1).is_none(), "eigene Kennung gehört nicht hinein");
+        // Lese-Sperre fallen lassen, sonst verklemmt sich der folgende Schreibzugriff.
+        drop(wege);
 
         // Eine leere Tabelle räumt die alte ab.
         a.tabelle_lesen(b"ERC-PEERSABCD\n");

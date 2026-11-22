@@ -885,7 +885,12 @@ fn disabled_without_a_log_server_at_build_time() {
     assert!(LogServer::new(Some("")).is_none());
     assert!(LogServer::new(Some("   ")).is_none());
     assert!(LogServer::new(Some("not a url")).is_none());
-    if option_env!("SWOFTY_LOGS_URL").is_none() && std::env::var_os("SWOFTY_LOGS_URL").is_none() {
+    // Unser Sammelpunkt ist fest eingebaut (OUR_LOGS_URL); ohne ihn prüft der Test,
+    // dass ein Bau ganz ohne Logserver das Senden abschaltet.
+    if option_env!("SWOFTY_LOGS_URL").is_none()
+        && std::env::var_os("SWOFTY_LOGS_URL").is_none()
+        && OUR_LOGS_URL.is_empty()
+    {
         assert!(!available());
         let (_, progress) = collect_stages();
         assert_eq!(send(&noisy_bundle(&[1]), &progress), Err(SendError::Unavailable));
