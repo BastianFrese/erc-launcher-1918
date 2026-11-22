@@ -4508,6 +4508,8 @@ pub type Game_FullRaceReplaySystem_Init_t = unsafe extern "C" fn(
 pub type Game_Game_HandleInterruptEvent_t =
     unsafe extern "C" fn(game: *mut c_void, event: *const c_void) -> u64;
 pub type Game_Game_SetCurrentGameMode_t = unsafe extern "C" fn(mode_context: *mut c_void, mode: *mut c_void);
+pub type Game_GarageCrewInstance_Hide_t =
+    unsafe extern "C" fn(crew_inst: *mut c_void, hide_car: bool, keep_flag: bool);
 pub type Game_Get_ModelNodeId_t = unsafe extern "C" fn(name: *const c_char) -> u32;
 pub type Game_GridRundown_ShouldPlay_t = unsafe extern "C" fn(
     variant: u8,
@@ -4684,6 +4686,14 @@ pub type Game_Teleport_Vehicle_t = unsafe extern "C" fn(
     name: *const c_char,
     prev_mtx: *mut f32,
     new_mtx: *mut f32,
+    dt: f32,
+    flags: u32,
+);
+pub type Game_Teleport_VehicleImmediate_Thunk_t = unsafe extern "C" fn(
+    car: *mut c_void,
+    tag: *const c_char,
+    prev_mtx: *const f32,
+    new_mtx: *const f32,
     dt: f32,
     flags: u32,
 );
@@ -11015,6 +11025,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_GarageCrewInstance_Hide: Binding = Binding {
+        id: "Game_GarageCrewInstance_Hide",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_GarageCrewInstance_PlayOverlaySequence: Binding = Binding {
         id: "Game_GarageCrewInstance_PlayOverlaySequence",
         kind: "func",
@@ -13182,6 +13197,11 @@ pub mod bindings {
     };
     pub const Game_Teleport_Vehicle: Binding = Binding {
         id: "Game_Teleport_Vehicle",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_Teleport_VehicleImmediate_Thunk: Binding = Binding {
+        id: "Game_Teleport_VehicleImmediate_Thunk",
         kind: "func",
         status: Status::Experimental,
     };
