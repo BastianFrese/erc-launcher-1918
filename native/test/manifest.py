@@ -192,6 +192,7 @@ UNITS = [
     Unit('bag_scan', 'Bag scan and read stream unit test', 'zig'),
     Unit('entitlements', 'Entitlement check unit test', 'zig'),
     Unit('room_cover', 'Loading cover unit test', 'zig'),
+    Unit('netplay_room', 'Room set-up teardown guard unit test', 'zig'),
     Unit('session_env', 'Loader session environment file unit test', 'zig'),
     Unit('testagent', 'Test agent logic unit test', 'zig'),
     Unit('storage_logic', 'Storage library path unit test', 'zig'),

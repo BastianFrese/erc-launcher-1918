@@ -299,6 +299,11 @@ struct InlineStr {
     char inline_chars[0x28];
 };
 
+uint64_t since(uint64_t start)
+{
+    return GetTickCount64() - start;
+}
+
 std::string switch_to_lan()
 {
     void *ns = network_now();
@@ -307,6 +312,7 @@ std::string switch_to_lan()
     if (!a_set_mode || !a_name_index || !a_str_vtable || !a_mp_mode || !a_presence)
         return "SetCurrentGameMode, the game mode name index, the name string vtable, changeMPMode or "
                "declareActivePresence did not resolve on this build";
+    uint64_t t = GetTickCount64();
     room::ModePlan plan;
     if (std::string why = room::plan_mode_switch(memory(), manager(), reinterpret_cast<uint64_t>(ns), plan); !why.empty())
         return why;
@@ -314,21 +320,42 @@ std::string switch_to_lan()
         swofty::log("[netplay] room: the network subsystem is already in LAN mode");
         return {};
     }
+    // Every call below runs on the flow thread, so one that does not return stalls the game's frame tick; the
+    // game's own deadlock watchdog then kills the process (MauMau, 22.11.2026: the log stopped right after the
+    // network subsystem resolved and the tick was silent for 30.8 s). The steps are logged with their duration,
+    // and the mode context's entry table is read before the game's name index walks it: a context the front end
+    // has not built yet is a named failure instead of a call into it.
+    uint64_t entries = 0;
+    if (!read_memory(plan.modes + room::MODES_ENTRIES, &entries, sizeof entries, nullptr) || !entries)
+        return "the game mode context's entry table (+0x58) is not there yet";
+    swofty::log("[netplay] room: mode switch: context read in %llums (modes %p, %llu mode entries, current %p, "
+                "network mode %d), calling the name index for online_custom",
+                static_cast<unsigned long long>(since(t)), reinterpret_cast<void *>(plan.modes),
+                static_cast<unsigned long long>(entries), reinterpret_cast<void *>(plan.current), plan.net);
     InlineStr name{};
     name.vtable = *reinterpret_cast<void **>(a_str_vtable);
     name.capacity = 0x20;
     name.chars = name.inline_chars;
     std::memcpy(name.inline_chars, "online_custom", sizeof "online_custom");
+    t = GetTickCount64();
     uint64_t index = reinterpret_cast<NameIndex_t *>(a_name_index)(reinterpret_cast<void *>(plan.modes + room::MODES_NAMES), &name);
+    swofty::log("[netplay] room: mode switch: the name index returned %llu in %llums", static_cast<unsigned long long>(index),
+                static_cast<unsigned long long>(since(t)));
     if (std::string why = room::mode_entity(memory(), plan.modes, index, plan); !why.empty())
         return why;
     swofty::log("[netplay] room: game mode online_custom is entry %llu (entity %p, mode %p), network mode %d",
                 static_cast<unsigned long long>(index), reinterpret_cast<void *>(plan.entity),
                 reinterpret_cast<void *>(plan.mode), plan.net);
+    t = GetTickCount64();
     reinterpret_cast<SetMode_t *>(a_set_mode)(reinterpret_cast<void *>(plan.modes), reinterpret_cast<void *>(plan.mode));
+    swofty::log("[netplay] room: mode switch: SetCurrentGameMode returned in %llums",
+                static_cast<unsigned long long>(since(t)));
+    t = GetTickCount64();
     reinterpret_cast<Presence_t *>(a_presence)(ns);
     uint8_t lan = 1;
     reinterpret_cast<MpMode_t *>(a_mp_mode)(ns, &lan, 1);
+    swofty::log("[netplay] room: mode switch: declareActivePresence and changeMPMode returned in %llums",
+                static_cast<unsigned long long>(since(t)));
     int after = room::net_mode(memory(), reinterpret_cast<uint64_t>(ns));
     swofty::log("[netplay] room: changeMPMode(eLan) called, network mode now %d%s", after,
                 after == int(room::NET_SYSTEM_LAN) ? "" : " (the check waits for it)");
@@ -608,6 +635,13 @@ void act(room::Do d)
     }
     case room::Do::fallback_notify: {
         uint64_t gsui = role == room::Role::host ? host_plan.gsui : join_plan.gsui;
+        uint64_t plan_ns = role == room::Role::host ? host_plan.ns : join_plan.ns;
+        // The last check before the one call the game routes into its own teardown when the session is gone.
+        if (!room::still_attached(memory(), gsui, plan_ns)) {
+            err = "the GameSessionUI stopped pointing at the network subsystem before the by-hand join; "
+                  "onInviteJoinNotification was not called";
+            break;
+        }
         swofty::log("[netplay] room %s: the invite reached the invite manager but the interrupt raised no join "
                     "within the wait; calling onInviteJoinNotification(gsui %p, 0) by hand (fallback path)",
                     room::role_name(role), reinterpret_cast<void *>(gsui));
@@ -881,6 +915,14 @@ void tick()
     uint64_t invites = run.role == Role::host ? host_plan.invites : join_plan.invites;
     if (invites)
         f.invite = invite_state(memory(), invites);
+    // Once a plan holds, the GameSessionUI says whether the session is still the one we are setting up: a torn-down
+    // session clears its back pointer at +8, and every call into it after that ends in the game's teardown.
+    if (run.stage == Stage::interrupt || run.stage == Stage::lobby) {
+        uint64_t plan_ns = run.role == Role::host ? host_plan.ns : join_plan.ns;
+        uint64_t gsui = run.role == Role::host ? host_plan.gsui : join_plan.gsui;
+        if (plan_ns && gsui)
+            f.session_alive = room::still_attached(memory(), gsui, plan_ns);
+    }
     Stage before = run.stage;
     Do d = run.tick(f, GetTickCount64());
     if (d != Do::nothing)
