@@ -1090,9 +1090,12 @@ GridBox grid_for_box(const std::string &entrant_list)
 
 size_t seats_for_box(const std::string &entrant_list)
 {
-    Packages p;
-    collect_packages(p);
-    return package_seats(entrant_list, p.list);
+    // ERC: die Sitzplatz-Grenze aus 1.10.22 ist vorerst AUS. Mit ihr starb F1 25 beim
+    // Betreten der LAN-Lobby in der Startaufstellung (ACCESS_VIOLATION reading 0x588,
+    // F1_25.exe+0x120ec05), auf beiden Rechnern und mit passenden Fingerprints.
+    // 0 ist das Verhalten von 1.10.19: die Aufstellung wird nicht gedeckelt.
+    (void)entrant_list;
+    return 0;
 }
 
 bool any_grid_rule()
