@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Career_MyTeamSetup_CommitCustomisation",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1411118a0",
+  "level": "L1",
+  "subsystem": "career",
+  "proto": "void (uint64_t setup)",
+  "evidence": "decomp:re/decomp/1411118a0.c;xref:0x142276977,0x14228404b",
+  "notes": "Disasm: searches sponsor defs c+0x500..+0x508 for id +0x28 == word 0x14606d43c of a lazily initialised static setup record (0x14606d340, init 0x142268640) and tail-jumps (0x141111911) to 0x1410f5b90(c, def); returns if none. The decomp inlines 0x1410f5b90. Callers 0x142276540 / 0x142282c00."
+ },
+ "signature": {
+  "id": "career.my_team_setup_commit_customisation",
+  "section": ".xtls",
+  "pattern": "56 48 83 EC 20 48 89 CE 8B 05 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 65 48 8B 14 25 58 00 00 00 48 8B 0C CA 3B 81 04 00 00 00 7F 4D",
+  "match": "0x1411118a0",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x1411118a0",
+  "kind": "func_start",
+  "names": [
+   "Career_MyTeamSetup_CommitCustomisation"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-11-12",
+    "by": "vmknolle",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-11-12",
+   "verifier": "verify-mt3-1",
+   "kind": "func",
+   "item": "0x1411118a0",
+   "claimed": "L1",
+   "verdict": "partial",
+   "evidence": "decomp:re/decomp/1411118a0.c;xref:0x142276976",
+   "notes": "V9658 Callee set matches (FindPackedEntry, FilterListByLod, ReplaceVehicleCustomisation) but the entrants system is read from setup+0x358, not +0x290."
+  }
+ ],
+ "proofs": []
+}

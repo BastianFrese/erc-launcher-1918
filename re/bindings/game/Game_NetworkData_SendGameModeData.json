@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Game_NetworkData_SendGameModeData",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x143060be0",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/143060be0.c;pat:log-message-method;xref:0x140996e0d",
+  "notes": "Logs sendGameModeData(conn); serialises the current game mode data (0x142a83020, 0x140998830) into a buffer and sends it via Game_NetworkData_SendToConnection."
+ },
+ "signature": {
+  "id": "game.network_data_send_game_mode_data",
+  "section": ".xtls",
+  "pattern": "41 56 56 57 53 48 81 EC C8 05 00 00",
+  "match": "0x143060be0",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x143060be0",
+  "kind": "func_start",
+  "names": [
+   "Game_NetworkData_SendGameModeData"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-22",
+    "by": "vmknolle",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "lb12-verify",
+   "kind": "func",
+   "item": "0x143060be0",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/143060be0.c;xref:0x140996e0e",
+   "notes": "V5505 name matches own log/pretty string and body; no broader behaviour found"
+  }
+ ],
+ "proofs": []
+}

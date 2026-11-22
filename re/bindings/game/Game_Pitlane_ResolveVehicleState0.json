@@ -1,0 +1,52 @@
+{
+ "schema": 1,
+ "name": "Game_Pitlane_ResolveVehicleState0",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1434c0600",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/1434c0600.c;xref:0x1434b8028,0x1434c0431",
+  "notes": "Spline builder type 0 of Game_PitLane_BuildPitSplineByType (0x1434c0431); also Game_PitLane_HandleEnterPitBox 0x1434b8028; ends in Ne_Spline_ComputeLengths. Earlier static round (C2): box entry pulling through the preceding box (neighbour box via mgr+0xc2a, box record mgr+0x40+box*0x90, factors mgr+0x8c8/+0x8d0/+0x8d8), knots into car record +0x118. Better name: Game_PitLane_BuildEntrySplinePullThrough (bound record keeps its name)."
+ },
+ "signature": {
+  "id": "game.pitlane_resolve_vehicle_state0",
+  "section": ".xtls",
+  "pattern": "E8 ?? ?? ?? ?? 41 C7 84 24 D4 00 00 00 00 00 00",
+  "match": "0x1434b8028",
+  "anchor": "0x1",
+  "resolve": {
+   "kind": "rel32",
+   "insn": 0
+  },
+  "target": "0x1434c0600",
+  "kind": "func_start",
+  "names": [
+   "Game_Pitlane_ResolveVehicleState0"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-30",
+    "by": "engine-re",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "vq2-verify",
+   "kind": "func",
+   "item": "0x1434c0600",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/1434c0600.c;xref:0x1434b8028",
+   "notes": "V8228 name+concrete claims match decomp"
+  }
+ ],
+ "proofs": []
+}

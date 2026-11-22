@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Game_ReplayCamera_SetFocusVehicle",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1406ae650",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/1406ae650.c;xref:0x1406ae141,0x1406ae506,0x1406aec60,0x1406aee10,0x1406aef68,0x1406af0b5,0x142c05d17",
+  "notes": "(cam, idx, flag, comp): stores +0x15; idx 0xff clears focus (0x144534390 with preset 0x14565bc9e, +0x29 = 1, +0x14 = 0xff); else updates per-vehicle bitmasks [cam+0x48]+0x60 (stride 0x14) and sets focus via 0x1445361a0, +0x14 = idx. Decomp runs past pdata end 0x1406ae904 (merged tail code)."
+ },
+ "signature": {
+  "id": "game.replay_camera_set_focus_vehicle",
+  "section": ".xtls",
+  "pattern": "41 57 41 56 56 57 53 48 83 EC 70 48 89 CE 44 88",
+  "match": "0x1406ae650",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x1406ae650",
+  "kind": "func_start",
+  "names": [
+   "Game_ReplayCamera_SetFocusVehicle"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-30",
+    "by": "engine-re",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "vp0-verify",
+   "kind": "func",
+   "item": "0x1406ae650",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/1406ae650.c;xref:0x1406ae141",
+   "notes": "V8001 name and concrete claims match decomp"
+  }
+ ],
+ "proofs": []
+}

@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Game_VehicleSpawning_Begin",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x142f3b410",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/142f3b410.c;pat:log-channel-VEHICLE_SPAWNING_SYSTEM;xref:0x1457f7c68",
+  "notes": "Only ref: absolute vtable cell 0x1457f7c68 (code neighbours). 1609-line decomp; registers callbacks 0x142f3dc90 / ObjectPreCreation 0x142f3e200 / OnWorldStarted 0x142f3e7c0 (lea at 0x142f3c214/0x142f3c22b) and calls SetState 0x142f3d970(..,2/5). Likely the spawning system per-frame update, not only 'begin'."
+ },
+ "signature": {
+  "id": "game.vehicle_spawning_begin",
+  "section": ".xtls",
+  "pattern": "41 57 41 56 41 55 41 54 56 57 55 53 48 81 EC 18 02 00 00 C5 78 29 94 24 00 02 00 00 C5 78 29 8C 24 F0 01 00 00 C5 78 29 84 24 E0 01 00 00 C5 F8 29 BC 24 D0 01 00 00 C5 F8 29 B4 24 C0 01 00 00 48 89 CE 48 8B 0D",
+  "match": "0x142f3b410",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x142f3b410",
+  "kind": "func_start",
+  "names": [
+   "Game_VehicleSpawning_Begin"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-22",
+    "by": "vmknolle",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "lb11-verify",
+   "kind": "func",
+   "item": "0x142f3b410",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/142f3b410.c;xref:0x14bab8fd7",
+   "notes": "V5618 name/log strings and body scale match"
+  }
+ ],
+ "proofs": []
+}

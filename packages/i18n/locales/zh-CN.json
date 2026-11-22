@@ -1,11 +1,21 @@
 {
   "Also update the addons that are off in your profile when Play updates addons. Turned off, only the addons that are on are updated.": "当“开始游戏”更新插件时，也更新配置中已关闭的插件。关闭后，只更新已开启的插件。",
   "Update turned-off addons": "更新已关闭的插件",
-  "{count} addon": ["{count} 个插件"],
-  "{count} changed setting": ["{count} 项已更改的设置"],
-  "{count} minute ago": ["{count} 分钟前"],
-  "{count} hour ago": ["{count} 小时前"],
-  "{count} day ago": ["{count} 天前"],
+  "{count} addon": [
+    "{count} 个插件"
+  ],
+  "{count} changed setting": [
+    "{count} 项已更改的设置"
+  ],
+  "{count} minute ago": [
+    "{count} 分钟前"
+  ],
+  "{count} hour ago": [
+    "{count} 小时前"
+  ],
+  "{count} day ago": [
+    "{count} 天前"
+  ],
   "just now": "刚刚",
   "{count} s": "{count} 秒",
   "{count} min": "{count} 分钟",
@@ -17,7 +27,6 @@
   "ADDONS": "插件",
   "Add another folder…": "添加其他文件夹…",
   "Addon Browser": "插件浏览器",
-  "Addon careers may have been removed from your Steam save: {names}. Last version: {at}": "插件生涯可能已从你的 Steam 存档中移除：{names}。最新版本：{at}",
   "Addons": "插件",
   "Addons, mods and tracks for F1 25, in one place.": "F1 25 的插件、模组和赛道，尽在一处。",
   "Applies after a rebuild": "重新构建后生效",
@@ -86,6 +95,7 @@
   "Language": "语言",
   "Larger text and controls, for the couch or a handheld.": "更大的文字和控件，适合沙发或掌机。",
   "Launch failed: {cause}": "启动失败：{cause}",
+  "Launcher options, and where ERC keeps its files": "启动器选项，以及 Swofty 存放文件的位置",
   "Launcher saves could not be used, so F1 25 closed before loading a save": "无法使用启动器存档，因此 F1 25 在加载存档前已关闭",
   "Launching…": "正在启动…",
   "Letters, digits, - and _. Each profile keeps its own addons and saves.": "可使用字母、数字、- 和 _。每个配置都有自己的插件和存档。",
@@ -93,6 +103,7 @@
   "Log": "日志",
   "Looking for the game…": "正在查找游戏…",
   "Measuring…": "正在计算…",
+  "Multiplayer": "多人游戏",
   "New profile": "新建配置",
   "News": "新闻",
   "Next": "下一步",
@@ -151,6 +162,7 @@
   "Storage": "存储",
   "Switch the copy of F1 25 Play uses": "切换“开始游戏”使用的 F1 25 副本",
   "Switch to it": "切换到它",
+  "ERC Launcher looked at what the game left behind and didn't recognise this crash. Send your logs to the developers, then join the ERC Developments Discord so they can get back to you.": "ERC Launcher 检查了游戏留下的信息，但无法识别这次崩溃。请将日志发送给开发者，然后加入 Swofty Developments Discord，以便他们回复你。",
   "TV mode": "电视模式",
   "TV or handheld": "电视或掌机",
   "The launcher's own text. Text that isn't translated yet stays in English, and addons and F1 25 keep their own": "启动器本身的文字。尚未翻译的文字仍显示为英文，插件和 F1 25 使用各自的语言",
@@ -163,6 +175,7 @@
   "View log": "查看日志",
   "WHAT TO DO": "该怎么做",
   "We couldn't tell why it crashed": "无法确定崩溃原因",
+  "Welcome to": "欢迎使用",
   "What happened": "发生了什么",
   "What to do": "该怎么做",
   "When you press Play": "按“开始游戏”时",
@@ -203,6 +216,7 @@
   "Free there": "目标可用空间",
   "From": "来源",
   "Interface": "界面",
+  "It is on the same drive, so it moves in a moment. ERC Launcher restarts when it is done.": "目标在同一磁盘上，很快就能移动完成。完成后 ERC Launcher 会重新启动。",
   "Links": "链接",
   "Location": "位置",
   "Logs": "日志",
@@ -219,6 +233,9 @@
   "PC mode": "PC 模式",
   "Restarting to finish the move": "正在重新启动以完成移动",
   "Restarting to use your addons and saves": "正在重新启动以使用你的插件和存档",
+  "ERC Launcher": "ERC Launcher",
+  "ERC Launcher locks while it copies and restarts when it is done. Your addons and saves stay where they are until the copy checks out.": "复制期间 ERC Launcher 会被锁定，完成后会重新启动。在复制校验通过之前，你的插件和存档会保留在原处。",
+  "This launcher has none of your addons yet. ERC Launcher restarts to use the ones below.": "此启动器中还没有你的插件。ERC Launcher 将重新启动并使用下方找到的内容。",
   "To": "目标",
   "Unknown": "未知",
   "Up to date": "已是最新",
@@ -232,6 +249,7 @@
   "We found your addons and saves": "我们找到了你的插件和存档",
   "Your addons and saves are already moving": "你的插件和存档正在移动中",
   "Your addons and saves are back. They are in {to}": "你的插件和存档已恢复，位于 {to}",
+  "Your addons and saves are copied. Close ERC Launcher and open it again to finish the move. ({error})": "你的插件和存档已复制。请关闭 ERC Launcher 后重新打开以完成移动。（{error}）",
   "Your addons and saves moved to {to}": "你的插件和存档已移动到 {to}",
   "Your addons and saves moved to {to}, but the old copy in {old} could not be deleted. You can delete it yourself.": "你的插件和存档已移动到 {to}，但无法删除 {old} 中的旧副本。你可以自行删除。",
   "Your addons and saves were not moved": "你的插件和存档未被移动",
@@ -558,7 +576,6 @@
   "Hide profiles": "隐藏配置",
   "Hint": "提示",
   "Home": "主页",
-  "Home screen video": "主界面视频",
   "Homepage": "主页",
   "I understand": "我已了解",
   "ID {id} · versions look like 1.2.0": "ID {id} · 版本格式如 1.2.0",
@@ -599,7 +616,6 @@
   "Its files are deleted and it is taken out of every profile. You can install it again later.": "其文件将被删除，并从所有配置中移除。你之后可以重新安装。",
   "Its shader config stays in Shaders while it's off": "关闭时，其着色器预设会保留在“着色器”中",
   "Joined {month} {year}": "{year} 年{month}加入",
-  "Joining…": "正在加入…",
   "Keep building": "继续构建",
   "Keep launcher open": "保持启动器打开",
   "Keep this window's changes": "保留此窗口的更改",
@@ -621,7 +637,6 @@
   "Loading runs…": "正在加载提交…",
   "Loading saves…": "正在加载存档…",
   "Loading supporters…": "正在加载支持者…",
-  "Loading the goal…": "正在加载目标…",
   "Loading the leaderboard…": "正在加载排行榜…",
   "Loading the profile…": "正在加载个人资料…",
   "Loading their addons…": "正在加载其插件…",
@@ -654,7 +669,6 @@
   "Mods like this one go through the Simplified Importer, which turns them into addons.": [
     "这类模组需要通过 Simplified Importer 导入，它会将其转换为插件。"
   ],
-  "Monthly goal": "每月目标",
   "More": "更多",
   "More from {name}": "{name} 的更多作品",
   "Most downloads": "下载最多",
@@ -772,7 +786,6 @@
   "Open in Shaders": "在着色器中打开",
   "Open in browser": "在浏览器中打开",
   "Opened {file} as a new addon. Review it, then Save as Addon.": "已将 {file} 作为新插件打开。请检查后点击“另存为插件”。",
-  "Opening room…": "正在开启房间…",
   "Opening the clip": "正在打开片段",
   "Original": "原始",
   "Outside EA's terms of service": "超出 EA 服务条款范围",
@@ -794,7 +807,6 @@
   "Pin": "固定",
   "Plans this profile's build without installing it": "规划此配置的构建，但不安装",
   "Play F1 25": "游玩 F1 25",
-  "Play anyway": "仍然开始游戏",
   "Play when the conflict check finishes.": "请在冲突检查完成后开始游戏。",
   "Play with your Steam saves": "使用你的 Steam 存档游戏",
   "Play without shaders": "不使用着色器游戏",
@@ -803,6 +815,7 @@
   "Preview": "预览",
   "Publisher": "发布者",
   "Put this lap's replay into the game's Theatre": "将此圈的回放放入游戏的剧场",
+  "Putting back the files ERC changed…": "正在还原 Swofty 更改过的文件…",
   "P{position}": "P{position}",
   "Queued": "已排队",
   "Queued · View downloads": "已排队 · 查看下载",
@@ -892,6 +905,7 @@
   "Season: {name}": "赛季：{name}",
   "See all": "查看全部",
   "Send logs": "发送日志",
+  "Sends your logs to the developers on Discord, so they can see what went wrong.": "将你的日志通过 Discord 发送给开发者，以便他们了解问题所在。",
   "Set all": "全部设置",
   "Set all {n} to the {end}, {v}": "将全部 {n} 项设为{end}值 {v}",
   "Set all {n} to {shown}": "将全部 {n} 项设为 {shown}",
@@ -906,6 +920,7 @@
   "Show me": "查看",
   "Show more laps": "显示更多圈速",
   "Show profiles": "显示配置",
+  "Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "在插件赛季的计时赛中显示 Swofty 排行榜和对手幽灵车。实验性功能。",
   "Show the car setup": "显示赛车调校",
   "Show the log in the file manager": "在文件管理器中显示日志",
   "Show {count} older version": [
@@ -935,11 +950,9 @@
   "Stock: {s}": "原版：{s}",
   "Stop F1 25?": "要停止 F1 25 吗？",
   "Stop game": "停止游戏",
-  "Support": "支持",
-  "Supporters": "支持者",
-  "Supporting a free and open-source launcher": "支持一个免费、开源的启动器",
-  "No ads in the launcher": "启动器内无广告",
   "Switch away from {vanilla} to use addons": "切换到 {vanilla} 以外的配置才能使用插件",
+  "ERC Developments": "Swofty Developments",
+  "ERC stops after the file it is on and puts the game files back. Your profile and addons stay as they are, and the next Play builds again.": "Swofty 会在处理完当前文件后停止，并还原游戏文件。你的配置和插件保持不变，下次“开始游戏”时会重新构建。",
   "Synced stars": "已同步星标",
   "Syncing stars…": "正在同步星标…",
   "TYPE": "类型",
@@ -1006,6 +1019,7 @@
   "Time Trial": "计时赛",
   "Time Trial boards": "计时赛排行榜",
   "Time Trial laps show up here once they are uploaded.": "计时赛圈速上传后会显示在这里。",
+  "Tools that make or edit ERC addons": "用于制作或编辑 Swofty 插件的工具",
   "Track can't be used": "赛道无法使用",
   "Track: {count} picked": "赛道：已选 {count} 条",
   "Track: {name}": "赛道：{name}",
@@ -1084,11 +1098,13 @@
   "We don't see a game launch in your logs yet. Press Play and reproduce the problem first, then send logs.": "你的日志中还没有游戏启动记录。请先按“开始游戏”并重现问题，然后再发送日志。",
   "We may collect anonymised usage data from your use of the launcher.": "我们可能会收集你使用启动器时的匿名使用数据。",
   "Web": "网页",
+  "Welcome to ERC Launcher": "欢迎使用 ERC Launcher",
   "What gets sent": "会发送哪些内容",
   "What happened? What were you doing when it went wrong?": "发生了什么？出问题时你正在做什么？",
   "What the addon changes": "插件更改了什么",
   "What went wrong?": "出了什么问题？",
   "Wheel": "方向盘",
+  "Windows blocks dragging files onto a program that runs as administrator. Choose files with the launcher's buttons instead, or open ERC Launcher normally to drag and drop.": "Windows 会阻止将文件拖到以管理员身份运行的程序上。请改用启动器的按钮选择文件，或以普通方式打开 ERC Launcher 再拖放。",
   "Works with any game version": "适用于任何游戏版本",
   "Works with this game version": "适用于此游戏版本",
   "Works with this launcher": "适用于此启动器",
@@ -1110,6 +1126,9 @@
   "Your changes could not be saved to the draft: {e}": "无法将你的更改保存到草稿：{e}",
   "Your name": "你的名字",
   "Yours": "你的",
+  "a file ERC did not put in the game folder is in the way": [
+    "有不是 Swofty 放入游戏文件夹的文件造成了阻碍"
+  ],
   "also installed {names}": "同时安装了 {names}",
   "an antivirus removed mod files, so F1 25 was not started": "杀毒软件移除了模组文件，因此 F1 25 未启动",
   "and {count} more": "以及另外 {count} 个",
@@ -1143,7 +1162,6 @@
   "none": "无",
   "now": "当前",
   "number": "数字",
-  "of": "/",
   "off in {profile}": "在 {profile} 中关闭",
   "on in {profile}": "在 {profile} 中开启",
   "one of": "以下之一",
@@ -1194,9 +1212,6 @@
   "{changes} {verb} an addon, turned on in {profile}.": "{changes}{verb}一个插件，并已在 {profile} 中开启。",
   "{changes} · {size} · saved to {path}": "{changes} · {size} · 已保存到 {path}",
   "{changes}, saved or not": "{changes}（无论是否已保存）",
-  "{count} addon career may have been removed from your Steam save when F1 25 started without the launcher: {names}. The last version that held it is from {when}.": [
-    "F1 25 未通过启动器启动时，可能已从你的 Steam 存档中移除了 {count} 个插件生涯：{names}。包含其内容的最后一个版本来自 {when}。"
-  ],
   "{count} addon installed": [
     "已安装 {count} 个插件"
   ],
@@ -1277,6 +1292,7 @@
   "{count} record": [
     "{count} 条记录"
   ],
+  "{count} releases": "{count} 个版本",
   "{count} removal": [
     "{count} 项移除"
   ],
@@ -1315,6 +1331,7 @@
   "{error} · Already installed: {names}": "{error} · 已安装：{names}",
   "{error} · {waiting}": "{error} · {waiting}",
   "{feed_url}: HTTP {status}": "{feed_url}：HTTP {status}",
+  "{feed_url}: not a news feed": "{feed_url}：不是新闻源",
   "{from} replaces the save of {to}. Its current save is kept as a version.": "{from} 将替换 {to} 的存档。其当前存档会作为一个版本保留。",
   "{imported} imported · {unchanged} unchanged": "已导入 {imported} 个 · {unchanged} 个未更改",
   "{installed} · {on} on in {name}": "{installed} · {name} 中已开启 {on} 个",
@@ -1377,7 +1394,15 @@
   "Too many tracks": "赛道过多",
   "Left out: the game holds {room} tracks": "已排除：游戏最多容纳 {room} 条赛道",
   "{shown} and {more} more": "{shown} 等另外 {more} 条",
-  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": ["游戏最多容纳 {room} 条赛道，因此 {count} 条赛道被排除在此次构建之外：{list}。关闭一些赛道插件即可游玩。"],
+  "The game holds {room} tracks, so {count} track is left out of this build: {list}. Turn some track addons off to play it.": [
+    "游戏最多容纳 {room} 条赛道，因此 {count} 条赛道被排除在此次构建之外：{list}。关闭一些赛道插件即可游玩。"
+  ],
+  "The launcher couldn't reach ERC's server in time.": "启动器未能及时连接到 Swofty 的服务器。",
+  "ERC's server didn't offer it to you.": "Swofty 的服务器没有向你提供它。",
+  "The download failed its safety check.": "下载的文件未通过安全检查。",
+  "Time Trial laps you drive this session won't be sealed, so they won't rank on the boards. Everything else works as usual. To try again, close the game and press Play.": "你在本次会话中跑出的计时赛圈速不会被封存，因此不会计入排行榜。其他功能照常可用。要重试，请关闭游戏并点击“开始游戏”。",
+  "Details: {why}": "详情：{why}",
+  "The Time Trial integrity module didn't load": "计时赛完整性校验模块未能加载",
   "MEDIA": "媒体",
   "Picture": "图片",
   "Video": "视频",
@@ -1404,5 +1429,29 @@
   "Right-click {path}, open Properties > Compatibility and untick \"Run this program as an administrator\", also under \"Change settings for all users\". Then press Play again.": "右键单击 {path}，打开“属性”>“兼容性”，取消勾选“以管理员身份运行此程序”，并在“更改所有用户的设置”中同样取消勾选。然后再次点击“开始游戏”。",
   "These files are set to run as administrator, so Windows won't start them for an EA app session (error 740):\n{paths}": "以下文件被设置为以管理员身份运行，因此 Windows 不会为 EA app 会话启动它们（错误 740）：\n{paths}",
   "For each one, right-click it, open Properties > Compatibility and untick \"Run this program as an administrator\", also under \"Change settings for all users\". Then press Play again.": "逐个右键单击这些文件，打开“属性”>“兼容性”，取消勾选“以管理员身份运行此程序”，并在“更改所有用户的设置”中同样取消勾选。然后再次点击“开始游戏”。",
-  "The EA app starts F1 25 without administrator rights, so running Swofty Launcher as administrator doesn't help.": "EA app 会在没有管理员权限的情况下启动 F1 25，因此以管理员身份运行 Swofty Launcher 没有帮助。"
+  "The EA app starts F1 25 without administrator rights, so running ERC Launcher as administrator doesn't help.": "EA app 会在没有管理员权限的情况下启动 F1 25，因此以管理员身份运行 ERC Launcher 没有帮助。",
+  "Restore waits for Play": "恢复将在开始游戏时进行",
+  "A restore is waiting. The game applies it the next time you press Play.": "有一项恢复正在等待。游戏会在你下次按“开始游戏”时应用它。",
+  "{mode} comes back from the saved copy the next time you press Play.": "下次按“开始游戏”时，{mode} 会从保存的副本中恢复。",
+  "The career was not restored: {error}": "未能恢复该生涯：{error}",
+  "Forget": "忘记",
+  "Take this career off the list. No save is deleted, and it shows again if the game finds it.": "将此生涯从列表中移除。不会删除任何存档，游戏再次找到它时会重新显示。",
+  "The career was not forgotten: {error}": "未能忘记该生涯：{error}",
+  "Careers missing from the save the game read: {names}. Saved copy: {at}": "游戏读取的存档中缺少这些生涯：{names}。保存的副本：{at}",
+  "{count} career is in the last save a launcher session wrote but not in the save the game read since: {names}. The launcher's saved copy from {when} still has it. Restore puts it back the next time you press Play.": [
+    "最近一次由启动器会话写入的存档中有 {count} 个生涯，但游戏此后读取的存档里没有：{names}。启动器在 {when} 保存的副本中仍有它。“恢复”会在你下次按“开始游戏”时把它放回去。"
+  ],
+  "{whose} kept F1 25 on Loading... after Press any button in {count} session(s). The launcher left it as it is and kept a copy. The version from {when} loaded before; Restore puts it back, and the save as it is stays in Versions.": [
+    "{whose}：在 {count} 次会话中，F1 25 在“按任意按钮”之后停在了“正在加载…”界面。启动器保持存档原样并保留了一份副本。{when} 的版本此前可以正常加载；“恢复”会把它放回去，而当前状态的存档会保留在“版本”中。"
+  ],
+  "{whose} kept F1 25 on Loading... after Press any button in {count} session(s). The launcher left it as it is and kept a copy, and holds no earlier version to restore.": [
+    "{whose}：在 {count} 次会话中，F1 25 在“按任意按钮”之后停在了“正在加载…”界面。启动器保持存档原样并保留了一份副本，且没有更早的版本可供恢复。"
+  ],
+  "The save of profile {profile}": "配置 {profile} 的存档",
+  "From {when}": "{when}的版本",
+  "In the game's save · {container}": "游戏存档中 · {container}",
+  "Kept by the launcher · {container}": "由启动器保管 · {container}",
+  "Put back by the launcher · {container}": "由启动器放回 · {container}",
+  "The game applied the last restore: {detail}": "游戏已应用上次的恢复：{detail}",
+  "The game could not apply the last restore: {detail}": "游戏无法应用上次的恢复：{detail}"
 }

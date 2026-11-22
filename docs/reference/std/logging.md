@@ -174,6 +174,14 @@ Crashes, with the exception, registers and a stack named from `symbols.tsv`. The
 [crash] ExitProcess(1) on thread 340, 11 s after load; caller stack:
 ```
 
+An exit that ends a close the game was asked for writes no report: a non-zero exit within 60 s of the game's window getting `WM_CLOSE` or `WM_ENDSESSION`, or after the launcher wrote the session's `stop_requested`. An exit within 10 s of a fatal exception still gets one.
+
+```text
+[crash] the game's window got WM_CLOSE; an exit within 60 s is that close, with no crash report
+[crash] TerminateProcess(1) on thread 33672, 20 s after load; caller stack:
+[crash] TerminateProcess(1) ends a close the game was asked for (WM_CLOSE 0.4 s earlier); no crash report
+```
+
 A fast-fail ends the game with exit code `0xc0000409` and skips every exception handler, so the core hooks the paths that end in one before they run: `__report_gsfailure` (a stack cookie check failed), the CRT's invalid-parameter terminate path, the CRT's `abort()` path and `RaiseFailFastException`. The report is written first and the fast-fail then goes ahead. Its reason names the path, the fast-fail code and the exit code, and its `Exception` section carries the code as parameter 0:
 
 ```text
@@ -267,6 +275,7 @@ These environment variables change what swofty_core and the loader log. Set them
 - `SWOFTY_PROFILE=0`: turns the [performance report](#performance-report) off.
 - `SWOFTY_PERF_HITCH_MS=<ms>`: the frame time the performance report counts as a hitch. Default 50.
 - `SWOFTY_PERF_SLOW_CALL_MS=<ms>`: the time a single hook or callback takes before the performance report lists it as a slow call. Default 8.
+- `SWOFTY_PERF_GPU_ENGINE=0`: turns the 3D engine use in the performance report off. The core then makes no GPU Engine performance counter calls.
 - `SWOFTY_FRAME_CAPTURE=<folder>`: writes the presented frame, overlay included, to `<folder>\frame-NNNN.png` every `SWOFTY_FRAME_CAPTURE_EVERY` seconds (default 10). Under Proton, give a Windows path such as `Z:\mnt\work\shots`. It arms the overlay's present hook even when no addon turns the overlay on, and captures only swapchains the overlay would draw on:
 
   ```text
@@ -276,6 +285,12 @@ These environment variables change what swofty_core and the loader log. Set them
 - `SWOFTY_OVERLAY_KILL=<list>`: turns overlay parts off: `all`, `paint`, `capture` or `hdr`, comma-separated. `"overlay_kill"` in `swofty/assets.json` does the same.
 - `SWOFTY_OVERLAY_FG`: draws the overlay into the game's back buffer before frame generation, so generated frames carry it. On by default when frame generation is on in the game's settings at start. `SWOFTY_OVERLAY_FG=0` or `"overlay_fg": false` in `swofty/assets.json` turns it off, and keeps the device hooks off for a swapchain that names no present queue; `=1` or `true` turns it on whatever the game's setting.
 - `SWOFTY_OVERLAY_RIVAL=1`: arms the overlay's `Present` hook while RivaTuner Statistics Server is running. Without it the hook stays off and nothing draws over the game. `"overlay_rival": true` in `swofty/assets.json` does the same.
+- `SWOFTY_ARM_SYNC=1`: makes the core's D3D12 hooks (overlay, post-processing, shaders, srv clamp, ray tracing build guard) and their probe device in the core's ready stage, before the game goes on, as before 1.10.0. Without it they are made on a worker while the game boots, and the game's first `D3D12CreateDevice` and `CreateDXGIFactory` calls wait for it. One line says where they are made:
+
+  ```text
+  [d3d12] the D3D12 arm runs in the stage: SWOFTY_ARM_SYNC=1
+  ```
+
 - `SWOFTY_OVERLAY_NITS=<nits>`: the overlay's paper white on HDR10 and scRGB output, 80 to 1000. Default 350, the level of the game's own HUD white.
 - `SWOFTY_KEEP_FOCUS=1`: keeps the game running when its window loses focus. swofty_core drops `WM_KILLFOCUS`, `WM_ACTIVATE(WA_INACTIVE)` and `WM_ACTIVATEAPP(FALSE)` before the game's window procedure sees them, and hands a window that starts without focus one `WM_SETFOCUS`. A race in a parked or hidden window then runs instead of stopping at the pause menu. For test runs only.
 - `SWOFTY_POSTFX_CAPTURE=<folder>`: for developing [post-process passes](/reference/addons/postfx). Writes the picture just before and just after the passes to `<folder>\postfx-NN-before.ppm` and `postfx-NN-after.ppm`, at most six pairs, ten seconds apart, the first thirty seconds after the passes start. The pictures have no HUD. Under Proton, give a Windows path:
@@ -371,7 +386,11 @@ After the three lines above, the core logs six more every minute:
 
 `presents` counts the `Present` and `Present1` calls on the game's swapchain, timed in the core's Present hook: their intervals, with the same measures as `pacing`, the time the call took (with VSync on, the wait for a free back buffer shows here), the sync interval the game passed and the share of presents with the tearing flag. Presents to other swapchains, occluded presents and failed presents, with the last error code, are counted at the end. `per game frame` above 1 means the game presents more often than its frame index advances.
 
-`gpu N` is the GPU the game's swapchain runs on, sampled every 5 seconds. The clocks, temperature, power and fan come from the graphics driver; a driver that gives none logs one `[perf] gpu N: the driver gives no ...` line and the minute line says `clocks and sensors unavailable`. The 3D engine use comes from the Windows GPU Engine performance counters, split into the game and the other processes, with the busiest other process. `[perf] gpu engine use:` says once how it is sampled; a counter read over 250 ms moves sampling to every 30 seconds, and one over 2 seconds turns it off.
+`gpu N` is the GPU the game's swapchain runs on, sampled every 5 seconds. The clocks, temperature, power and fan come from the graphics driver; a driver that gives none logs one `[perf] gpu N: the driver gives no ...` line and the minute line says `clocks and sensors unavailable`. The 3D engine use comes from the Windows GPU Engine performance counters, read through pdh.dll, which the core keeps loaded until the game closes. It is split into the game and the other processes, with the busiest other process. `[perf] gpu engine use:` says once how it is sampled; a counter read over 250 ms moves sampling to every 30 seconds, and one over 2 seconds turns it off. A fault in a counter call turns it off for the session, with one line that names the call, the exception code and the address:
+
+```text
+[perf] gpu engine use: PdhAddEnglishCounterW faulted (0xc0000005 at pdh.dll+0x6a35); 3D engine use is not sampled from now on
+```
 
 `cpu` has the load of the whole system and of its busiest core, sampled every 5 seconds, the clocks Windows reports with their limit (a limit under the maximum is throttling), and the busiest thread that swofty code did not start.
 

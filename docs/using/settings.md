@@ -79,6 +79,8 @@ On the same drive the folder is renamed and nothing is copied. A copy is checked
 
 The launcher refuses to start the move while F1 25 is open, a build is running or downloads are queued. It refuses a whole drive, a folder inside or around the launcher's own folder, inside or around the F1 25 folder, inside the folder they are in now, one that isn't empty, one it can't write to, and one on a drive without room for the data plus a margin. When `SWOFTY_DATA_DIR` sets the folder, it refuses and says so: change the variable instead.
 
+When your addons and saves are in the launcher's own folder, or the launcher is installed inside theirs, **Move…** moves nothing. It names the folder they are in, the one a junction or link resolves to, and points to the installer: install to a new, empty folder and the installer moves only the launcher's files there; see [Moving your addons and saves](/guide/installation#moving-your-addons-and-saves). A folder of their own inside the launcher's folder moves out as usual, without the launcher's files.
+
 If the launcher or the computer stops during a move, the next start finishes it or puts everything back. When the old copy can't be deleted, the message names it so you can delete it yourself.
 
 ### Finding your addons and saves
@@ -102,7 +104,7 @@ A hard link joins two names for one file and only works inside one drive. Play k
 
 The first Play copies every file; later Plays copy only files that are new or whose size or modified time changed, and delete files that are no longer placed. A cached copy the game wrote to is copied again.
 
-The copy stays when the game goes back to stock. It needs the size of those files on F1 25's drive plus 2 GB to spare; with less room, Play copies each file straight into the game folder and the Play log says why. **Clear** removes the copy at any time and doesn't run while F1 25 is open; the next Play rebuilds it.
+The copy stays when the game goes back to stock. Play needs room on F1 25's drive for the files the copy doesn't hold yet, plus 2 GB to spare; with less room, Play copies each file straight into the game folder and the Play log says why. With the copy up to date, Play needs at most those 2 GB there, not the size of the profile. When neither fits, Play stops with `not enough free space on <drive>` and the room it needs; see [Free space](/reference/restore#free-space). **Clear** removes the copy at any time and doesn't run while F1 25 is open; the next Play rebuilds it.
 
 ### Low space when you press Play
 

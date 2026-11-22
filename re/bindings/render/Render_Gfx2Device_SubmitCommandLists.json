@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Render_Gfx2Device_SubmitCommandLists",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1439dc660",
+  "level": "L1",
+  "subsystem": "render",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/1439dc660.c;xref:0x142bcff15,0x14379c4f6,0x1439dc289",
+  "notes": "Under device CS copies param_2 entries of param_3 into a stack array (Ne_Crt_Chkstk): entries with byte +0x38 == 0 are collected, the others move into the per-frame list at +0x38e0+frame*0x50 (count +0x38f0, size +0x38f8); stamps +0x30 with device+0xa38; if any were collected calls 0x1439e1700 (jmp to .data1 0x151f79060). Callers 0x142bcfc30, 0x14379c250, Render_Gfx2_AcquireBackbuffer 0x1439ad480."
+ },
+ "signature": {
+  "id": "render.gfx2_device_submit_command_lists",
+  "section": ".xtls",
+  "pattern": "55 41 57 41 56 41 54 56 57 53 48 89 E5 4C 89 C7",
+  "match": "0x1439dc660",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x1439dc660",
+  "kind": "func_start",
+  "names": [
+   "Render_Gfx2Device_SubmitCommandLists"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-30",
+    "by": "engine-re",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "vp2-verify",
+   "kind": "func",
+   "item": "0x1439dc660",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/1439dc660.c;xref:0x142bcff15",
+   "notes": "V7778 name, concrete offsets/strings/callers match decomp"
+  }
+ ],
+ "proofs": []
+}

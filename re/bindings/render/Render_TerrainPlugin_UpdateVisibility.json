@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Render_TerrainPlugin_UpdateVisibility",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x143c36650",
+  "level": "L1",
+  "subsystem": "render",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/143c36650.c;xref:0x143c34e33,0x143cefb09,0x143df03a3",
+  "notes": "Mode param_3: 1 logs 'double set of PVS-MIP camera in one frame' (channel AndrewW) when +0x1c8 == +0x20; 2 checks LOD ranges +0x10604..; then cell lookups in flat hash maps (+0x58 seed, +0x60..+0x8c; +0xd8/+0x90 via Ne_FlatHashMap_FindSlotKey16_D), atan2f. Render_TerrainPlugin_Render calls it with mode 6 on [x+0x40]."
+ },
+ "signature": {
+  "id": "render.terrain_plugin_update_visibility",
+  "section": ".xtls",
+  "pattern": "41 57 41 56 41 55 41 54 56 57 55 53 48 81 EC C8 00 00 00 C5 78 29 84 24 B0 00 00 00 C5 F8 29 BC 24 A0 00 00 00 C5 F8 29 B4 24 90 00 00 00 44 89",
+  "match": "0x143c36650",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x143c36650",
+  "kind": "func_start",
+  "names": [
+   "Render_TerrainPlugin_UpdateVisibility"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-30",
+    "by": "engine-re",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "vp3-verify",
+   "kind": "func",
+   "item": "0x143c36650",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/143c36650.c;xref:0x143c34e33",
+   "notes": "V7864 name and concrete claims match code"
+  }
+ ],
+ "proofs": []
+}

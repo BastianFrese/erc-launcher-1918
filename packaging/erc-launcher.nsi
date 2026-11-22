@@ -10,29 +10,29 @@ Unicode true
 SetCompressor /SOLID lzma
 
 !define NAME "ERC Launcher"
-!define VERSION "1.4.4"
+!define VERSION "1.5.0"
 !define HERSTELLER "Erdi's Racing Community"
 ; Ueberschreibbar fuer eine Vorabfassung: makensis //DQUELLE=<ordner> ...
 !ifndef QUELLE
-  !define QUELLE "C:\Users\basti\source\repos\swofty-erc-1918\dist-1918"
+  !define QUELLE "C:\Users\basti\source\repos\erc-launcher-110\dist-110"
 !endif
 !define ZIEL "$LOCALAPPDATA\Programs\ERCL"
 !define SCHLUESSEL "Software\Microsoft\Windows\CurrentVersion\Uninstall\ERCL"
 
 Name "${NAME} ${VERSION}"
-OutFile "C:\Users\basti\source\repos\swofty-erc-1918\ERC-Launcher-${VERSION}-setup.exe"
+OutFile "C:\Users\basti\source\repos\erc-launcher-110\ERC-Launcher-${VERSION}-setup.exe"
 InstallDir "${ZIEL}"
 InstallDirRegKey HKCU "${SCHLUESSEL}" "InstallLocation"
 RequestExecutionLevel user
 BrandingText "${HERSTELLER}"
-Icon "C:\Users\basti\source\repos\erc-launcher\src-tauri\icons\icon.ico"
-UninstallIcon "C:\Users\basti\source\repos\erc-launcher\src-tauri\icons\icon.ico"
+Icon "C:\Users\basti\source\repos\erc-launcher-110\apps\launcher\assets\icon.ico"
+UninstallIcon "C:\Users\basti\source\repos\erc-launcher-110\apps\launcher\assets\icon.ico"
 
 !include "MUI2.nsh"
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "C:\Users\basti\source\repos\erc-launcher\src-tauri\icons\icon.ico"
-!define MUI_UNICON "C:\Users\basti\source\repos\erc-launcher\src-tauri\icons\icon.ico"
+!define MUI_ICON "C:\Users\basti\source\repos\erc-launcher-110\apps\launcher\assets\icon.ico"
+!define MUI_UNICON "C:\Users\basti\source\repos\erc-launcher-110\apps\launcher\assets\icon.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\erc-launcher.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "ERC Launcher jetzt starten"
 
@@ -90,7 +90,7 @@ Section "ERC Launcher" SecMain
 
   ; Die Liga-Mod wird nicht mehr mitgeliefert (noch nicht fertig). Wer sie aus einer
   ; frueheren Fassung hat, verliert sie hier — die Dateien liegen nur im Programmordner.
-  RMDir /r "$INSTDIRddons\erdi.erc-liga"
+  RMDir /r "$INSTDIR\addons\erdi.erc-liga"
 
   CreateDirectory "$SMPROGRAMS\ERC Launcher"
   CreateShortCut "$SMPROGRAMS\ERC Launcher\ERC Launcher.lnk" "$INSTDIR\erc-launcher.exe"

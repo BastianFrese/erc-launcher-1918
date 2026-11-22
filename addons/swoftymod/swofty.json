@@ -30,10 +30,19 @@
     {
       "id": "startup_intro",
       "type": "toggle",
-      "label": "Fremder Start-Intro",
-      "description": "Spielt das sechssekündige Intro eines fremden Projekts anstelle des EA-SPORTS-Startvideos. Aus: das Spiel zeigt sein eigenes Intro, der ERC-Ladebildschirm bleibt davor.",
-      "default": false,
+      "label": "Swofty startup intro",
+      "description": "Play the 6 second Swofty logo intro in place of the EA SPORTS startup video. Another addon that replaces the startup video takes its place. Applies the next time you press Play.",
+      "default": true,
       "binds": "db",
+      "multiplayer": "cosmetic"
+    },
+    {
+      "id": "shorter_loading_waits",
+      "type": "toggle",
+      "label": "Shorter loading waits",
+      "description": "Skip the 3 second waits the game adds to loading screens and between sessions. Applies the next time you press Play.",
+      "default": true,
+      "binds": "native",
       "multiplayer": "cosmetic"
     }
   ],

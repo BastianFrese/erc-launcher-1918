@@ -1,132 +1,50 @@
-# ERC Launcher for F1 25
+# Swofty Launcher for F1 25
 
-The launcher of **Erdi's Racing Community**: it starts F1 25 with the league's mods, compares the
-mods before anyone joins, and opens lobbies on our own server instead of a third-party one.
+A launcher and mod loader for F1 25 on Windows and Linux. Addons change the game's data and engine, mods and community tracks drop onto the Mods page, and profiles keep separate setups.
 
-Built on [Swofty Launcher](https://github.com/Swofty-Developments/SwoftyLauncher) by Jacob Nardella
-(Swofty). Upstream arrives as release tags (`v1.9.x`); our own work sits on top of them. The upstream
-parts up to v1.9.61 are under the GNU Affero General Public License v3 — see [LICENSE-AGPL](LICENSE-AGPL);
-from v1.9.62 upstream is under the PolyForm Noncommercial License 1.0.0 — see [LICENSE](LICENSE).
+![The launcher's Home page with the Swofty Launcher 1.9 news post, the Discord server banner and the changelogs](docs/public/screenshots/hero-launcher.png)
 
-## What the league added
+## Features
 
-### Lobby on our own relay
-
-The **Multiplayer** page opens a room and hands out a four-character code; everyone else types that
-code in and joins. No account, no sign-in, no open port at home. The room server
-(`server/raum/raum-server.py`) only issues codes, room keys and member numbers — the race packets
-themselves travel over the relay (`server/relay/erc-relay.py`, UDP `f1.erdi-erc.de:35501`), which
-knows a room only by the code its packets carry. Room content is sealed with a key the server hands
-out, so nobody outside the room can read it.
-
-### Mod comparison before joining
-
-The host sends a fingerprint of everything it runs: addons, versions, tracks, data packages. The
-launcher turns that into work — missing or mismatched mods are fetched from the catalog, mods the
-host does not run are switched off for that profile. If a difference survives, joining does not
-happen and the launcher names the open point instead of letting the session fail later. See
-`apps/launcher/src/abgleich.rs` and `packages/core/src/multiplayer/fingerprint.rs`.
-
-### Player counter
-
-Every launcher sends a heartbeat to the room server once a minute; the server counts the distinct
-machines seen in the last five minutes and says how many of them are in the game. The start page
-shows it as one line, and the league mod shows the same number as a race HUD toast. See
-`apps/launcher/src/presence.rs`, `POST/GET /v1/presence` in the room server, and `presence.json`
-next to the launcher's data.
-
-### Updates
-
-At start the launcher asks `download.erdi-erc.de/updates.json` for a newer version, verifies the
-SHA-256 of the setup before running it, and replaces itself. The button in the title bar stays short;
-the full changelog lives on the start page.
-
-### League mod
-
-`dist-1918/addons/erdi.erc-liga` connects the race control's panel to the game: a small text file
-becomes a race HUD notification (flags, penalties, race-control messages). It is our own addon and
-is not published separately.
-
-### German by default
-
-The launcher starts in German; other languages remain in the settings.
-
-## The servers behind it
-
-| Server | Where | What |
-|---|---|---|
-| Room server | `server/raum/`, LXC 121, `raum.erdi-erc.de` | room codes, room keys, member numbers, player counter |
-| Relay | `server/relay/`, UDP `f1.erdi-erc.de:35501` | carries the race packets; the room list answers `ERC-LOBBYS` |
-| Protocol | `server/protokoll/`, LXC 121 | takes session reports from the league's machines |
-
-All three are plain Python 3 with the standard library only.
-
-## Everything else comes from upstream
-
-- **Addons:** anything with a `swofty.json`, installed on the Addons page. Data addons change the game
-  database, text, `.erp` archives and menus; code addons edit the F1 25 engine directly, from new
-  menus and settings to bigger grids.
-- **Mods:** `.serps` packages, `.erp` archives and other game files in a zip, 7z, RAR or folder, plus
-  community tracks.
-- **DB Editor:** change drivers, teams, line-ups, tracks, the calendar, weather and points, saved as
-  packages you can stack and share.
-- **Profiles:** keep separate setups; the game folder goes back to vanilla when a session ends.
-- **In-game addon settings:** under **ADDON SETTINGS** in the game's main menu.
-- **ERC UI:** view and edit the game's menu layouts (`.idf` scenes) and ship the edits in an addon.
+- **Addons:** Anything with a `swofty.json`, installed on the Addons page. Data addons change the game database, text, `.erp` archives, menus and files through operations, applied at build time or while the game boots through the Asset API. Code addons use the Advanced Mod Mixin System to edit the F1 25 engine directly, from new menus and settings to bigger grids, or add pages to the launcher.
+- **Mods:** Content with no code, as the Simplified Suite loads it: `.serps` packages, `.erp` archives and other game files in a zip, 7z, RAR or folder, and community tracks such as Sepang and Okayama. Drop them on the launcher's Mods page, which comes from Team Simplified's Simplified for Swofty addon.
+- **DB Editor:** Change drivers, teams, line-ups, tracks, the calendar, weather, points and any other value in the game database from the launcher. Changes are saved as packages: data addons you turn on per profile, stack and share as zips. EGO GameDatabases Editor exports of value changes import as packages.
+- **Profiles:** Keep separate setups like *Vanilla*, *26 car grid* or *Classic tracks*. The game folder goes back to vanilla when a session ends.
+- **In-game addon settings:** Change addon settings from the game's main menu, in **ADDON SETTINGS** under Career.
+- **Swofty UI:** View and edit the game's menu layouts (`.idf` scenes) with real textures, then ship the edits in an addon. It comes with every release as `bin/swofty-ui`. See [Swofty UI](https://f1.swofty.net/reference/ui/swofty-ui).
 
 ## Install
 
-Download `ERC-Launcher-<version>-setup.exe` from **https://download.erdi-erc.de** and run it. It
-installs per user under `%LOCALAPPDATA%\Programs\ERCL`, no administrator rights needed, and keeps
-itself up to date from then on.
+Follow the [installation guide](https://f1.swofty.net/guide/installation).
 
 ## Supported platforms
 
-- Windows 10 and 11, with F1 25 from **Steam** or the **EA App** — the core ships the build
-  signatures for both (four F1 25 builds at the time of writing). An unknown game build loads
-  neither the core nor any addon, and the loader says so in its log.
-- Linux with Steam and Proton is inherited from upstream and not tested by the league.
+- Windows 10 and 11 with Steam.
+- Linux with Steam and Proton, including Steam Deck, NixOS and Flatpak Steam.
+- F1 25 on Steam, including the F1 2026 season content.
 
-## Building
+## Contributing
 
 ```bash
-cargo test -p erc-launcher          # launcher tests
-cargo build --release               # builds erc-launcher.exe and swofty.exe
-native/build.sh                     # core DLLs; needs zig 0.16.0 on PATH
-makensis packaging/erc-launcher.nsi # the installer
+nix develop                     # development tools on NixOS
+cargo fmt --all --check
+cargo clippy --all-targets -- -D warnings
+cargo test                      # set F1_25_DIR to test with your game files
+cargo run -p swofty-launcher
+native/build.sh
+native/test/run_wine_test.sh
+pnpm install
+pnpm docs:dev
 ```
 
-`native/build-win.sh` is behind `native/build.sh` — use `build.sh`. It regenerates the binding sets
-and the supported-build table as part of the build.
+See the [development guide](https://f1.swofty.net/reference/development) for build details.
 
-## Source of the released installers
+## Licence
 
-| Installer | Tag |
-|---|---|
-| `ERC-Launcher-1.4.4-setup.exe` | [`erc-1.4.4`](../../releases/tag/erc-1.4.4) |
-| `ERC-Launcher-1.4.3-setup.exe` | [`erc-1.4.3`](../../releases/tag/erc-1.4.3) |
-| `ERC-Launcher-1.4.2-setup.exe` | [`erc-1.4.2`](../../releases/tag/erc-1.4.2) |
-| `ERC-Launcher-1.4.1-setup.exe` | [`erc-1.4.1`](../../releases/tag/erc-1.4.1) |
-| `ERC-Launcher-1.4.0-setup.exe` | [`erc-1.4.0`](../../releases/tag/erc-1.4.0) |
-| `ERC-Launcher-1.3.9-setup.exe` | [`erc-1.3.9`](../../releases/tag/erc-1.3.9) |
-| `ERC-Launcher-1.3.8-setup.exe` | [`erc-1.3.8`](../../releases/tag/erc-1.3.8) |
-| `ERC-Launcher-1.3.7-setup.exe` | [`erc-1.3.7`](../../releases/tag/erc-1.3.7) |
-| `ERC-Launcher-1.3.6-setup.exe` | [`erc-1.3.6`](../../releases/tag/erc-1.3.6) |
-| `ERC-Launcher-1.3.5-setup.exe` | [`erc-1.3.5`](../../releases/tag/erc-1.3.5) |
-| `ERC-Launcher-1.3.4-setup.exe` | [`erc-1.3.4`](../../releases/tag/erc-1.3.4) |
-| `ERC-Launcher-1.3.3-setup.exe` | [`erc-1.3.3`](../../releases/tag/erc-1.3.3) |
-| `ERC-Launcher-1.3.2-setup.exe` | [`erc-1.3.2`](../../releases/tag/erc-1.3.2) |
-| `ERC-Launcher-1.3.1-setup.exe` | [`erc-1.3.1`](../../releases/tag/erc-1.3.1) |
-| `ERC-Launcher-1.3.0-setup.exe` | [`erc-1.3.0`](../../releases/tag/erc-1.3.0) |
-| `ERC-Launcher-1.2.2-setup.exe` | [`erc-1.2.2`](../../releases/tag/erc-1.2.2) |
-| `ERC-Launcher-1.2.1-setup.exe` | [`erc-1.2.1`](../../releases/tag/erc-1.2.1) |
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). Copyright Swofty Pty Ltd (ACN 665 787 244).
 
-The 1.2.0 installer is superseded; its source is available on request. Every commit after the first
-describes one change against the 1.2.1 state.
+The plugin SDK in `packages/sdk` and the addon template in `templates/addon` use the MIT licence. The docs theme adapts MIT-licensed CSS from the Geode docs, Swofty UI's texture decoder is ported from MIT-licensed bcdec_rs and bcdec; see [THIRD_PARTY.md](THIRD_PARTY.md).
 
-A build whose version carries a suffix (`1.3.0-beta.1`) only says "Beta" in its window title.
-There is no separate feed any more: every build reads `updates.json`.
+## Credits
 
-**Order for a new version:** bump the version, build the installer, commit and push here, create the
-release with the installer attached, and only then update the download page — so the page always
-follows a release that already exists in git.
+- [xanpavle](https://github.com/xanpavle) for [F1 25 RE-Optimization](https://github.com/xanpavle/F1-25-RE-Optimization), the renderer tuning, engine overrides and GPU-aware upscaler choice behind the `xanpavle.re-optimization` addon in the Addon Browser.

@@ -1,0 +1,61 @@
+{
+ "schema": 1,
+ "name": "Game_Network_MOXSessionClearingRegistered",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1430f3cb0",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/1430f3cb0.c;pat:log-channel-NETWORK;xref:0x1458140c0",
+  "notes": "Slot 14 (+0x70) of the NetworkSubsystem vtable 0x145814050. Unsubscribes a bus message (0x143988350), logs 'onSessionExit', clears registered vehicles from the ProgressVehicleManager (0x1432625b0) and VehicleMechanicalManager (0x143242790), NETWORK-MATCHING log, inlined GameSessionMigrationManager::setHaveResults(FALSE), onLoadingTeamHQ branch (setMyRaceStatus 0x143092b20). Better name: Game_NetworkSubsystem_OnSessionExit (bound record keeps its name)."
+ },
+ "signature": {
+  "id": "game.network_mox_session_clearing_registered",
+  "section": ".xtls",
+  "pattern": "41 57 41 56 41 55 41 54 56 57 55 53 48 81 EC 28 01 00 00 49 89 CE",
+  "match": "0x1430f3cb0",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x1430f3cb0",
+  "kind": "func_start",
+  "names": [
+   "Game_Network_MOXSessionClearingRegistered"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-22",
+    "by": "vmknolle",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "lb13-verify",
+   "kind": "func",
+   "item": "0x1430f3cb0",
+   "claimed": "L1",
+   "verdict": "partial",
+   "evidence": "decomp:re/decomp/1430f3cb0.c",
+   "notes": "V5401 better name Game_Network_OnSessionExit: 710 lines: onSessionExit/onLoadingTeamHQ handler clearing progress+mechanical vehicle managers, migration setHaveResults"
+  },
+  {
+   "date": "2026-10-31",
+   "verifier": "lc1-verify",
+   "kind": "func",
+   "item": "0x1430f3cb0",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/1430f3cb0.c",
+   "notes": "V6975 710 decomp lines, strings match current name; vtable/indirect"
+  }
+ ],
+ "proofs": []
+}

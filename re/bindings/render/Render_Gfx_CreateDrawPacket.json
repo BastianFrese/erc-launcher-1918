@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Render_Gfx_CreateDrawPacket",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1439d8970",
+  "level": "L1",
+  "subsystem": "render",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/1439d8970.c;xref:0x142437122,0x1439aca4d,0x143b2c8b6",
+  "notes": "Under device CS allocates 0xd8 bytes, vtable 0x14589e880, copies a 0xb8-byte block; pkt+0x20 holds an object whose +0x20 has the 40-byte binding table (+0x678..+0x680, the table BindShaderResourceByName indexes); allocates per-entry arrays pkt+0xc0 (8 B) / +0xc8 (1 B), stores the flags of Render_Gfx_ClassifyDrawPacketPass at +0xd0, inserts into set +0x49b8 (destroyed by 0x1439dbea0)."
+ },
+ "signature": {
+  "id": "render.gfx_create_draw_packet",
+  "section": ".xtls",
+  "pattern": "41 56 56 57 53 48 83 EC 28 48 89 D3 48 89 CE 48 8B 89 68 26 00 00 FF 15 ?? ?? ?? ?? 48 8B 8E 50 01 00 00 48 8B 01 BA D8",
+  "match": "0x1439d8970",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x1439d8970",
+  "kind": "func_start",
+  "names": [
+   "Render_Gfx_CreateDrawPacket"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-30",
+    "by": "engine-re",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "vp2-verify",
+   "kind": "func",
+   "item": "0x1439d8970",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/1439d8970.c;xref:0x142437122",
+   "notes": "V7767 name, concrete offsets/strings/callers match decomp"
+  }
+ ],
+ "proofs": []
+}

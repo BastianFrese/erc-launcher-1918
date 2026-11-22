@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gvdb.hpp"
-#include "lower.hpp"
+#include "core/apply/content/gvdb.hpp"
+#include "core/apply/content/lower.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -34,9 +34,9 @@ inline constexpr int64_t POINTS_MAX = 9999, POINTS_BONUS_MAX = 99;
 struct PointsSystem {
     std::string label;
     std::vector<int32_t> full;
-    std::vector<std::vector<int32_t>> reduced;   // 3 levels, 75 / 50 / 25 %
-    int32_t bonus = 0;                           // fastest_lap_bonus; 0 with rule None
-    uint8_t rule = 0;                            // fastest_lap_rule: 0 None, 1 BestOfTop10
+    std::vector<std::vector<int32_t>> reduced; // 3 levels, 75 / 50 / 25 %
+    int32_t bonus = 0;                         // fastest_lap_bonus; 0 with rule None
+    uint8_t rule = 0;                          // fastest_lap_rule: 0 None, 1 BestOfTop10
 };
 
 inline std::string points_label(std::string_view id)
@@ -147,8 +147,8 @@ inline void lower_session_points(const std::string &id, const Value &rec, Plan &
     for (int32_t p : s->full)
         if (p)
             shown += (shown.empty() ? "" : "-") + std::to_string(p);
-    plan.lines.push_back("session.points " + id + ": preset " + s->label + " from " + POINTS_STOCK_PRESET + ", points " +
-                         shown + (s->rule ? ", fastest lap +" + std::to_string(s->bonus) : std::string(", no fastest lap point")));
+    plan.lines.push_back("session.points " + id + ": preset " + s->label + " from " + POINTS_STOCK_PRESET + ", points " + shown +
+                         (s->rule ? ", fastest lap +" + std::to_string(s->bonus) : std::string(", no fastest lap point")));
 }
 
 struct PointsPick {
@@ -159,9 +159,8 @@ struct PointsPick {
 
 // The points system for the box whose entrant list was pressed: the last content.package (in the order given) with
 // that entrant list, its rules.points, and that system if the boot apply added it.
-inline PointsPick points_pick(const std::string &entrant_list,
-                              const std::vector<std::pair<std::string, const Value *>> &packages,
-                              const std::map<std::string, PointsSystem> &systems)
+inline PointsPick points_pick(const std::string &entrant_list, const std::vector<std::pair<std::string, const Value *>> &packages,
+                              const std::map<std::string, PointsSystem> &systems, const std::string &host = "swofty_f1")
 {
     PointsPick p;
     const Value *found = nullptr;
@@ -171,19 +170,19 @@ inline PointsPick points_pick(const std::string &entrant_list,
             found = rec;
         }
     if (!found) {
-        p.line = "box " + entrant_list + ": no content.package; swofty_f1 keeps its own points";
+        p.line = "box " + entrant_list + ": no content.package; " + host + " keeps its own points";
         return p;
     }
     const Value &pts = (*found)["rules"]["points"];
     if (!pts.is_string()) {
-        p.line = "box " + entrant_list + " (" + p.package + "): no points rule; swofty_f1 keeps its own points";
+        p.line = "box " + entrant_list + " (" + p.package + "): no points rule; " + host + " keeps its own points";
         return p;
     }
     p.rule = std::string(pts.as_string());
     auto it = systems.find(p.rule);
     if (it == systems.end()) {
-        p.line = "box " + entrant_list + " (" + p.package + "): rules.points " + p.rule +
-                 " was not added at boot; swofty_f1 keeps its own points";
+        p.line = "box " + entrant_list + " (" + p.package + "): rules.points " + p.rule + " was not added at boot; " + host +
+                 " keeps its own points";
         return p;
     }
     p.system = it->second;
@@ -191,7 +190,7 @@ inline PointsPick points_pick(const std::string &entrant_list,
     for (int32_t v : it->second.full)
         if (v)
             shown += (shown.empty() ? "" : "-") + std::to_string(v);
-    p.line = "box " + entrant_list + " (" + p.package + "): swofty_f1 race points " + shown +
+    p.line = "box " + entrant_list + " (" + p.package + "): " + host + " race points " + shown +
              (it->second.rule ? ", fastest lap +" + std::to_string(it->second.bonus) : std::string()) + " (rules.points " +
              p.rule + ", preset " + it->second.label + ")";
     return p;

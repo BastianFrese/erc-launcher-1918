@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "name": "Game_Options_Apply",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x1440217f0",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/1440217f0.c;pat:log-message-cxx;xref:0x144022450,0x1443c67e3,0x1443c6e11",
+  "notes": "Callers 0x144022450 (recursive), 0x1443c67e3, 0x1443c6e11. hardwareSettings::Options::apply: applies reference category/option entries (hardware_settings_info, graphics_card, show)."
+ },
+ "signature": {
+  "id": "game.options_apply",
+  "section": ".xtls",
+  "pattern": "41 57 41 56 41 55 41 54 56 57 55 53 48 81 EC F8 02 00 00 4C 89 CE",
+  "match": "0x1440217f0",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x1440217f0",
+  "kind": "func_start",
+  "names": [
+   "Game_Options_Apply"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-22",
+    "by": "vmknolle",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "lb20-verify",
+   "kind": "func",
+   "item": "0x1440217f0",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/1440217f0.c;xref:0x1443c67e3",
+   "notes": "V6376 name and logged strings match body"
+  }
+ ],
+ "proofs": []
+}

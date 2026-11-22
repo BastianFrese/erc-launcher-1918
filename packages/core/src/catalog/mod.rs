@@ -21,7 +21,7 @@ use sha2::{Digest, Sha256};
 
 use crate::manifest::{AddonManifest, Category, Platform, Requirement};
 use crate::store::Store;
-use crate::transfer;
+use crate::updates::transfer;
 use crate::{Error, Result, io_err};
 
 pub const URL_ENV: &str = "SWOFTY_REGISTRY_URL";
@@ -309,7 +309,7 @@ pub fn updates<'a>(
 pub fn store_updates(store: &Store, catalog: &[Addon], launcher: &semver::Version) -> Result<Vec<Update>> {
     let addons = store.addons()?;
     let installed = addons.values().filter(|m| {
-        !store.is_builtin(&m.id) && !crate::managed::is_managed(&m.id) && source::takes_updates(m)
+        !store.is_builtin(&m.id) && !crate::updates::managed::is_managed(&m.id) && source::takes_updates(m)
     });
     Ok(updates(installed, catalog, launcher))
 }
@@ -569,7 +569,7 @@ pub fn epoch(iso: &str) -> Option<i64> {
 
 /// Adds a line to the registry log Save Logs sends, and to stderr.
 pub fn log(root: &Path, line: &str) {
-    eprintln!("erc-launcher: registry: {line}");
+    eprintln!("swofty-launcher: registry: {line}");
     let path = root.join(LOG_FILE);
     if std::fs::metadata(&path).is_ok_and(|m| m.len() > LOG_LIMIT)
         && let Ok(text) = std::fs::read_to_string(&path)

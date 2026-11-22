@@ -1,0 +1,61 @@
+{
+ "schema": 1,
+ "name": "Game_F1DataFeed_SkipStreamLine",
+ "table": "functions",
+ "author": "kb-import",
+ "row": {
+  "addr": "0x142c29190",
+  "level": "L1",
+  "subsystem": "game",
+  "proto": "-",
+  "evidence": "decomp:re/decomp/142c29190.c;pat:log-channel-F1-DATA-FEED-REAL-WORLD;xref:0x142c290f7",
+  "notes": "Body brackets its own logs '***** F1DataFeedSystem::requestLoadReplay - STARTING TO LOAD' / 'FINISHED LOADING'; loads %s\\replays files, entrants, weather/time-of-day settings, parses UDP/real-world lines (the skipStreamDataLine log is an inlined part), pit entries and EM lap timestamps. Old name SkipStreamLine was a fragment. Better name: Game_F1DataFeedSystem_RequestLoadReplay (bound record keeps its name)."
+ },
+ "signature": {
+  "id": "game.f1_data_feed_skip_stream_line",
+  "section": ".xtls",
+  "pattern": "41 57 41 56 41 55 41 54 56 57 55 53 B8 D8 53 00 00",
+  "match": "0x142c29190",
+  "anchor": "0x0",
+  "resolve": {
+   "kind": "addr"
+  },
+  "target": "0x142c29190",
+  "kind": "func_start",
+  "names": [
+   "Game_F1DataFeed_SkipStreamLine"
+  ],
+  "verified": [
+   {
+    "build": "d873a1c8d2044cef",
+    "date": "2026-10-22",
+    "by": "vmknolle",
+    "how": "static"
+   }
+  ],
+  "used_by": []
+ },
+ "verify": [
+  {
+   "date": "2026-10-31",
+   "verifier": "lb09-verify",
+   "kind": "func",
+   "item": "0x142c29190",
+   "claimed": "L1",
+   "verdict": "partial",
+   "evidence": "decomp:re/decomp/142c29190.c;xref:0x141e2008c",
+   "notes": "V5043 21KB requestLoadReplay (STARTING/FINISHED LOADING, entrants, time of day, weather); skip-stream-line is a part; better Game_F1DataFeedSystem_RequestLoadReplay"
+  },
+  {
+   "date": "2026-10-31",
+   "verifier": "lc1-verify",
+   "kind": "func",
+   "item": "0x142c29190",
+   "claimed": "L1",
+   "verdict": "agree",
+   "evidence": "decomp:re/decomp/142c29190.c;xref:0x141e2008c",
+   "notes": "V6886 3076 decomp lines, strings match current name"
+  }
+ ],
+ "proofs": []
+}

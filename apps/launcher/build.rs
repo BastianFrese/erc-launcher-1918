@@ -1,6 +1,6 @@
 use std::path::Path;
 
-const SITE: &str = "https://f1.swofty.net";
+const SITE: &str = "https://erdi-erc.de";
 
 /// Der Merker in der Kopfzeile einer Versionsnotiz, die zu **unserem** Launcher gehoert.
 /// Notizen des fremden Zweigs (1.9.x) tragen ihn nicht: sie kommen nicht ins Programm,

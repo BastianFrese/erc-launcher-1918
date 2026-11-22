@@ -1,8 +1,6 @@
 [package]
 name = "erc-launcher"
-# Der Launcher zaehlt eigen: 0.6.0. Der Unterbau bleibt auf seiner Fassung,
-# an der die Addons ihre Mindestfassung messen.
-version = "1.4.4"
+version = "1.5.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -23,6 +21,7 @@ png.workspace = true
 raw-window-handle = "0.6"
 semver.workspace = true
 serde.workspace = true
+sha2.workspace = true
 serde_json.workspace = true
 swofty-ads.workspace = true
 swofty-builtins.workspace = true
@@ -30,7 +29,6 @@ swofty-core.workspace = true
 swofty-i18n.workspace = true
 swofty-preview.workspace = true
 swofty-shaders.workspace = true
-sha2.workspace = true
 ureq.workspace = true
 
 [target.'cfg(windows)'.dependencies]

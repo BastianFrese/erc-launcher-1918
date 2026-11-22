@@ -18,8 +18,12 @@ result-*
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 
+/dxc/
 native/build/
 native/dist/
+native/dist-*/
+native/release/
+native/release-*/
 re/decomp/
 re/ghidra/*
 !re/ghidra/scripts/
@@ -44,24 +48,8 @@ templates/mod/native/build/
 re/db/*.tmp
 !packages/sdk/std/fixtures/*.bin
 /target
+dist-110/
+dist-110.vor-*/
 
-# Das Paket wird zusammengesetzt und ist nicht versioniert — ausser unserer eigenen
-# Mod, deren Quelle sonst nirgends liegt.
-dist-1918/*
-!dist-1918/addons/
-dist-1918/addons/*
-!dist-1918/addons/erdi.erc-liga/
-dist-1918/addons/erdi.erc-liga/native/build/
-dist-1918/addons/erdi.erc-liga/native/liga_plugin.dll
-dist-1918/addons/erdi.erc-liga/native/liga_plugin.exp
-dist-1918/addons/erdi.erc-liga/native/liga_plugin.lib
-dist-1918.vor-*/
-dist-1918-beta/
-
-# Testaufnahmen und Setup-Bauten
-ERC-Launcher-*-setup.exe
-spiel-*.png
-fenster-*.png
-
-# Der Verification Token von Ko-fi steht nur auf dem Server
-server/raum/kofi.json
+# Cache des Graphify-Werkzeugs, kein Quelltext
+graphify-out/
