@@ -2,17 +2,20 @@
 # Einen gebauten Stand oeffentlich machen — und den Tag auf genau diesen Commit setzen.
 #
 # Ablauf:
-#   1. Arbeitsbaum muss sauber sein (sonst bricht es ab).
-#   2. Der oeffentliche Zweig wird ein exaktes Abbild des Arbeitszweigs (eigener
-#      Commit, ohne Upstream-Historie; LICENSE bleibt AGPL).
-#   3. Probe: die Baeume beider Zweige muessen gleich sein, sonst Abbruch.
+#   1. Arbeitsbaum muss sauber sein (verfolgte Dateien; unverfolgte Reste stoeren nicht).
+#   2. Der oeffentliche Zweig bekommt einen Commit, dessen Baum exakt der des
+#      Arbeitszweigs ist. Das passiert ueber einen eigenen Index: der Arbeitsbaum wird
+#      NICHT angefasst und kein fremder Zweig ausgecheckt (das hat am 22.11.2026 die
+#      alten Dateinamen der oeffentlichen Fassung im Arbeitsbaum liegen gelassen, und der
+#      Kern-Bau hat sie mitkompiliert).
+#   3. Probe: beide Baeume muessen gleich sein, sonst Abbruch.
 #   4. Push auf <FERN> main.
 #   5. Nur mit --tag: Fassung gegen apps/launcher/Cargo.toml pruefen, Tag
 #      erc-<fassung> auf genau diesen Commit setzen und pushen. Ein vorhandener,
 #      anderswohin zeigender Tag wird NIE verschoben.
 #
 #     ./scripts/auf-github.sh "Was sich geaendert hat"
-#     ./scripts/auf-github.sh --tag 1.5.0 "release: 1.5.0 — ..."
+#     ./scripts/auf-github.sh --tag 1.5.1 "release: 1.5.1 — ..."
 #
 # Umgebung: ARBEIT (Zweig), OEFFENTLICH (Spiegelzweig), FERN (Remote).
 set -euo pipefail
@@ -30,12 +33,13 @@ TAG_FASSUNG=""
 if [ "${1:-}" = "--tag" ]; then
     TAG_FASSUNG=${2:-}
     shift 2 || true
-    [ -n "$TAG_FASSUNG" ] || die "--tag braucht eine Fassung, z. B. --tag 1.5.0"
+    [ -n "$TAG_FASSUNG" ] || die "--tag braucht eine Fassung, z. B. --tag 1.5.1"
 fi
 text=${1:-"Stand $(date +%Y-%m-%d)"}
 
-# 1. Sauberer Arbeitsbaum ist Voraussetzung: sonst spiegelt der Lauf die halbe Arbeit.
-[ -z "$(git status --porcelain)" ] || die "Arbeitsbaum ist nicht sauber — erst committen"
+# 1. Keine uncommitteten Aenderungen an verfolgten Dateien: sonst spiegelt der Lauf die
+#    halbe Arbeit.
+[ -z "$(git status --porcelain --untracked-files=no)" ] || die "Arbeitsbaum ist nicht sauber — erst committen"
 
 git rev-parse --verify --quiet "$ARBEIT" >/dev/null || die "Zweig $ARBEIT fehlt"
 git rev-parse --verify --quiet "$OEFFENTLICH" >/dev/null || die "Zweig $OEFFENTLICH fehlt"
@@ -47,22 +51,26 @@ if [ -n "$TAG_FASSUNG" ]; then
         || die "apps/launcher/Cargo.toml nennt $im_text, verlangt war $TAG_FASSUNG"
 fi
 
-# 2. Spiegeln: Index exakt auf den Baum des Arbeitszweigs, dann in den Arbeitsbaum schreiben.
-git checkout -q "$OEFFENTLICH"
-trap 'git checkout -q "$ARBEIT" 2>/dev/null || true' EXIT
-git read-tree "$ARBEIT"
-git checkout-index -a -f
-if git diff --cached --quiet; then
+# 2. Spiegel-Commit ueber einen eigenen Index.
+idx="$(cd "$(git rev-parse --git-dir)" && pwd)/auf-github-index.$$"
+rm -f "$idx"
+GIT_INDEX_FILE=$idx git read-tree "$ARBEIT"
+tree=$(GIT_INDEX_FILE=$idx git write-tree)
+rm -f "$idx"
+[ -n "$tree" ] || die "kein Baum aus $ARBEIT"
+
+alt=$(git rev-parse "$OEFFENTLICH")
+if [ "$(git rev-parse "$alt^{tree}")" = "$tree" ]; then
     echo "nichts Neues — der oeffentliche Stand ist schon der von $ARBEIT"
 else
-    git commit -q -m "$text"
+    neu=$(git commit-tree "$tree" -p "$alt" -m "$text")
+    git update-ref "refs/heads/$OEFFENTLICH" "$neu"
+    echo "Spiegel-Commit $(git rev-parse --short "$neu")"
 fi
 
-# 3. Probe: Inhalt, nicht nur Fassungsnummer. Genau dieser Vergleich hat bei
-#    beta.1..beta.4 gefehlt — die Tags zeigten auf einen aelteren Stand.
-rest=$(git diff --name-only "$OEFFENTLICH" "$ARBEIT")
-[ -z "$rest" ] || die "Baeume weichen ab:
-$rest"
+# 3. Probe: Inhalt, nicht nur Fassungsnummer.
+[ "$(git rev-parse "$OEFFENTLICH^{tree}")" = "$(git rev-parse "$ARBEIT^{tree}")" ] \
+    || die "Baeume weichen ab: $OEFFENTLICH != $ARBEIT"
 echo "Baeume gleich: $OEFFENTLICH = $ARBEIT ($(git rev-parse --short "$OEFFENTLICH"))"
 
 # 4. Push.
