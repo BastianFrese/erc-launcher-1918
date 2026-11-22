@@ -17,7 +17,7 @@
 # Umgebung: ARBEIT (Zweig), OEFFENTLICH (Spiegelzweig), FERN (Remote).
 set -euo pipefail
 
-ARBEIT=${ARBEIT:-erc/v1.10.19-port}
+ARBEIT=${ARBEIT:-erc/v1.10.24-port}
 OEFFENTLICH=${OEFFENTLICH:-erc-eigen}
 FERN=${FERN:-erc1918}
 
