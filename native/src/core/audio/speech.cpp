@@ -65,9 +65,12 @@ double now() { return double(GetTickCount64()) / 1000.0; }
 
 bool switched_on()
 {
+    // ERC: standardmaessig AUS. Der Hook auf Game_SpeechSystem_PostLine feuerte beim
+    // Betreten einer LAN-Sitzung und riss F1 25 mit (ACCESS_VIOLATION reading 0x588,
+    // F1_25.exe+0x120ec05); erst mit SWOFTY_SPEECH_EVENTS=1 wieder einschalten.
     char v[8] = {};
     DWORD n = GetEnvironmentVariableA("SWOFTY_SPEECH_EVENTS", v, sizeof v);
-    return !(n && n < sizeof v && !strcmp(v, "0"));
+    return n == 1 && v[0] == '1';
 }
 
 bool rd_str(uintptr_t at, std::string &out, size_t max) { return mem::c_string(at, out, max); }
@@ -131,7 +134,7 @@ std::vector<runtime::CoreMixins> speech_mixins()
     if (!runtime::enabled("events", nullptr))
         return out;
     if (!switched_on()) {
-        swofty::log("[speech] voice line events off (SWOFTY_SPEECH_EVENTS=0)");
+        swofty::log("[speech] voice line events off (SWOFTY_SPEECH_EVENTS=1 turns them on)");
         return out;
     }
     if (!runtime::holds(GATE))
