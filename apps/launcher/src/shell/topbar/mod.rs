@@ -248,7 +248,7 @@ impl Shell {
                     let page = if self.navigation.page.tab() == Some(tab) {
                         self.navigation.page
                     } else {
-                        self.tab_home(tab)
+                        tab.home()
                     };
                     self.open_page(page, cx);
                 }

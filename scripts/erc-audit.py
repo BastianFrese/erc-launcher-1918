@@ -77,6 +77,14 @@ CHECKS = [
      r'"f1\.erdi-erc\.de'),
     ("sign_in.rs: AUTH_URL raum.erdi-erc.de", "match", "packages/core/src/online/server/sign_in.rs",
      r'AUTH_URL\s*:\s*&str\s*=\s*"https://raum\.erdi-erc\.de"'),
+
+    # Der Online-Reiter fuehrt in die Lobby, nicht in fremde Bestenlisten (22.11.2026:
+    # der 1.10.24-Merge brachte Zeitfahren als Startseite und einen Helfer
+    # `online_pages` zurueck, obwohl beides bei uns entfernt ist).
+    ("tabs.rs: Online-Reiter startet in der Lobby", "match", "apps/launcher/src/shell/tabs.rs",
+     r"Tab::Online\.home\(\)\s*==\s*Page::Multiplayer"),
+    ("tabs.rs: kein fremdes online_pages", "absent", "apps/launcher/src/shell/tabs.rs",
+     r"\bfn\s+online_pages\s*\("),
 ]
 
 # Unsere Markierungen in fremden Dateien: Datei -> Kurzname.
@@ -87,7 +95,6 @@ MARKERS = [
     ("native/src/core/hud/room_cover.cpp", "netplay-cover"),
     ("native/src/core/hud/room_cover.cpp", "netplay-cover-signal"),
 ]
-
 
 def read(path):
     try:
@@ -107,6 +114,8 @@ def check(kind, rel, pattern):
         return path.is_file()
     if kind == "match":
         return has(path, pattern)
+    if kind == "absent":
+        return not has(path, pattern)
     if kind == "optional":
         return not path.exists() or has(path, pattern)
     if kind == "dir_match":
