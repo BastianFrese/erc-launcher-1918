@@ -3,7 +3,9 @@
 #include "core/apply/content/career_rows.hpp"
 #include "core/apply/content/drs.hpp"
 #include "core/apply/content/points.hpp"
+#include "core/apply/content/box_assets_lower.hpp"
 #include "core/apply/content/garage_lower.hpp"
+#include "core/apply/content/sponsors_lower.hpp"
 #include "core/apply/content/liveries.hpp"
 #include "core/apply/content/lower.hpp"
 #include "core/apply/content/rows.hpp"
@@ -27,11 +29,28 @@
 
 namespace swofty_core::apply::content {
 
-inline constexpr const char *ROW_REGISTRIES[] = {"engine_sound",  "vehicle.package", "vehicle",         "livery",
-                                                 "team.identity", "team.pit_times",  "team.garage",     "helmet",
-                                                 "suit",          "gloves",          "driver.head",     "driver.look",
-                                                 "driver.person", "driver.identity", "driver.stats",    "wearable.season_set",
-                                                 "rules.drs",     "session.points",  "content.package", "career.rnd.tree",
+inline constexpr const char *ROW_REGISTRIES[] = {"engine_sound",
+                                                 "vehicle.package",
+                                                 "vehicle",
+                                                 "livery",
+                                                 "team.identity",
+                                                 "team.pit_times",
+                                                 "team.garage",
+                                                 "track.sponsors",
+                                                 "content.box_assets",
+                                                 "helmet",
+                                                 "suit",
+                                                 "gloves",
+                                                 "driver.head",
+                                                 "driver.look",
+                                                 "driver.person",
+                                                 "driver.identity",
+                                                 "driver.stats",
+                                                 "wearable.season_set",
+                                                 "rules.drs",
+                                                 "session.points",
+                                                 "content.package",
+                                                 "career.rnd.tree",
                                                  "career.market"};
 
 inline Lookup store_lookup(registry::Store &st, std::map<std::string, Value> &keep)
@@ -299,6 +318,11 @@ struct Expansion {
     // A box with more teams than its world has garages gets a world of its own (box_world.hpp). The core turns it on
     // unless SWOFTY_BOX_WORLDS=0; host tools pass it.
     bool box_worlds = false;
+    // A box whose content.package names a world gets that one (box_world.hpp, choose_named) when box worlds are on
+    // and SWOFTY_BOX_OWN_WORLDS=1; world_tracks lists the track folders that hold a world (unset in host tools: not
+    // looked at).
+    bool own_worlds = false;
+    box_world::WorldTracks world_tracks;
 };
 
 // The runtime twin of the build's virtual-list step (packages/core/src/games/f1_25/game_db/virtual_lists.rs) for content.package lists
@@ -744,6 +768,10 @@ inline void expand(registry::Store &st, Expansion &x, const StatIds &stat, const
                 lower_pit_times(id, *rec, lookup, read, refs, plan);
             else if (r == "team.garage")
                 lower_garage(id, *rec, lookup, read, plan);
+            else if (r == "track.sponsors")
+                lower_sponsors(id, *rec, lookup, read, plan);
+            else if (r == "content.box_assets")
+                lower_box_assets(id, *rec, lookup, read, plan);
             else if (r == "rules.drs")
                 lower_drs_rule(id, *rec, plan);
             else if (r == "session.points")
@@ -754,7 +782,7 @@ inline void expand(registry::Store &st, Expansion &x, const StatIds &stat, const
                 lower_market(id, *rec, lookup, read, refs, plan);
             else
                 lower_package(id, *rec, lookup, plan, stat, &wear.person_driver, read, &refs.constructor_team, &dropped,
-                              x.box_worlds);
+                              x.box_worlds, x.own_worlds, x.world_tracks ? &x.world_tracks : nullptr);
             if (std::string full = r == "content.package" ? setup_mode_full(x.engine, plan, hosts) : std::string();
                 !full.empty()) {
                 x.refused[reg]++;

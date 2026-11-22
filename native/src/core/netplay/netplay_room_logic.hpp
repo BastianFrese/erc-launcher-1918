@@ -150,6 +150,17 @@ inline std::string find_gsui(const Memory &m, uint64_t ns, uint64_t &gsui)
     return {};
 }
 
+// Whether the GameSessionUI (or the invite manager, whose +8 is the same field) still belongs to this network
+// subsystem. Once the game tears a session down it clears that field, and a call made into either object then
+// runs through the teardown with the cleared field: Zorax, 22.11.2026, ACCESS_VIOLATION reading 0x1
+// (F1_25.exe+0x30a52b6, frames through Game_GameSessionUI_Shutdown and Game_SeasonDocument_CloseDocument),
+// 0.35 s after the first session datagrams and while the by-hand join was still waiting for its delegate.
+inline bool still_attached(const Memory &m, uint64_t obj, uint64_t ns)
+{
+    uint64_t back = 0;
+    return obj != 0 && ns != 0 && m.get(obj + GSUI_NS, back) && back == ns;
+}
+
 struct HostPlan {
     uint64_t ns = 0, gsui = 0, settings = 0, invites = 0;
     std::vector<Write> writes;
@@ -597,6 +608,9 @@ struct Facts {
     bool lan_mode = false;
     bool pending_taken = false;
     bool join_ready = true;
+    // The GameSessionUI still points back at the network subsystem (still_attached). False means the game tore
+    // the session down; the set-up then ends there instead of calling into the teardown.
+    bool session_alive = true;
     InviteState invite;
 };
 
@@ -697,6 +711,11 @@ public:
                     fail("the game did not take the join request");
                 return Do::nothing;
             }
+            if (!f.session_alive) {
+                fail("the game tore the session down after it took the join request (the GameSessionUI no "
+                     "longer points at the network subsystem); the run stopped before calling into it");
+                return Do::nothing;
+            }
             if (f.invite.readable && f.invite.delegate) {
                 to_lobby(now);
                 return Do::nothing;
@@ -714,6 +733,8 @@ public:
         case Stage::lobby:
             if (joined)
                 stage = Stage::done;
+            else if (!f.session_alive)
+                fail("the game tore the session down before the lobby opened");
             else if (now >= deadline)
                 fail(role == Role::host ? "the session was not created" : "the host's session was not joined");
             return Do::nothing;
