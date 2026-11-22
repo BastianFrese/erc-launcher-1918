@@ -1344,7 +1344,6 @@
   "The launcher couldn't reach Swofty's server in time.": "Лаунчер не смог вовремя связаться с сервером Swofty.",
   "Swofty's server didn't offer it to you.": "Сервер Swofty не предложил его вам.",
   "The download failed its safety check.": "Загрузка не прошла проверку безопасности.",
-  "Time Trial laps you drive this session won't be sealed, so they won't rank on the boards. Everything else works as usual. To try again, close the game and press Play.": "Круги заезда на время в этой сессии не будут запечатаны, поэтому не попадут в таблицы лидеров. Всё остальное работает как обычно. Чтобы попробовать снова, закройте игру и нажмите «Играть».",
   "Details: {why}": "Подробности: {why}",
   "The Time Trial integrity module didn't load": "Модуль проверки целостности для заезда на время не загрузился",
   "MEDIA": "МЕДИА",
@@ -1391,5 +1390,6 @@
   "Kept by the launcher · {container}": "Хранится лаунчером · {container}",
   "Put back by the launcher · {container}": "Возвращено лаунчером · {container}",
   "The game applied the last restore: {detail}": "Игра применила последнее восстановление: {detail}",
-  "The game could not apply the last restore: {detail}": "Игра не смогла применить последнее восстановление: {detail}"
+  "The game could not apply the last restore: {detail}": "Игра не смогла применить последнее восстановление: {detail}",
+  "The integrity module could not be loaded, so Time Trial is blocked in game this session. Start the game again with a working connection, or turn off Time Trial boards in Settings to play it without the boards.": "Не удалось загрузить модуль целостности, поэтому заезд на время заблокирован в игре на эту сессию. Запустите игру снова при работающем соединении или отключите «Таблицы заезда на время» в настройках, чтобы играть без таблиц."
 }

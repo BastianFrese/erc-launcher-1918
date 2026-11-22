@@ -201,7 +201,7 @@ integrity module: the server's copy could not be had (couldn't reach https://...
 integrity module: not loaded for this session: couldn't reach https://...
 ```
 
-When the offer is missing, unreachable or fails a check and no cached copy can stand in, the session starts without the module and the lap is written without an `ATST` section. The launcher then says so in a dialog at Play: Time Trial laps that session won't be sealed and won't rank.
+When the offer is missing, unreachable or fails a check and no cached copy can stand in, the session starts without the module and the core blocks Time Trial in game (below). The launcher then says so in a dialog at Play.
 
 Each lap's upload meta says what the session did about the module, under `integrity`:
 
@@ -223,6 +223,42 @@ json = { "v": 1, "module": "2026.11.10.1", "nonce": "...", "body_sha256": "...",
 ```
 
 `body_sha256` is the hash of the lap file before the section, `values` and `db` are the handling values and database rows read for the player's car, and `modules` lists the DLLs loaded from the game folder. The key of the MAC is held by the server.
+
+### Time Trial blocked
+
+The launcher tells the core what the session did through `swofty/tt.json` and takes both keys out when the game closes:
+
+```json
+{
+  "tt_boards": true,
+  "tt_module": { "version": "2026.11.10.1", "dll": "swofty_integrity.dll" }
+}
+```
+
+```json
+{
+  "tt_boards": true,
+  "tt_blocked": { "reason": "couldn't reach https://...: timeout" }
+}
+```
+
+`tt_module` names the module the session placed, `local` for `SWOFTY_TT_INTEGRITY_DLL`. `tt_blocked` is written when Time Trial boards is on, the player is signed in, the profile loads the core and no verified module could be placed, whatever the upload meta's `state` says. Neither key is written with Time Trial boards off, signed out or in a vanilla profile.
+
+The core blocks Time Trial while `tt_boards` is `true` and either `tt_blocked` is there, or `tt_module` is there and, from the first main menu on, `swofty_integrity.dll` is not in the process or `laps.sealing` has no handler. The main menu's Time Trial card and the activity container's `time_trial` command (F1 World > Play > Time Trial) are refused, and the game's own message popup says why:
+
+```
+Time Trial is unavailable
+The launcher could not load the Time Trial integrity module, so laps would not count. Check your connection and start the game from the launcher again. To play Time Trial without the boards, turn off Time Trial boards in the launcher.
+```
+
+The main menu's Time Trial card reads `Unavailable: the integrity module did not load`. When the game reaches Time Trial another way, the popup shows once on entry. `SWOFTY_TT_BLOCKED=0` turns the block off.
+
+```
+[tt-blocked] Time Trial is blocked: the launcher placed no integrity module; the launcher said: couldn't reach https://...: timeout
+[tt-blocked] the main menu's Time Trial card refused; popup queued
+```
+
+The launcher's session log says `integrity module: Time Trial is blocked in game this session, ...`, and the launcher's Time Trial page shows a notice while that session runs.
 
 ## Server-timed laps
 

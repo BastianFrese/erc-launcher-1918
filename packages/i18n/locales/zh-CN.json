@@ -1344,7 +1344,6 @@
   "The launcher couldn't reach Swofty's server in time.": "启动器未能及时连接到 Swofty 的服务器。",
   "Swofty's server didn't offer it to you.": "Swofty 的服务器没有向你提供它。",
   "The download failed its safety check.": "下载的文件未通过安全检查。",
-  "Time Trial laps you drive this session won't be sealed, so they won't rank on the boards. Everything else works as usual. To try again, close the game and press Play.": "你在本次会话中跑出的计时赛圈速不会被封存，因此不会计入排行榜。其他功能照常可用。要重试，请关闭游戏并点击“开始游戏”。",
   "Details: {why}": "详情：{why}",
   "The Time Trial integrity module didn't load": "计时赛完整性校验模块未能加载",
   "MEDIA": "媒体",
@@ -1391,5 +1390,6 @@
   "Kept by the launcher · {container}": "由启动器保管 · {container}",
   "Put back by the launcher · {container}": "由启动器放回 · {container}",
   "The game applied the last restore: {detail}": "游戏已应用上次的恢复：{detail}",
-  "The game could not apply the last restore: {detail}": "游戏无法应用上次的恢复：{detail}"
+  "The game could not apply the last restore: {detail}": "游戏无法应用上次的恢复：{detail}",
+  "The integrity module could not be loaded, so Time Trial is blocked in game this session. Start the game again with a working connection, or turn off Time Trial boards in Settings to play it without the boards.": "无法加载完整性模块，因此本次会话中游戏内的计时赛已被锁定。请在网络连接正常时重新启动游戏，或在设置中关闭计时赛排行榜以在没有排行榜的情况下游玩。"
 }

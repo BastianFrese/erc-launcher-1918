@@ -1434,7 +1434,6 @@
   "The launcher couldn't reach Swofty's server in time.": "Der Launcher hat Swoftys Server nicht rechtzeitig erreicht.",
   "Swofty's server didn't offer it to you.": "Swoftys Server hat es dir nicht angeboten.",
   "The download failed its safety check.": "Der Download hat die Sicherheitsprüfung nicht bestanden.",
-  "Time Trial laps you drive this session won't be sealed, so they won't rank on the boards. Everything else works as usual. To try again, close the game and press Play.": "Zeitfahren-Runden, die du in dieser Sitzung fährst, werden nicht versiegelt und deshalb nicht in den Bestenlisten gewertet. Alles andere funktioniert wie gewohnt. Um es erneut zu versuchen, schließe das Spiel und drücke auf Spielen.",
   "Details: {why}": "Details: {why}",
   "The Time Trial integrity module didn't load": "Das Zeitfahren-Integritätsmodul wurde nicht geladen",
   "MEDIA": "MEDIEN",
@@ -1481,5 +1480,6 @@
   "Kept by the launcher · {container}": "Vom Launcher aufbewahrt · {container}",
   "Put back by the launcher · {container}": "Vom Launcher zurückgelegt · {container}",
   "The game applied the last restore: {detail}": "Das Spiel hat die letzte Wiederherstellung angewendet: {detail}",
-  "The game could not apply the last restore: {detail}": "Das Spiel konnte die letzte Wiederherstellung nicht anwenden: {detail}"
+  "The game could not apply the last restore: {detail}": "Das Spiel konnte die letzte Wiederherstellung nicht anwenden: {detail}",
+  "The integrity module could not be loaded, so Time Trial is blocked in game this session. Start the game again with a working connection, or turn off Time Trial boards in Settings to play it without the boards.": "Das Integritätsmodul konnte nicht geladen werden, daher ist das Zeitfahren in dieser Sitzung im Spiel gesperrt. Starte das Spiel mit einer funktionierenden Verbindung neu oder schalte die Zeitfahren-Bestenlisten in den Einstellungen aus, um es ohne die Bestenlisten zu spielen."
 }
