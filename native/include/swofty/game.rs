@@ -10725,6 +10725,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_FrontendSceneManager_DespawnMainScene: Binding = Binding {
+        id: "Game_FrontendSceneManager_DespawnMainScene",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_FrontendSceneManager_GetDriverHelmetData: Binding = Binding {
         id: "Game_FrontendSceneManager_GetDriverHelmetData",
         kind: "func",
