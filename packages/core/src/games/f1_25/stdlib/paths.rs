@@ -64,6 +64,10 @@ const SCHEMAS: &[(&str, &str)] = &[
         include_str!("../../../../../sdk/std/registries/career.wizard/1.0.json"),
     ),
     (
+        "content.box_assets",
+        include_str!("../../../../../sdk/std/registries/content.box_assets/1.0.json"),
+    ),
+    (
         "content.package",
         include_str!("../../../../../sdk/std/registries/content.package/1.7.json"),
     ),
@@ -428,6 +432,10 @@ mod tests {
               "track.sponsors": { "boards_1950": { "package": "mod.s/f1_1950", "textures": "sponsors/f1_1950" } },
               "ui.per_package": { "f1_1950_ui": { "package": "mod.s/f1_1950", "textures": { "erp": "ui/f1_1950.erp", "resources": ["eaid://x"] },
                                                   "archives": ["2025_asset_groups/ui_package/flow_race.erp"] } },
+              "content.box_assets": {
+                "marshals_1950": { "package": "mod.s/f1_1950", "kind": "marshals", "textures": "box_assets/marshals_1950" },
+                "crowd_1950": { "package": "mod.s/f1_1950", "archive": "box_assets/crowd_1950.erp", "resources": ["eaid://x/"] }
+              },
               "someone.own": { "x": { "file": "not/a/schema/path.bin" } },
               "career.season": { "y": { "name": "sounds/v10_screamer.bdl" } }
             }"#,
@@ -437,6 +445,8 @@ mod tests {
         assert_eq!(
             named,
             [
+                "box_assets/crowd_1950.erp",
+                "box_assets/marshals_1950",
                 "cars/ferrari.erp",
                 "cars/ferrari/",
                 "garage/renault_2020",

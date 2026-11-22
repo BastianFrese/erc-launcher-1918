@@ -50,6 +50,7 @@ template <class Declare> std::size_t declare_system_registries(Declare &&declare
     one(content::packages);
     one(content::era_boxes);
     one(content::package_ui);
+    one(content::box_assets);
     one(power::drs_rules);
     one(swofty::career::modes);
     one(swofty::career::seasons);

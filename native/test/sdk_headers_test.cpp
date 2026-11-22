@@ -587,6 +587,16 @@ static void schemas()
     content::PackageUi ui_rec;
     CHECK(swofty::to_json(ui_rec).find("\"root\":\"eaid://ui_package/art/\"") != std::string::npos && ui_rec.srgb &&
           ui_rec.archives.empty());
+    std::string kit = content::box_assets.schema();
+    CHECK(kit.find("\"x-registry\":\"content.box_assets\"") != std::string::npos &&
+          kit.find("\"x-applies\":\"boot\"") != std::string::npos && kit.find("\"marshals\"") != std::string::npos);
+    CHECK(kit.find("\"x-ref\":\"content.package\"") != std::string::npos &&
+          content::box_assets.at_major() == "content.box_assets@1");
+    content::BoxAssets kit_rec;
+    kit_rec.resources = {"eaid://character_package_shared/crowd/"};
+    std::string kit_json = swofty::to_json(kit_rec);
+    CHECK(kit_json.find("\"kind\":\"other\"") != std::string::npos && kit_json.find("\"archive\":null") != std::string::npos &&
+          kit_json.find("\"resources\":[\"eaid://character_package_shared/crowd/\"]") != std::string::npos && kit_rec.srgb);
     std::string tree = career::rnd_trees.schema();
     CHECK(tree.find("\"x-applies\":\"boot\"") != std::string::npos && tree.find("\"x-key\":[\"label\"]") != std::string::npos);
     CHECK(tree.find("\"enum\":[\"aerodynamics\",\"chassis\",\"durability\",\"engine\"]") != std::string::npos);
