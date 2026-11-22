@@ -271,7 +271,7 @@ const FIRST_LAUNCH_ENV: [(&str, &str); 4] = [
     ("SWOFTY_NETPLAY", "armed"),
     ("SWOFTY_NET_TRACE", "1"),
     ("SWOFTY_NET_TRACE_CAP_KB", "16384"),
-    ("SWOFTY_GAME_LOG_CHANNELS", "default,NETWORK*:info,SSL*:info"),
+    ("SWOFTY_GAME_LOG_CHANNELS", "default,NETWORK*:info,SSL*:info,GRID*:info"),
 ];
 
 fn remember_launch_env(data: &Path) -> Option<Vec<(String, String)>> {

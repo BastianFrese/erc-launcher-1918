@@ -48,7 +48,7 @@ pub const TRACE_WHEN_ARMED: bool = true;
 pub const TRACE_ENV: [(&str, &str); 3] = [
     ("SWOFTY_NET_TRACE", "1"),
     ("SWOFTY_NET_TRACE_CAP_KB", "16384"),
-    ("SWOFTY_GAME_LOG_CHANNELS", "default,NETWORK*:info,SSL*:info"),
+    ("SWOFTY_GAME_LOG_CHANNELS", "default,NETWORK*:info,SSL*:info,GRID*:info"),
 ];
 /// The game's `Network.Transport.SocketPort`.
 pub const DEFAULT_GAME_PORT: u16 = 21414;
@@ -68,18 +68,24 @@ const RESERVED_MEMBERS: u8 = 24;
 const BIND_ATTEMPTS: usize = 64;
 const BUF: usize = 65536;
 
-/// The game log channels a multiplayer game always opens, on top of any the player set.
-pub const NETWORK_LOG_CHANNELS: &str = "NETWORK*:info,SSL*:info";
+/// The game log channels a multiplayer game always opens, on top of any the player set: the network
+/// channels, and GRID, whose "Setting driver based grid" and "Driver %s vehicleId %u in slot %u" name
+/// the driver the grid set-up cannot find when a room's race start goes wrong.
+pub const NETWORK_LOG_CHANNELS: &str = "NETWORK*:info,SSL*:info,GRID*:info";
 
 /// `channels` with [`NETWORK_LOG_CHANNELS`] added, unless it already opens the network channels.
 pub fn with_network_log_channels(channels: &str) -> String {
-    if channels.split(',').any(|c| c.trim().starts_with("NETWORK*")) {
-        return channels.to_owned();
+    let mut out = if channels.split(',').any(|c| c.trim().starts_with("NETWORK*")) {
+        channels.to_owned()
+    } else if channels.trim().is_empty() {
+        format!("default,{NETWORK_LOG_CHANNELS}")
+    } else {
+        format!("{channels},{NETWORK_LOG_CHANNELS}")
+    };
+    if !out.split(',').any(|c| c.trim().starts_with("GRID*")) {
+        out.push_str(",GRID*:info");
     }
-    if channels.trim().is_empty() {
-        return format!("default,{NETWORK_LOG_CHANNELS}");
-    }
-    format!("{channels},{NETWORK_LOG_CHANNELS}")
+    out
 }
 
 /// The game's environment for [`ENV`] set to `value`: the trace too while [`TRACE_WHEN_ARMED`].
@@ -885,13 +891,17 @@ mod tests {
     fn a_players_own_log_channels_keep_the_network_ones() {
         assert_eq!(
             with_network_log_channels("default,PITLANE:info"),
-            "default,PITLANE:info,NETWORK*:info,SSL*:info"
+            "default,PITLANE:info,NETWORK*:info,SSL*:info,GRID*:info"
         );
         assert_eq!(
             with_network_log_channels("default,NETWORK*:info,SSL*:info"),
-            "default,NETWORK*:info,SSL*:info"
+            "default,NETWORK*:info,SSL*:info,GRID*:info"
         );
-        assert_eq!(with_network_log_channels(""), "default,NETWORK*:info,SSL*:info");
+        assert_eq!(with_network_log_channels(""), "default,NETWORK*:info,SSL*:info,GRID*:info");
+        assert_eq!(
+            with_network_log_channels("default,GRID*:debug,NETWORK*:info"),
+            "default,GRID*:debug,NETWORK*:info"
+        );
     }
 
     #[test]
