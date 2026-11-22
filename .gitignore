@@ -50,3 +50,6 @@ re/db/*.tmp
 /target
 dist-110/
 dist-110.vor-*/
+
+# Cache des Graphify-Werkzeugs, kein Quelltext
+graphify-out/

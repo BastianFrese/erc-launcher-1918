@@ -1,6 +1,6 @@
 {
-  "version": "1.4.4",
-  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.4.4-setup.exe",
-  "sha256": "ee55411adedd583f3d62211d4c9835b8fdd95c215d30f2a41a8258d7ff04cf11",
-  "notiz": "Neuer Unterbau: Addons mit beschaedigten Dateien halten den Start an, Karriere- und Strecken-Korrekturen."
+  "version": "1.5.0",
+  "setup": "https://download.erdi-erc.de/ERC-Launcher-1.5.0-setup.exe",
+  "sha256": "db714725f0ea6c34e55395667392e2b5cf2ba782019ce6f63bb49c73a38a698a",
+  "notiz": "1.5.0: eigener Mehrspieler bis in die Lobby, ERC-Deckblatt beim Raumstart, Wiedereinstieg nach einem Absturz — und der Unterbau 1.10.24."
 }
