@@ -52,7 +52,7 @@ if [ -n "$TAG_FASSUNG" ]; then
 fi
 
 # 2. Spiegel-Commit ueber einen eigenen Index.
-idx="$ROOT/.git/auf-github-index.$$"
+idx="$(cd "$(git rev-parse --git-dir)" && pwd)/auf-github-index.$$"
 rm -f "$idx"
 GIT_INDEX_FILE=$idx git read-tree "$ARBEIT"
 tree=$(GIT_INDEX_FILE=$idx git write-tree)
