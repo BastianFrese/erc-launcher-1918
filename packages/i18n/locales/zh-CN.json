@@ -576,7 +576,6 @@
   "Hide profiles": "隐藏配置",
   "Hint": "提示",
   "Home": "主页",
-  "Home screen video": "主界面视频",
   "Homepage": "主页",
   "I understand": "我已了解",
   "ID {id} · versions look like 1.2.0": "ID {id} · 版本格式如 1.2.0",
@@ -923,7 +922,6 @@
   "Show profiles": "显示配置",
   "Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "在插件赛季的计时赛中显示 Swofty 排行榜和对手幽灵车。实验性功能。",
   "Show the car setup": "显示赛车调校",
-  "Show the latest ERC video in the bottom right of the F1 25 home screen. A change shows the next time you press Play.": "在 F1 25 主界面右下角显示最新的 Swofty 视频。更改会在你下次按“开始游戏”时生效。",
   "Show the log in the file manager": "在文件管理器中显示日志",
   "Show {count} older version": [
     "显示 {count} 个旧版本"

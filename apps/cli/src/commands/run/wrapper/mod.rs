@@ -130,7 +130,8 @@ pub(crate) fn run(store: &Store, profile: &str, args: &RunArgs, g: &Game) -> Res
         &store.root,
         &game,
         env!("CARGO_PKG_VERSION"),
-        store.config().home_video,
+        // ERC: keine fremde Videokarte im Hauptmenue (siehe run/launch.rs).
+        false,
     );
     become_subreaper();
     let vanilla = store.profile(&profile).is_ok_and(|p| p.is_vanilla());

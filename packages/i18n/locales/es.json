@@ -582,7 +582,6 @@
   "Hide profiles": "Ocultar perfiles",
   "Hint": "Sugerencia",
   "Home": "Inicio",
-  "Home screen video": "Video de la pantalla de inicio",
   "Homepage": "Página web",
   "I understand": "Entiendo",
   "ID {id} · versions look like 1.2.0": "ID {id} · las versiones tienen el formato 1.2.0",
@@ -933,7 +932,6 @@
   "Show profiles": "Mostrar perfiles",
   "Show the ERC boards and rival ghosts inside Time Trial for addon seasons. Experimental.": "Muestra las clasificaciones de Swofty y los fantasmas rivales dentro de Contrarreloj para las temporadas de complementos. Experimental.",
   "Show the car setup": "Mostrar el reglaje del coche",
-  "Show the latest ERC video in the bottom right of the F1 25 home screen. A change shows the next time you press Play.": "Muestra el último video de Swofty en la esquina inferior derecha de la pantalla de inicio de F1 25. Los cambios se ven la próxima vez que pulses Jugar.",
   "Show the log in the file manager": "Mostrar el registro en el explorador de archivos",
   "Show {count} older version": [
     "Mostrar {count} versión anterior",

@@ -106,7 +106,9 @@ pub(crate) fn run(store: &Store, profile: &str, args: &RunArgs, g: &Game) -> Res
         &store.root,
         &game,
         env!("CARGO_PKG_VERSION"),
-        store.config().home_video,
+        // ERC: keine fremde Videokarte im Hauptmenue. Der Abruf haengt am fremden
+        // Katalog (api.f1.swofty.net/v1/video/latest) und bewirbt dessen Kanal.
+        false,
     );
     let mut wrapper = start_wrapper(store, &game, args.direct, mode, &args.game_arg)
         .inspect_err(|e| note_blocked(store, e))?;

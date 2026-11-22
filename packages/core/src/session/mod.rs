@@ -142,7 +142,9 @@ pub struct Config {
     /// Show the Swofty boards and rival ghosts inside Time Trial; on unless turned off.
     #[serde(default = "on", skip_serializing_if = "is_on")]
     pub time_trial_ingame: bool,
-    /// Show the latest Swofty video card on the F1 25 home screen; on unless turned off.
+    /// Formerly "show the latest video card on the F1 25 home screen". ERC no longer
+    /// publishes that card (it came from a foreign catalog), so the value is only kept
+    /// so old config.json files still load.
     #[serde(default = "on", skip_serializing_if = "is_on")]
     pub home_video: bool,
     #[serde(default = "on", skip_serializing_if = "is_on")]
