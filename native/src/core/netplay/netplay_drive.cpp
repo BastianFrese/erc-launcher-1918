@@ -266,7 +266,9 @@ void skip_setup()
         swofty::log("[netplay] room launch: the notice is not passed, no virtual pad (%s)", runtime::pad::why().c_str());
         return;
     }
-    runtime::pad::claim(true);
+    // Unterbau 1.10.26: claim nimmt den Eigentuemer mit (virtual_pad.hpp). Die Anforderung ist die des
+    // Titel-Skips, wie sie runtime::title::want() fuer seinen eigenen stellt.
+    runtime::pad::claim(runtime::pad::Owner::title, true);
     title_skip.start(GetTickCount64());
     skip_armed = true;
     hud::room_cover::step("Starting F1 25", 0.05f, 0.2f);

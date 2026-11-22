@@ -56,6 +56,14 @@ impl Tab {
             Self::Store => Page::Store,
         }
     }
+
+    /// The page a click on the tab opens: Multiplayer for the Online tab with access to the rooms, else home().
+    pub fn home_with(self, access: bool) -> Page {
+        match self {
+            Self::Online if access => Page::Multiplayer,
+            tab => tab.home(),
+        }
+    }
 }
 
 pub const ACTIONS: usize = 3;
