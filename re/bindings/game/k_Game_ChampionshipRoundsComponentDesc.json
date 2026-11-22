@@ -8,8 +8,8 @@
   "type": "void",
   "level": "L2",
   "subsystem": "game",
-  "evidence": "decomp:own disasm around 0x140b9dd69;xref:0x140b9dd69",
-  "notes": "component description of the championship rounds component, passed to the mode entity registry (+0x1030, vtable +0x10); the result is stored at +0x550 there"
+  "evidence": "decomp:own disasm 0x140d6a8a3-0x140d6a8be in the static init and around 0x140b9dd69;xref:0x140d6a8aa,0x140b9dd69",
+  "notes": "CustomTrackListComponent's 0x20-byte component type descriptor: the static init stores its name 'CustomTrackListComponent' at +8 (0x140d6a8aa) and its hash at +0x10; passed as the key to the mode entity's component registry get (+0x1030, vtable +0x10) at 0x140b9dd69, the result stored at +0x550 there (V100078/V100079: a maintainer rename to k_Game_CustomTrackListComponentDesc would fit)"
  },
  "signature": {
   "id": "game.championship_rounds_component_desc",
