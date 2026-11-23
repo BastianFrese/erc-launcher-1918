@@ -352,7 +352,7 @@ fn an_ea_copys_game_set_to_run_as_admin_blocks_however_the_launcher_runs() {
     assert!(
         text.starts_with(
             "F1_25.exe is set to run as administrator, so Windows won't start it for an EA app session \
-             (error 740). The EA app starts F1 25 without administrator rights, so running Swofty Launcher \
+             (error 740). The EA app starts F1 25 without administrator rights, so running ERC Launcher \
              as administrator doesn't help. Right-click D:\\Games\\F1 25\\F1_25.exe, open Properties > \
              Compatibility and untick \"Run this program as an administrator\", also under \"Change settings \
              for all users\". Then press Play again."

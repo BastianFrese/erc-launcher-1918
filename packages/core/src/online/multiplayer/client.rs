@@ -4,7 +4,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -84,7 +83,6 @@ fn token_key(token: Option<&str>) -> u64 {
 static STATE: Mutex<State> = Mutex::new(State::Idle);
 static CHANGED: Condvar = Condvar::new();
 static REFRESHES: Mutex<Option<HashMap<u64, Refresh>>> = Mutex::new(None);
-static NEXT_REF: AtomicU64 = AtomicU64::new(1);
 static KNOWN: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
 fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -271,7 +269,10 @@ const FIRST_LAUNCH_ENV: [(&str, &str); 4] = [
     ("SWOFTY_NETPLAY", "armed"),
     ("SWOFTY_NET_TRACE", "1"),
     ("SWOFTY_NET_TRACE_CAP_KB", "16384"),
-    ("SWOFTY_GAME_LOG_CHANNELS", "default,NETWORK*:info,SSL*:info,GRID*:info"),
+    (
+        "SWOFTY_GAME_LOG_CHANNELS",
+        "default,NETWORK*:info,SSL*:info,GRID*:info",
+    ),
 ];
 
 fn remember_launch_env(data: &Path) -> Option<Vec<(String, String)>> {
@@ -487,6 +488,9 @@ pub fn state_of(doc: Value) -> Option<SessionState> {
     View::read(doc).map(|v| v.state)
 }
 
+/// The rest of a `session.state` answer from a launcher older than ours. Our own session builds its state
+/// itself, so outside the tests only `state` is read.
+#[allow(dead_code)]
 struct View {
     state: SessionState,
     fix_plan: Vec<FixStep>,
@@ -535,7 +539,11 @@ fn conv<T: serde::Serialize, U: serde::de::DeserializeOwned>(v: &T) -> Option<U>
 
 /// Was diese Sitzung an Addons mitbringt, in der Form unseres Sitzungsablaufs.
 fn our_local(local: &Local) -> super::session::Local {
-    super::session::Local::new(local.fingerprint.clone(), &local.categories, local.catalog.clone())
+    super::session::Local::new(
+        local.fingerprint.clone(),
+        &local.categories,
+        local.catalog.clone(),
+    )
 }
 
 pub fn room_server() -> String {
@@ -663,7 +671,6 @@ impl Drop for Session {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -733,7 +740,10 @@ mod tests {
             BTreeMap::new(),
             Vec::new(),
         );
-        for token in ["i1H8signedinsessiontokenfromjson00", "0123456789abcdef0123456789abcdef"] {
+        for token in [
+            "i1H8signedinsessiontokenfromjson00",
+            "0123456789abcdef0123456789abcdef",
+        ] {
             let ours = Session::ours_setup(Setup::new(token, &dir, local.clone()));
             assert_eq!(ours.api.token(), token, "the room call carries this token");
             assert_eq!(ours.api.server(), room_server().trim_end_matches('/'));

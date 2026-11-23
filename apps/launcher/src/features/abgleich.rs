@@ -39,10 +39,7 @@ pub fn angleichen(
     for step in plan {
         match step {
             FixStep::Install {
-                id,
-                name,
-                version,
-                ..
+                id, name, version, ..
             } => {
                 let Some(addon) = katalog.iter().find(|a| &a.id == id) else {
                     ergebnis.offen.push(format!(
@@ -108,7 +105,7 @@ mod tests {
 
     #[test]
     fn a_manual_line_stays_open_and_installs_nothing() {
-        let plan = vec![FixStep::Manual {
+        let plan = [FixStep::Manual {
             line: "Track pack is not in the catalog".into(),
         }];
         let ergebnis = Ergebnis {

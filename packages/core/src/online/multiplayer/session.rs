@@ -24,16 +24,16 @@ use zeroize::Zeroize;
 use super::bridge::{self, Bridge, BridgeConfig, MemberStats, Stats};
 use super::diag;
 use super::direct::DirectUdp;
-use super::relay::RelayUdp;
 use super::fingerprint::{self, Fingerprint, Mismatch, MismatchKind};
 use super::game::{self, Category, Command, GameStatus, Screen};
 use super::progress::{self, MemberStage, NEEDS_F1_2026, OPENS_LOBBY};
+use super::relay::RelayUdp;
 use super::rooms::{Api, ApiError, Lobby, RoomKey, RoomSettings, User};
 use super::transport::Transport;
 use super::turn::TurnTransport;
 use super::ws::{self, ConnectError};
-use crate::game_folder::baseline::Identity;
 use crate::catalog::{self, Addon};
+use crate::game_folder::baseline::Identity;
 use crate::profile::Profile;
 use crate::row_ids::Overrides;
 use crate::store::Store;
@@ -3629,7 +3629,10 @@ mod tests {
             RoomSettings::default(),
         );
         let first = wait_until(&host, "the launch ask", asked);
-        let (code, member) = (first.room.clone().unwrap().code, first.launch.as_ref().unwrap().self_member);
+        let (code, member) = (
+            first.room.clone().unwrap().code,
+            first.launch.as_ref().unwrap().self_member,
+        );
         host.launched();
         game.closed.store(false, Ordering::Relaxed);
         game.reach_lobby();

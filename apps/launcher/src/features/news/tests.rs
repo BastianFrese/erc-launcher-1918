@@ -23,7 +23,9 @@ fn embeds_the_news_in_full() {
         .find(|p| p.title == "Willkommen im ERC Launcher")
         .expect("die Willkommensnachricht fehlt");
     assert_eq!(news.kind, "news");
-    assert!(news.body.contains("## Wenn etwas nicht laeuft") || news.body.contains("## Wenn etwas nicht läuft"));
+    assert!(
+        news.body.contains("## Wenn etwas nicht laeuft") || news.body.contains("## Wenn etwas nicht läuft")
+    );
     assert!(posts.windows(2).all(|w| w[0].date >= w[1].date));
 }
 
@@ -48,18 +50,11 @@ fn no_foreign_release_note_reaches_the_program() {
                 continue;
             }
             let text = std::fs::read_to_string(&path).unwrap_or_default();
-            let kopf: Vec<&str> = text
-                .lines()
-                .skip(1)
-                .take_while(|l| l.trim() != "---")
-                .collect();
+            let kopf: Vec<&str> = text.lines().skip(1).take_while(|l| l.trim() != "---").collect();
             if kopf.iter().any(|l| l.trim() == "product: erc") {
                 continue;
             }
-            let name = path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or_default();
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default();
             let version = name.strip_suffix(".md").unwrap_or(name);
             if eingebettet.iter().any(|v| v == version) {
                 fremde.push(name.to_owned());
@@ -78,9 +73,7 @@ fn the_running_version_has_its_note() {
     let fassung = env!("CARGO_PKG_VERSION");
     let posts = embedded();
     assert!(
-        posts
-            .iter()
-            .any(|p| p.release() && p.version() == fassung),
+        posts.iter().any(|p| p.release() && p.version() == fassung),
         "{fassung} hat keine Versionsnotiz im Programm"
     );
 }

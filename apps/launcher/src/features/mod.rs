@@ -1,8 +1,8 @@
 pub(crate) mod abgleich;
 pub(crate) mod addons;
+pub(crate) mod ads;
 pub(crate) mod aktualisierung;
 pub(crate) mod ampel;
-pub(crate) mod ads;
 pub(crate) mod browser;
 pub(crate) mod career_saves;
 pub(crate) mod console;

@@ -51,9 +51,13 @@ namespace drive = runtime::drive;
 // The probe only reads; it logs what it reached.
 const runtime::Sig S_LAN_VT{"vt_FeTile_LanItem",
                             "48 8D 05 ?? ?? ?? ?? 49 89 04 24 C4 C1 78 11 B4 24 48 01 00 00 41 C6 84 24 58 01 00 00 00",
-                            0x5704740, runtime::Sig::riprel, 0, 3, 7};
-const runtime::Sig S_POPULATE_LOOP{"site_FeTile_PopulateLoop",
-                                   "49 8B 76 78 4D 8B B6 80 00 00 00 4C 39 F6 8B AC 24 00 03 00 00", 0x1745016};
+                            0x5704740,
+                            runtime::Sig::riprel,
+                            0,
+                            3,
+                            7};
+const runtime::Sig S_POPULATE_LOOP{"site_FeTile_PopulateLoop", "49 8B 76 78 4D 8B B6 80 00 00 00 4C 39 F6 8B AC 24 00 03 00 00",
+                                   0x1745016};
 constexpr size_t LAN_ITEM_SIZE = 0x160, LAN_GAME_MODES = 0x148, LAN_NETWORK = 0x150, LAN_ACTIVE = 0x158;
 constexpr unsigned MAX_PROBES = 2;
 
@@ -110,8 +114,13 @@ void populate_mid(safetyhook::Context &c)
 // Multiplayer one (its list is the lone splitscreen tile once the LAN tile is gone). A route fires as
 // the view model's own handlers fire it: Vm_Fire_Route(vm->router (+0x28), vm, &name, 0), which runs
 // the route in the group of the view model's screen.
-const runtime::Sig S_FIRE_CALL{"Vm_Fire_Route", "48 8B 4E 28 48 89 F2 49 89 F8 45 31 C9 E8 ?? ?? ?? ?? E9 E4 00 00 00",
-                               0x42c0e20, runtime::Sig::rel32, 13, 14, 5};
+const runtime::Sig S_FIRE_CALL{"Vm_Fire_Route",
+                               "48 8B 4E 28 48 89 F2 49 89 F8 45 31 C9 E8 ?? ?? ?? ?? E9 E4 00 00 00",
+                               0x42c0e20,
+                               runtime::Sig::rel32,
+                               13,
+                               14,
+                               5};
 constexpr size_t VM_TILE_LIST = 0x2c8, VM_ROUTER = 0x28, STACK_SCAN = 0x1000, NESTR_CHARS = 9;
 constexpr uintptr_t NET_SYSTEM = 0xd8, NET_MODE = 0x750;
 
@@ -229,8 +238,8 @@ void probe_setup()
 {
     uintptr_t vt = runtime::find(S_LAN_VT, "netplay", "netplay"), loop = runtime::find(S_POPULATE_LOOP, "netplay", "netplay");
     if (!vt || !loop || !runtime::readable(reinterpret_cast<void *>(vt), 6 * sizeof(void *))) {
-        swofty::log("[netplay] LAN systems probe not installed (LAN item vtable %s, populate loop %s)",
-                    vt ? "found" : "missing", loop ? "found" : "missing");
+        swofty::log("[netplay] LAN systems probe not installed (LAN item vtable %s, populate loop %s)", vt ? "found" : "missing",
+                    loop ? "found" : "missing");
         return;
     }
     lan_vt = reinterpret_cast<void **>(vt);
@@ -305,8 +314,12 @@ void skip_tick()
         skip_held = false;
         // The game binds the player to the virtual pad at the title; letting go of the last claim unplugs it and the
         // game stops on CONTROLLER DISCONNECTED, so the claim stays held, idle, for the rest of the run.
-        swofty::log("[netplay] room launch: stopped pressing the notice after %d press(es) (%s); the virtual pad stays plugged in", title_skip.presses(),
-                    activity_screen.load() ? "the activity screen is up" : home_screen.load() ? "the main menu is up" : "the lobby or the time limit");
+        swofty::log(
+            "[netplay] room launch: stopped pressing the notice after %d press(es) (%s); the virtual pad stays plugged in",
+            title_skip.presses(),
+            activity_screen.load() ? "the activity screen is up"
+            : home_screen.load()   ? "the main menu is up"
+                                   : "the lobby or the time limit");
     }
 }
 
@@ -346,10 +359,7 @@ uint64_t wall_ms()
     return t / 10000 - 11644473600000ull;
 }
 
-std::wstring dir(const char *sub)
-{
-    return runtime::under_swofty(std::string("netplay\\") + sub);
-}
+std::wstring dir(const char *sub) { return runtime::under_swofty(std::string("netplay\\") + sub); }
 
 constexpr const char *LEAVE_BINDING = "Game_InviteManager_Cancel";
 
@@ -449,40 +459,19 @@ void *network()
     return lan_systems.load() && network && runtime::readable(network, 8) ? network : nullptr;
 }
 
-void *registry()
-{
-    return init_registry.load();
-}
+void *registry() { return init_registry.load(); }
 
-bool on_home()
-{
-    return on_frontend.load() && home_screen.load();
-}
+bool on_home() { return on_frontend.load() && home_screen.load(); }
 
-bool in_lobby()
-{
-    return lobby.load();
-}
+bool in_lobby() { return lobby.load(); }
 
-bool lan_mode()
-{
-    return ::lan_mode();
-}
+bool lan_mode() { return ::lan_mode(); }
 
-bool provide_context(void *registry, void *context)
-{
-    return init_lan_item(registry, context, "caller");
-}
+bool provide_context(void *registry, void *context) { return init_lan_item(registry, context, "caller"); }
 
-bool armed()
-{
-    return ::armed.load();
-}
+bool armed() { return ::armed.load(); }
 
-std::string mode_switch()
-{
-    return ::mode_switch();
-}
+std::string mode_switch() { return ::mode_switch(); }
 
 }
 
@@ -537,9 +526,16 @@ void netplay_flow(uint32_t hash, uint32_t to)
 
 void netplay_screen(const char *name)
 {
-    static const char *const overlays[] = {"fe_planes", "persistent", "playercard", "render_badge",
-                                           "theming_overlay_frontend", "standard_wipe", "frontend_transition",
-                                           "slice_bg_content_underlay", "f1_life_driver_tags", "audio_themes"};
+    static const char *const overlays[] = {"fe_planes",
+                                           "persistent",
+                                           "playercard",
+                                           "render_badge",
+                                           "theming_overlay_frontend",
+                                           "standard_wipe",
+                                           "frontend_transition",
+                                           "slice_bg_content_underlay",
+                                           "f1_life_driver_tags",
+                                           "audio_themes"};
     if (!name)
         return;
     runtime::netplay_room_screen(name);
@@ -595,8 +591,8 @@ bool netplay_popup(const char *id, void *fn, void *ctx)
         return false;
     answer_fn = fn;
     answer_ctx = ctx;
-    swofty::log("[netplay] %s: answering '%s' for the launcher (callback %p, view model %p)", drive::op_name(job.cmd.op),
-                id, fn, ctx);
+    swofty::log("[netplay] %s: answering '%s' for the launcher (callback %p, view model %p)", drive::op_name(job.cmd.op), id, fn,
+                ctx);
     return true;
 }
 
@@ -604,8 +600,7 @@ void reply(const drive::Command &c, const std::string &error, const std::string 
 {
     if (c.op != drive::Op::status || !error.empty())
         swofty::log("[netplay] command %llu %s: %s%s%s%s", (unsigned long long)c.seq, drive::op_name(c.op),
-                    error.empty() ? "ok" : error.c_str(), detail.empty() ? "" : " (", detail.c_str(),
-                    detail.empty() ? "" : ")");
+                    error.empty() ? "ok" : error.c_str(), detail.empty() ? "" : " (", detail.c_str(), detail.empty() ? "" : ")");
     std::string body = drive::reply_json(c, state(), error, wall_ms(), detail);
     std::lock_guard<std::mutex> g(queue_lock);
     outgoing.emplace_back(c.seq, std::move(body));
@@ -795,7 +790,8 @@ void netplay_tick()
             reply(c, error, cancelled ? "the running host or join ends at its next step" : "nothing was running");
             return;
         }
-        default: break;
+        default:
+            break;
         }
     }
     reply(c, error);

@@ -452,8 +452,8 @@ void scenario_entry(void *session, uint8_t stat_id, const void *spec)
             if (s.stat_id == stat_id)
                 name = s.name;
         swofty::log("[car-category] SetScenario: %u -> %u (role %d%s%s), stat %u%s%s", before,
-                    at<uint8_t>(session, SESSION_SCENARIO), role, spec ? ", mit spec" : "", spec ? "" : "",
-                    (unsigned)stat_id, name.empty() ? "" : " = ", name.empty() ? "" : name.c_str());
+                    at<uint8_t>(session, SESSION_SCENARIO), role, spec ? ", mit spec" : "", spec ? "" : "", (unsigned)stat_id,
+                    name.empty() ? "" : " = ", name.empty() ? "" : name.c_str());
     }
 }
 

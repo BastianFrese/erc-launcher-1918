@@ -56,7 +56,8 @@ fn relay_probe() -> Result<(Tri, usize), String> {
     };
     let s = UdpSocket::bind("0.0.0.0:0").map_err(|e| format!("Kein Sende-Socket: {e}"))?;
     s.set_read_timeout(Some(Duration::from_secs(4))).ok();
-    s.send_to(b"ERC-LOBBYS", ziel).map_err(|e| format!("Die Anfrage ging nicht raus: {e}"))?;
+    s.send_to(b"ERC-LOBBYS", ziel)
+        .map_err(|e| format!("Die Anfrage ging nicht raus: {e}"))?;
     let mut puffer = [0u8; 8192];
     match s.recv_from(&mut puffer) {
         Ok((n, _)) => {
@@ -92,7 +93,10 @@ fn erreichbar(adresse: &str) -> Tri {
 
 /// Alles drei pruefen. Blockiert — gehoert in den Hintergrund.
 pub(crate) fn pruefen() -> Stand {
-    let raum = erreichbar(&format!("{}/v1/presence", swofty_core::online::multiplayer::client::room_server()));
+    let raum = erreichbar(&format!(
+        "{}/v1/presence",
+        swofty_core::online::multiplayer::client::room_server()
+    ));
     let download = erreichbar("https://download.erdi-erc.de/updates.json");
     let (relay, lobbys) = relay_probe().unwrap_or((Tri::Rot, 0));
     Stand {
@@ -130,8 +134,8 @@ mod fenster {
     use gpui_kit::*;
 
     use crate::features::ampel::{self, Stand, Tri};
-    use crate::ui::scale::px;
     use crate::shell::Shell;
+    use crate::ui::scale::px;
     use crate::ui::theme::Palette;
 
     /// So oft nachgesehen wird.
@@ -164,15 +168,11 @@ mod fenster {
                 return None;
             }
             let punkt = |stand: Tri| {
-                div()
-                    .w(px(6.))
-                    .h(px(6.))
-                    .rounded_full()
-                    .bg(match stand {
-                        Tri::Gruen => p.success,
-                        Tri::Rot => p.error,
-                        Tri::Unbekannt => p.text_muted,
-                    })
+                div().w(px(6.)).h(px(6.)).rounded_full().bg(match stand {
+                    Tri::Gruen => p.success,
+                    Tri::Rot => p.error,
+                    Tri::Unbekannt => p.text_muted,
+                })
             };
             let eintrag = |name: &'static str, stand: Tri| {
                 h_flex()

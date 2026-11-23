@@ -27,8 +27,7 @@ using NodeCallback = void(void *task, uint32_t privilege, bool success, const Co
 
 inline void done(void *, bool) {}
 
-template <class T>
-inline T load(const uint8_t *base, size_t off)
+template <class T> inline T load(const uint8_t *base, size_t off)
 {
     T v;
     std::memcpy(&v, base + off, sizeof v);

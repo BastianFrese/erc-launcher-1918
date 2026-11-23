@@ -1,4 +1,7 @@
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+// Die ERC-Oberflaeche zeigt ihre eigenen Seiten. Die Oberflaechenteile des fremden Unterbaus, die sie nicht
+// mehr aufruft, bleiben fuer den naechsten Merge stehen, statt geloescht zu werden.
+#![allow(dead_code)]
 
 mod app;
 mod blocks;

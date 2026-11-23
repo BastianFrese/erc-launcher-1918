@@ -81,8 +81,8 @@ mod fenster {
     use gpui_kit::*;
 
     use crate::features::presence::{self, TAKT};
-    use crate::ui::scale::px;
     use crate::shell::Shell;
+    use crate::ui::scale::px;
     use crate::ui::theme::Palette;
 
     impl Shell {
@@ -96,12 +96,8 @@ mod fenster {
                 loop {
                     let auftrag = this.update(cx, |s, _| {
                         // Auch ohne Anmeldung: der eigene Schluessel dieser Installation.
-                        let token = s
-                            .account
-                            .session
-                            .as_ref()
-                            .map(|m| m.token.clone())
-                            .or_else(|| {
+                        let token =
+                            s.account.session.as_ref().map(|m| m.token.clone()).or_else(|| {
                                 swofty_core::online::multiplayer::guest::token(&s.store.root).ok()
                             })?;
                         Some((
@@ -140,13 +136,11 @@ mod fenster {
                     .flex_shrink_0()
                     .items_center()
                     .gap(px(6.))
-                    .child(
-                        div()
-                            .w(px(6.))
-                            .h(px(6.))
-                            .rounded_full()
-                            .bg(if stand.ingame > 0 { p.success } else { p.text_muted }),
-                    )
+                    .child(div().w(px(6.)).h(px(6.)).rounded_full().bg(if stand.ingame > 0 {
+                        p.success
+                    } else {
+                        p.text_muted
+                    }))
                     .child(
                         div()
                             .text_size(px(11.))

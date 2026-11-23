@@ -669,10 +669,7 @@ mod tests {
     fn the_message_counts_the_files_and_names_the_cause() {
         let r = repair(Source::Steam);
         let why = not_stock(52).why(&r);
-        assert!(
-            why.starts_with("52 game files were changed outside ERC"),
-            "{why}"
-        );
+        assert!(why.starts_with("52 game files were changed outside ERC"), "{why}");
         assert!(
             why.contains("a mod is copied into the game folder by hand"),
             "{why}"

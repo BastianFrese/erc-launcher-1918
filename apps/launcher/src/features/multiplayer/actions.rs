@@ -416,11 +416,7 @@ impl Multiplayer {
 
     /// Holt fehlende Mods aus dem Katalog, schaltet eigene ab und gibt der Sitzung den
     /// frischen Stand — alles im Hintergrund, die Oberfläche wartet nicht darauf.
-    pub(super) fn align_mods<H: Host<Self>>(
-        host: &mut H,
-        plan: Vec<FixStep>,
-        cx: &mut Context<H>,
-    ) {
+    pub(super) fn align_mods<H: Host<Self>>(host: &mut H, plan: Vec<FixStep>, cx: &mut Context<H>) {
         let (m, needs) = host.split();
         let Some(dir) = needs.game_dir.map(Path::to_path_buf) else {
             return;
@@ -434,8 +430,7 @@ impl Multiplayer {
                     let katalog = read_local(&store, &profile, &dir)
                         .map_err(|e| format!("Der eigene Mod-Stand liess sich nicht lesen: {e}"))?
                         .catalog;
-                    let ergebnis =
-                        crate::features::abgleich::angleichen(&store, &profile, &katalog, &plan)?;
+                    let ergebnis = crate::features::abgleich::angleichen(&store, &profile, &katalog, &plan)?;
                     let frisch = read_local(&store, &profile, &dir).ok();
                     Ok::<_, String>((ergebnis, frisch))
                 })

@@ -13,7 +13,8 @@ pub const INVITE: &str = "https://discord.gg/Tp2Q4XEc5Q";
 pub const LABEL: &str = "Server öffnen";
 pub(crate) const BANNER_CARD_ID: &str = "discord-banner";
 
-const BODY: &str = "Fragen zum Launcher, Hilfe bei Problemen, Absprachen fürs Rennen — und die Änderungen zuerst.";
+const BODY: &str =
+    "Fragen zum Launcher, Hilfe bei Problemen, Absprachen fürs Rennen — und die Änderungen zuerst.";
 pub(crate) const LOGO: &[u8] = include_bytes!("../../assets/discord.svg");
 pub(crate) const BLURPLE: u32 = 0x5865f2;
 pub(crate) const BLURPLE_HOVER: u32 = 0x4752c4;

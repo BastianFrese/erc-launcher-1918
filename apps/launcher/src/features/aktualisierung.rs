@@ -70,8 +70,8 @@ pub fn pruefen() -> Stand {
     let Ok(ihre) = semver::Version::parse(angebot.version.trim_start_matches('v')) else {
         return Stand::Fehler(format!("Fassung '{}' ist keine Nummer", angebot.version));
     };
-    let unsere = semver::Version::parse(env!("CARGO_PKG_VERSION"))
-        .expect("die eigene Fassung ist eine Nummer");
+    let unsere =
+        semver::Version::parse(env!("CARGO_PKG_VERSION")).expect("die eigene Fassung ist eine Nummer");
     if ihre > unsere {
         Stand::Neu(angebot)
     } else {
@@ -81,10 +81,7 @@ pub fn pruefen() -> Stand {
 
 fn hole(adresse: &str) -> Result<String, String> {
     let mut antwort = ureq::get(adresse)
-        .header(
-            "User-Agent",
-            concat!("erc-launcher/", env!("CARGO_PKG_VERSION")),
-        )
+        .header("User-Agent", concat!("erc-launcher/", env!("CARGO_PKG_VERSION")))
         .config()
         .timeout_global(Some(TIMEOUT))
         .http_status_as_error(false)
@@ -107,10 +104,7 @@ fn hole(adresse: &str) -> Result<String, String> {
 pub fn laden(angebot: &Angebot) -> Result<PathBuf, String> {
     let ziel = std::env::temp_dir().join(SETUP_NAME);
     let antwort = ureq::get(&angebot.setup)
-        .header(
-            "User-Agent",
-            concat!("erc-launcher/", env!("CARGO_PKG_VERSION")),
-        )
+        .header("User-Agent", concat!("erc-launcher/", env!("CARGO_PKG_VERSION")))
         .config()
         .timeout_global(Some(Duration::from_secs(600)))
         .http_status_as_error(false)
@@ -121,8 +115,7 @@ pub fn laden(angebot: &Angebot) -> Result<PathBuf, String> {
     if status >= 400 {
         return Err(format!("{}: HTTP {status}", angebot.setup));
     }
-    let mut datei =
-        std::fs::File::create(&ziel).map_err(|e| format!("{}: {e}", ziel.display()))?;
+    let mut datei = std::fs::File::create(&ziel).map_err(|e| format!("{}: {e}", ziel.display()))?;
     let mut leser = antwort.into_body().into_reader();
     std::io::copy(&mut leser, &mut datei).map_err(|e| format!("Download: {e}"))?;
     drop(datei);
@@ -137,11 +130,7 @@ pub fn laden(angebot: &Angebot) -> Result<PathBuf, String> {
         }
         pruefer.update(&puffer[..n]);
     }
-    let gerechnet: String = pruefer
-        .finalize()
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect();
+    let gerechnet: String = pruefer.finalize().iter().map(|b| format!("{b:02x}")).collect();
     if !angebot.sha256.eq_ignore_ascii_case(&gerechnet) {
         let _ = std::fs::remove_file(&ziel);
         return Err(format!(
@@ -183,7 +172,7 @@ mod tests {
             notiz: String::new(),
         };
         let ihre = semver::Version::parse(&gleich.version).unwrap();
-        assert!(!(ihre > ihre), "die eigene Fassung ist kein Angebot");
+        assert!(ihre <= ihre, "die eigene Fassung ist kein Angebot");
 
         let hoeher = semver::Version::parse("99.0.0").unwrap();
         assert!(hoeher > ihre);
@@ -239,20 +228,14 @@ mod fenster {
                     if offen.is_err() {
                         return; // das Fenster ist zu
                     }
-                    cx.background_executor()
-                        .timer(aktualisierung::NACHSEHEN)
-                        .await;
+                    cx.background_executor().timer(aktualisierung::NACHSEHEN).await;
                 }
             })
             .detach();
         }
 
         /// Der Knopf in der Titelzeile, sobald es etwas Neues gibt.
-        pub(crate) fn aktualisierung_knopf(
-            &self,
-            p: Palette,
-            cx: &mut Context<Self>,
-        ) -> Option<AnyElement> {
+        pub(crate) fn aktualisierung_knopf(&self, p: Palette, cx: &mut Context<Self>) -> Option<AnyElement> {
             self.aktualisierung.angebot()?;
             let laeuft = self.aktualisierung_laeuft;
             // Kurz halten: die Fassung steht im Fenster für die Aktualisierung und in

@@ -48,7 +48,10 @@ pub const TRACE_WHEN_ARMED: bool = true;
 pub const TRACE_ENV: [(&str, &str); 3] = [
     ("SWOFTY_NET_TRACE", "1"),
     ("SWOFTY_NET_TRACE_CAP_KB", "16384"),
-    ("SWOFTY_GAME_LOG_CHANNELS", "default,NETWORK*:info,SSL*:info,GRID*:info"),
+    (
+        "SWOFTY_GAME_LOG_CHANNELS",
+        "default,NETWORK*:info,SSL*:info,GRID*:info",
+    ),
 ];
 /// The game's `Network.Transport.SocketPort`.
 pub const DEFAULT_GAME_PORT: u16 = 21414;
@@ -897,7 +900,10 @@ mod tests {
             with_network_log_channels("default,NETWORK*:info,SSL*:info"),
             "default,NETWORK*:info,SSL*:info,GRID*:info"
         );
-        assert_eq!(with_network_log_channels(""), "default,NETWORK*:info,SSL*:info,GRID*:info");
+        assert_eq!(
+            with_network_log_channels(""),
+            "default,NETWORK*:info,SSL*:info,GRID*:info"
+        );
         assert_eq!(
             with_network_log_channels("default,GRID*:debug,NETWORK*:info"),
             "default,GRID*:debug,NETWORK*:info"

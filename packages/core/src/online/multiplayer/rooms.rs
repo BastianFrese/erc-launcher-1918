@@ -715,7 +715,10 @@ mod tests {
         let token = "i1H8signedinsessiontokenfromjson00";
         let _ = Api::with_server(&format!("http://{addr}"), token).create(&RoomSettings::default());
         let request = reader.join().unwrap();
-        assert!(request.starts_with("POST /v1/mp/lobbies HTTP/1.1\r\n"), "{request}");
+        assert!(
+            request.starts_with("POST /v1/mp/lobbies HTTP/1.1\r\n"),
+            "{request}"
+        );
         assert!(
             request
                 .lines()

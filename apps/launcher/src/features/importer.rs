@@ -173,11 +173,10 @@ impl Shell {
                             .addon(managed::ID)
                             .failed(&e);
                         window.notify(
-                            Notification::error(e)
-                                .title(trf!(
-                                    "Could not install {name}",
-                                    name = display_name(managed::ID, managed::NAME)
-                                )),
+                            Notification::error(e).title(trf!(
+                                "Could not install {name}",
+                                name = display_name(managed::ID, managed::NAME)
+                            )),
                             cx,
                         )
                     }

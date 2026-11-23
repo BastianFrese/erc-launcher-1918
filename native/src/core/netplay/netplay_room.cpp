@@ -75,8 +75,12 @@ const runtime::Sig S_CUSTOM_CREATE{"game.network_custom_create", "56 48 81 EC 70
 const runtime::Sig S_INVITE_NOTIFY{"game.game_session_ui_on_invite_join_notification",
                                    "56 57 53 48 83 EC 40 48 89 CE 80 3D ?? ?? ?? ?? 01 75 66 B8 70 01 00 00", 0x30acca0};
 const runtime::Sig S_REQUEST_KEY{"game.join_request_owner_key",
-                                 "48 8D 15 ?? ?? ?? ?? 48 89 F9 FF 50 28 48 85 C0 0F 84 ?? ?? ?? ?? 48 8B 48 18", 0x6cb8278,
-                                 runtime::Sig::riprel, 0, 3, 7};
+                                 "48 8D 15 ?? ?? ?? ?? 48 89 F9 FF 50 28 48 85 C0 0F 84 ?? ?? ?? ?? 48 8B 48 18",
+                                 0x6cb8278,
+                                 runtime::Sig::riprel,
+                                 0,
+                                 3,
+                                 7};
 
 const char *const LOOKUP_SITE =
     "48 8D 05 ?? ?? ?? ?? 48 89 44 24 28 48 8D 54 24 28 48 89 D9 E8 ?? ?? ?? ?? 48 C1 E0 04 48 03 43 18 48 3B 43 20 0F 84 ?? "
@@ -84,20 +88,34 @@ const char *const LOOKUP_SITE =
     "48 85 C0 0F 84";
 const runtime::Sig S_MANAGER{"game.manager",
                              "48 8B B8 98 01 00 00 48 85 FF 0F 84 ?? ?? ?? ?? 48 8D 4C 24 70 E8 ?? ?? ?? ?? 48 8B 05",
-                             0x604c2c8, runtime::Sig::riprel, 26, 29, 7};
+                             0x604c2c8,
+                             runtime::Sig::riprel,
+                             26,
+                             29,
+                             7};
 const runtime::Sig S_SERVICE_FIND{"game.service_map_find", LOOKUP_SITE, 0x30ffd0, runtime::Sig::rel32, 0x14, 0x15, 5};
 const runtime::Sig S_NS_KEY{"game.net_subsystem_key", LOOKUP_SITE, 0x60bed80, runtime::Sig::riprel, 0, 3, 7};
-const runtime::Sig S_NS_VTABLE{"game.net_subsystem_vtable",
-                                "48 8D 05 ?? ?? ?? ?? 48 89 06 48 8D 05 ?? ?? ?? ?? 48 89 46 20 48 8D 05 ?? ?? ?? ?? 48 89 46 28 C5 C8 57 F6",
-                                0x5814050, runtime::Sig::riprel, 0, 3, 7};
-const runtime::Sig S_SET_MODE{"game.game_set_current_game_mode", "41 56 56 57 55 53 48 81 EC 80 00 00 00 48 8B 81 88 00 00 00", 0x7d07a0};
+const runtime::Sig S_NS_VTABLE{
+    "game.net_subsystem_vtable",
+    "48 8D 05 ?? ?? ?? ?? 48 89 06 48 8D 05 ?? ?? ?? ?? 48 89 46 20 48 8D 05 ?? ?? ?? ?? 48 89 46 28 C5 C8 57 F6",
+    0x5814050,
+    runtime::Sig::riprel,
+    0,
+    3,
+    7};
+const runtime::Sig S_SET_MODE{"game.game_set_current_game_mode", "41 56 56 57 55 53 48 81 EC 80 00 00 00 48 8B 81 88 00 00 00",
+                              0x7d07a0};
 const runtime::Sig S_NAME_INDEX{"game.game_modes_name_index", "E9 ?? ?? ?? ?? EF 7B F2 64 0F 84 ?? ?? ?? ?? 2B CA", 0x9763b0};
 // Derselbe Thunk auf F1 25 1.0.145 (Steam 26566308, dieselbe Stelle 0x50 Bytes weiter). Die Bytes hinter dem Sprung
 // sind Daten und je Build andere; abgelesen am entpackten Code (loader.log, 18.11.2026). Ziel: base+0x88ad0f0.
 const runtime::Sig S_NAME_INDEX_145{"game.game_modes_name_index", "E9 ?? ?? ?? ?? 8B 8E 46 CC BF 86 E9 16 52 2B 00", 0x976400};
 const runtime::Sig S_STR_VTABLE{"game.ne_inline_str_vtable",
-                                "48 8D 05 ?? ?? ?? ?? 48 89 44 24 28 48 8D 54 24 28 E8 ?? ?? ?? ?? 48 8B 4B 58 48 8B", 0x5612ea8,
-                                runtime::Sig::riprel, 0, 3, 7};
+                                "48 8D 05 ?? ?? ?? ?? 48 89 44 24 28 48 8D 54 24 28 E8 ?? ?? ?? ?? 48 8B 4B 58 48 8B",
+                                0x5612ea8,
+                                runtime::Sig::riprel,
+                                0,
+                                3,
+                                7};
 const runtime::Sig S_MP_MODE{"game.network_subsystem_change_mp_mode",
                              "41 57 41 56 41 54 56 57 55 53 48 81 EC 20 02 00 00 C5 F8 29 B4 24 10 02 00 00", 0x30ed330};
 const runtime::Sig S_PRESENCE{"game.network_mox_session_generic",
@@ -156,10 +174,7 @@ bool read_memory(uint64_t address, void *out, size_t n, void *)
     return true;
 }
 
-room::Memory memory()
-{
-    return {read_memory, nullptr};
-}
+room::Memory memory() { return {read_memory, nullptr}; }
 
 bool code_pointer(const void *p)
 {
@@ -203,8 +218,7 @@ void *resolve_network(std::string &why)
         if (why.empty()) {
             ns_cached = ns;
             char b[96];
-            std::snprintf(b, sizeof b, "network subsystem %p from the game manager's services map",
-                          reinterpret_cast<void *>(ns));
+            std::snprintf(b, sizeof b, "network subsystem %p from the game manager's services map", reinterpret_cast<void *>(ns));
             note_network(b);
             return reinterpret_cast<void *>(ns);
         }
@@ -254,16 +268,17 @@ void dump_around_name_index()
     uintptr_t at = base + 0x9763b0 + uintptr_t(delta);
     constexpr uintptr_t BACK = 0x400, LEN = 0x800;
     uintptr_t from = at - BACK;
-    swofty::log("[netplay] name-index dump: node_set_bool base+0x%llx, offset %+lld, window base+0x%llx..0x%llx (16 bytes a line)",
-                (unsigned long long)(anchor - base), (long long)delta, (unsigned long long)(from - base),
-                (unsigned long long)(from + LEN - base));
+    swofty::log(
+        "[netplay] name-index dump: node_set_bool base+0x%llx, offset %+lld, window base+0x%llx..0x%llx (16 bytes a line)",
+        (unsigned long long)(anchor - base), (long long)delta, (unsigned long long)(from - base),
+        (unsigned long long)(from + LEN - base));
     for (uintptr_t p = from; p < from + LEN; p += 16) {
         if (!runtime::readable(reinterpret_cast<void *>(p), 16))
             continue;
         auto *b = reinterpret_cast<const uint8_t *>(p);
         swofty::log("[netplay]   +0x%llx  %02x %02x %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x %02x %02x",
-                    (unsigned long long)(p - base), b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10],
-                    b[11], b[12], b[13], b[14], b[15]);
+                    (unsigned long long)(p - base), b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11],
+                    b[12], b[13], b[14], b[15]);
     }
 }
 
@@ -299,10 +314,7 @@ struct InlineStr {
     char inline_chars[0x28];
 };
 
-uint64_t since(uint64_t start)
-{
-    return GetTickCount64() - start;
-}
+uint64_t since(uint64_t start) { return GetTickCount64() - start; }
 
 std::string switch_to_lan()
 {
@@ -338,7 +350,8 @@ std::string switch_to_lan()
     name.chars = name.inline_chars;
     std::memcpy(name.inline_chars, "online_custom", sizeof "online_custom");
     t = GetTickCount64();
-    uint64_t index = reinterpret_cast<NameIndex_t *>(a_name_index)(reinterpret_cast<void *>(plan.modes + room::MODES_NAMES), &name);
+    uint64_t index =
+        reinterpret_cast<NameIndex_t *>(a_name_index)(reinterpret_cast<void *>(plan.modes + room::MODES_NAMES), &name);
     swofty::log("[netplay] room: mode switch: the name index returned %llu in %llums", static_cast<unsigned long long>(index),
                 static_cast<unsigned long long>(since(t)));
     if (std::string why = room::mode_entity(memory(), plan.modes, index, plan); !why.empty())
@@ -348,8 +361,7 @@ std::string switch_to_lan()
                 reinterpret_cast<void *>(plan.mode), plan.net);
     t = GetTickCount64();
     reinterpret_cast<SetMode_t *>(a_set_mode)(reinterpret_cast<void *>(plan.modes), reinterpret_cast<void *>(plan.mode));
-    swofty::log("[netplay] room: mode switch: SetCurrentGameMode returned in %llums",
-                static_cast<unsigned long long>(since(t)));
+    swofty::log("[netplay] room: mode switch: SetCurrentGameMode returned in %llums", static_cast<unsigned long long>(since(t)));
     t = GetTickCount64();
     reinterpret_cast<Presence_t *>(a_presence)(ns);
     uint8_t lan = 1;
@@ -475,8 +487,7 @@ void tabs_mid(safetyhook::Context &c)
     if (!v || !runtime::readable(v, room::CONTAINER_SIZE))
         return;
     if (container.load() != v)
-        swofty::log("[netplay] room: f1_world_activity_container %p is building its tabs (network mode %d)", v,
-                    net_mode_now());
+        swofty::log("[netplay] room: f1_world_activity_container %p is building its tabs (network mode %d)", v, net_mode_now());
     container_vt = *static_cast<void **>(v);
     container = v;
 }
@@ -484,12 +495,18 @@ void tabs_mid(safetyhook::Context &c)
 const char *ui_step_name(room::UiStep step)
 {
     switch (step) {
-    case room::UiStep::state: return "writing the custom game state";
-    case room::UiStep::container: return "waiting for the Car Category's container";
-    case room::UiStep::settle: return "waiting for its tab list";
-    case room::UiStep::sent: return "open_create_custom sent";
-    case room::UiStep::failed: return "failed";
-    default: return "idle";
+    case room::UiStep::state:
+        return "writing the custom game state";
+    case room::UiStep::container:
+        return "waiting for the Car Category's container";
+    case room::UiStep::settle:
+        return "waiting for its tab list";
+    case room::UiStep::sent:
+        return "open_create_custom sent";
+    case room::UiStep::failed:
+        return "failed";
+    default:
+        return "idle";
     }
 }
 
@@ -593,8 +610,8 @@ void finish(room::Phase phase, const std::string &detail)
 {
     state.phase = phase;
     state.detail = detail;
-    swofty::log("[netplay] room %s: %s %s", room::role_name(role), phase == room::Phase::done ? "ready:" : "failed:",
-                detail.c_str());
+    swofty::log("[netplay] room %s: %s %s", room::role_name(role),
+                phase == room::Phase::done ? "ready:" : "failed:", detail.c_str());
 }
 
 void act(room::Do d)
@@ -704,19 +721,16 @@ bool begin(Role r, const char *host_ip, bool from_home, std::string &why)
         hud::room_cover::step("Switching the game mode", 0.6f, 0.72f);
     swofty::log("[netplay] room %s: set-up started %s (plan checked: %s)", role_name(r),
                 from_home ? "from the main menu" : "before the main menu",
-                host_ui        ? "the network subsystem, then the front end's custom game state and the Car Category tab"
+                host_ui           ? "the network subsystem, then the front end's custom game state and the Car Category tab"
                 : r == Role::host ? "GameSessionUI, session settings, invite manager, request clear"
-                : join_at_home ? "the network subsystem, invite handler, ip address; the join itself runs from the main menu"
-                               : "the network subsystem, invite handler, ip address");
+                : join_at_home    ? "the network subsystem, invite handler, ip address; the join itself runs from the main menu"
+                                  : "the network subsystem, invite handler, ip address");
     return true;
 }
 
 }
 
-bool provide_context(void *registry, void *context)
-{
-    return bind::provide_context(registry, context);
-}
+bool provide_context(void *registry, void *context) { return bind::provide_context(registry, context); }
 
 bool set_up_from_home(Role r, const char *host_ip, std::string &why)
 {
@@ -991,17 +1005,14 @@ bool load_request()
     swofty::log("[netplay] room: the direct start request is a %s%s%s", request.role.c_str(),
                 request.role == "join" ? " of " : "", request.role == "join" ? request.host_ip.c_str() : "");
     if (drive::apply_room_config(request)) {
-        swofty::log("[netplay] room: configured from the direct start request, self=%d base=%d%s%s", request.self,
-                    request.base, request.name.empty() ? "" : ", driver name ", request.name.c_str());
+        swofty::log("[netplay] room: configured from the direct start request, self=%d base=%d%s%s", request.self, request.base,
+                    request.name.empty() ? "" : ", driver name ", request.name.c_str());
         netplay_bridge_status_changed();
     }
     return true;
 }
 
-netplay_room::Setup adapter(std::string &why)
-{
-    return netplay_room::room_poll(why);
-}
+netplay_room::Setup adapter(std::string &why) { return netplay_room::room_poll(why); }
 
 }
 
@@ -1018,15 +1029,10 @@ void netplay_room_setup()
     } else {
         swofty::log("[netplay] room: the container's tab builder did not resolve; a host cannot open the Car Category tab");
     }
-    direct_start_register_room([](std::string &why) {
-        return static_cast<direct_start::Setup>(adapter(why));
-    });
+    direct_start_register_room([](std::string &why) { return static_cast<direct_start::Setup>(adapter(why)); });
 }
 
-bool netplay_room_requested()
-{
-    return netplay_room::room_requested();
-}
+bool netplay_room_requested() { return netplay_room::room_requested(); }
 
 void netplay_room_screen(const char *name)
 {

@@ -173,11 +173,7 @@ impl RelayUdp {
 
     /// Everyone this room has shown us, this player included.
     pub fn seen(&self) -> Vec<u8> {
-        let mut all: BTreeSet<u8> = self
-            .seen
-            .read()
-            .unwrap_or_else(|e| e.into_inner())
-            .clone();
+        let mut all: BTreeSet<u8> = self.seen.read().unwrap_or_else(|e| e.into_inner()).clone();
         all.insert(self.me);
         all.into_iter().collect()
     }
@@ -188,10 +184,7 @@ impl RelayUdp {
     pub fn set_abdruck(&self, json: Option<String>) {
         let packed = json.and_then(|text| {
             let mut out = Vec::new();
-            let mut enc = flate2::write::ZlibEncoder::new(
-                &mut out,
-                flate2::Compression::fast(),
-            );
+            let mut enc = flate2::write::ZlibEncoder::new(&mut out, flate2::Compression::fast());
             use std::io::Write;
             enc.write_all(text.as_bytes()).ok()?;
             enc.finish().ok()?;
@@ -472,10 +465,7 @@ impl RelayUdp {
             ruf.extend_from_slice(&self.room);
             ruf.push(self.me);
             let _ = self.socket.send_to(&ruf, self.relay);
-            self.wege
-                .write()
-                .unwrap_or_else(|e| e.into_inner())
-                .gefragt = Some(jetzt);
+            self.wege.write().unwrap_or_else(|e| e.into_inner()).gefragt = Some(jetzt);
         }
 
         let mut raus: Vec<SocketAddr> = Vec::new();
@@ -561,10 +551,8 @@ impl RelayUdp {
             let Some((nr, adresse)) = zeile.split_once('=') else {
                 continue;
             };
-            let (Ok(kennung), Ok(adresse)) = (
-                nr.trim().parse::<u8>(),
-                adresse.trim().parse::<SocketAddr>(),
-            ) else {
+            let (Ok(kennung), Ok(adresse)) = (nr.trim().parse::<u8>(), adresse.trim().parse::<SocketAddr>())
+            else {
                 continue;
             };
             if kennung != self.me {
@@ -588,7 +576,11 @@ impl RelayUdp {
         wege.versuch.remove(&kennung);
         drop(wege);
         if vorher != Some(from) {
-            let woher = if aus_tabelle { "" } else { " (learned at the punch)" };
+            let woher = if aus_tabelle {
+                ""
+            } else {
+                " (learned at the punch)"
+            };
             diag::line(format!("direct path to member {kennung}: {from}{woher}"));
         }
     }
@@ -725,9 +717,7 @@ mod tests {
     fn fake_relay() -> (SocketAddr, Arc<AtomicBool>) {
         let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
         let addr = socket.local_addr().unwrap();
-        socket
-            .set_read_timeout(Some(Duration::from_millis(50)))
-            .unwrap();
+        socket.set_read_timeout(Some(Duration::from_millis(50))).unwrap();
         let stop = Arc::new(AtomicBool::new(false));
         let flag = stop.clone();
         thread::spawn(move || {
@@ -799,10 +789,7 @@ mod tests {
 
         a.send(2, b"to two").unwrap();
         let mut buf = [0u8; MAX_DATAGRAM];
-        assert_eq!(
-            b.recv(&mut buf, Duration::from_secs(2)).unwrap(),
-            Some((1, 6))
-        );
+        assert_eq!(b.recv(&mut buf, Duration::from_secs(2)).unwrap(), Some((1, 6)));
         assert_eq!(&buf[..6], b"to two");
 
         stop.store(true, Ordering::Relaxed);
@@ -820,20 +807,14 @@ mod tests {
         thread::sleep(Duration::from_millis(150));
         a.send(2, b"hello").unwrap();
         let mut buf = [0u8; MAX_DATAGRAM];
-        assert_eq!(
-            b.recv(&mut buf, Duration::from_secs(2)).unwrap(),
-            Some((1, 5))
-        );
+        assert_eq!(b.recv(&mut buf, Duration::from_secs(2)).unwrap(), Some((1, 5)));
 
         // Member 3 sends, but `b` does not know it: dropped.
         let c = RelayUdp::new(relay, "AB12", 3).unwrap();
         c.set_peers(&HashMap::from([(1, relay), (2, relay)])).unwrap();
         thread::sleep(Duration::from_millis(150));
         c.send(1, b"stranger").unwrap();
-        assert_eq!(
-            b.recv(&mut buf, Duration::from_millis(300)).unwrap(),
-            None
-        );
+        assert_eq!(b.recv(&mut buf, Duration::from_millis(300)).unwrap(), None);
         assert_eq!(b.unknown_dropped(), 1);
 
         stop.store(true, Ordering::Relaxed);
@@ -885,8 +866,11 @@ mod tests {
             wege.tabelle.get(&2),
             Some(&SocketAddr::from(([1, 2, 3, 4], 5000)))
         );
-        assert!(wege.tabelle.get(&3).is_some(), "IPv6 fehlt");
-        assert!(wege.tabelle.get(&1).is_none(), "eigene Kennung gehört nicht hinein");
+        assert!(wege.tabelle.contains_key(&3), "IPv6 fehlt");
+        assert!(
+            !wege.tabelle.contains_key(&1),
+            "eigene Kennung gehört nicht hinein"
+        );
         // Lese-Sperre fallen lassen, sonst verklemmt sich der folgende Schreibzugriff.
         drop(wege);
 
@@ -916,10 +900,7 @@ mod tests {
         // Wechselt das Gegenüber die Adresse, folgt der Weg.
         let neu: SocketAddr = "9.9.9.9:7001".parse().unwrap();
         t.weg_bestaetigen(2, neu);
-        assert_eq!(
-            t.wege.read().unwrap().direkt.get(&2).map(|(a, _)| *a),
-            Some(neu)
-        );
+        assert_eq!(t.wege.read().unwrap().direkt.get(&2).map(|(a, _)| *a), Some(neu));
     }
 
     #[test]
@@ -939,10 +920,7 @@ mod tests {
         gegen.send_to(&paket, ziel).unwrap();
 
         let mut buf = [0u8; MAX_DATAGRAM];
-        assert_eq!(
-            t.recv(&mut buf, Duration::from_secs(2)).unwrap(),
-            Some((2, 5))
-        );
+        assert_eq!(t.recv(&mut buf, Duration::from_secs(2)).unwrap(), Some((2, 5)));
         assert_eq!(&buf[..5], b"hallo");
         assert_eq!(
             t.wege.read().unwrap().direkt.get(&2).map(|(a, _)| *a),
@@ -973,11 +951,7 @@ mod tests {
         let mut t = RelayUdp::new("127.0.0.1:9", "ABCD", 1).unwrap();
         t.erlaubt = true;
         t.set_peers(&HashMap::from([(2, t.relay_addr())])).unwrap();
-        t.wege
-            .write()
-            .unwrap()
-            .direkt
-            .insert(2, (ziel, Instant::now()));
+        t.wege.write().unwrap().direkt.insert(2, (ziel, Instant::now()));
 
         t.send(2, b"hallo").unwrap();
         let mut puffer = [0u8; 64];

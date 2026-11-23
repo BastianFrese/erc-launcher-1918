@@ -146,8 +146,8 @@ void CoverScreen::draw(hud::drawlist::Frame &f, uint64_t now, float alpha)
                                 {0.60f, 0.78f}, {0.84f, 0.72f}, {0.90f, 0.52f}, {0.74f, 0.40f}};
         for (size_t i = 0; i + 1 < sizeof pts / sizeof pts[0]; ++i)
             hud::drawlist::line(f, W - pad - pw2 + 14 * u + pts[i][0] * 270 * u, top_y + 52 * u + pts[i][1] * 40 * u,
-                                W - pad - pw2 + 14 * u + pts[i + 1][0] * 270 * u,
-                                top_y + 52 * u + pts[i + 1][1] * 40 * u, 2 * u, with_alpha(ACCENT_HI, 0.75f));
+                                W - pad - pw2 + 14 * u + pts[i + 1][0] * 270 * u, top_y + 52 * u + pts[i + 1][1] * 40 * u, 2 * u,
+                                with_alpha(ACCENT_HI, 0.75f));
     }
     panel(pad, bot_y);
     heading(pad, bot_y, "ANTRIEB");
@@ -262,9 +262,15 @@ void CoverScreen::paint(hud::drawlist::Frame &f, uint64_t now)
             int host_sig = runtime::session_host_cover_signal();
             if (runtime::netplay_room_requested()) {
                 switch (runtime::netplay_room::cover_signal()) {
-                case runtime::netplay_room::CoverSignal::failed: host_sig = -1; break;
-                case runtime::netplay_room::CoverSignal::shown: host_sig = 1; break;
-                default: host_sig = 0; break;
+                case runtime::netplay_room::CoverSignal::failed:
+                    host_sig = -1;
+                    break;
+                case runtime::netplay_room::CoverSignal::shown:
+                    host_sig = 1;
+                    break;
+                default:
+                    host_sig = 0;
+                    break;
                 }
             }
             // ERC-END netplay-cover-signal

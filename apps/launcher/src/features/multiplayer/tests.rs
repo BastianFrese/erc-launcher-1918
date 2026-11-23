@@ -379,7 +379,10 @@ fn a_crash_keeps_the_room_open_and_a_regular_close_does_not() {
         "F1 25's own crash handler leaves -1, which reads Unknown"
     );
     assert!(exit_keeps_room(None), "a game that left no end at all");
-    assert!(!exit_keeps_room(Some(Ending::Quit)), "a regular close still leaves");
+    assert!(
+        !exit_keeps_room(Some(Ending::Quit)),
+        "a regular close still leaves"
+    );
     assert!(
         !exit_keeps_room(Some(Ending::Stopped)),
         "Stop in the launcher still leaves"

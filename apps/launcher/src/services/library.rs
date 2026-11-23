@@ -490,8 +490,7 @@ mod tests {
     use swofty_core::view::{Icon, SectionSpec};
 
     use super::{
-        AddonIcon, AddonItem, Changes, SectionItem, Source, display_name, listed, section_icon,
-        tracks_page,
+        AddonIcon, AddonItem, Changes, SectionItem, Source, display_name, listed, section_icon, tracks_page,
     };
 
     #[test]

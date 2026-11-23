@@ -264,7 +264,9 @@ mod tests {
         }
 
         fn netplay_env(&self) -> Option<String> {
-            Some(swofty_core::online::multiplayer::bridge::launch_env("self=1;base=20000"))
+            Some(swofty_core::online::multiplayer::bridge::launch_env(
+                "self=1;base=20000",
+            ))
         }
 
         fn still_asks(&self) -> bool {

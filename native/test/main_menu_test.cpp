@@ -129,9 +129,8 @@ int main()
     expect(mm::online_line(1234) == "1,234 currently playing" && mm::online_line(1) == "1 currently playing" &&
                mm::online_line(0).empty() && mm::online_line(-5).empty(),
            "the online line: separators, singular count, hidden for 0 or less");
-    expect(mm::offline_text(0) == "Launched with Swofty Launcher" &&
-               mm::offline_text(2500) == "Launched with Swofty Launcher\n2,500 currently playing",
-           "the Launched with panel text gains the online line");
+    expect(mm::offline_text(0).empty() && mm::offline_text(2500) == "2,500 currently playing",
+           "the panel text is empty without players and carries only the online line with them");
     expect(mm::parse_state(R"({"schema":1,"online":321,"discord":{}})").online == 321 &&
                mm::parse_state(R"({"schema":1,"discord":{}})").online == 0,
            "the state file's online field");

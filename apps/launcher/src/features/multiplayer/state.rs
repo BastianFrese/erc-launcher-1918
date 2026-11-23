@@ -18,7 +18,9 @@ use swofty_core::store::Store;
 use swofty_i18n::tr;
 
 use super::fix::RoomFix;
-use super::model::{OwnPrint, RoomFocus, crash_notice, exit_keeps_room, exit_notice, leaves_on_exit, room_focus};
+use super::model::{
+    OwnPrint, RoomFocus, crash_notice, exit_keeps_room, exit_notice, leaves_on_exit, room_focus,
+};
 use super::preview::{self, RoomPreview};
 use super::room_game::RoomGame;
 use super::steward::{self, Steward};
@@ -470,8 +472,7 @@ impl Host<Multiplayer> for Shell {
     fn split(&mut self) -> (&mut Multiplayer, OnlineNeeds<'_>) {
         // Einmal je Sitzung von der Platte gelesen, nicht bei jedem Neuzeichen.
         if self.account.guest.is_none() {
-            self.account.guest =
-                swofty_core::online::multiplayer::guest::token(&self.store.root).ok();
+            self.account.guest = swofty_core::online::multiplayer::guest::token(&self.store.root).ok();
         }
         let token = self
             .account

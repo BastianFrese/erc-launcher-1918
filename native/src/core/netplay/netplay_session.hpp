@@ -18,8 +18,7 @@ inline std::atomic<uint32_t> packed{0};
 
 inline bool valid(int self, int base)
 {
-    return self >= 1 && self <= 254 && base > 0 && base + 254 <= 65535 &&
-           !(game_port > base && game_port <= base + 254);
+    return self >= 1 && self <= 254 && base > 0 && base + 254 <= 65535 && !(game_port > base && game_port <= base + 254);
 }
 
 inline bool snapshot(int &self, int &base)

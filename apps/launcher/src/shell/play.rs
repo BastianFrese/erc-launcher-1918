@@ -493,9 +493,10 @@ impl Launching {
         let armed = (room.is_some() || needs.online).then(|| match room.as_ref() {
             // Für einen Raum trägt die Anfrage die Sitzung mit: Platz und Grundport dieser Runde.
             Some(ask) => ask.netplay.clone(),
-            None => {
-                swofty_core::online::multiplayer::client::launch_env_value(&needs.store.root, SESSION_MODULE_WAIT)
-            }
+            None => swofty_core::online::multiplayer::client::launch_env_value(
+                &needs.store.root,
+                SESSION_MODULE_WAIT,
+            ),
         });
         match Launch::start(
             needs.store,

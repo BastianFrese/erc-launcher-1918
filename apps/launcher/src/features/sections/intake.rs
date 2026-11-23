@@ -291,11 +291,7 @@ impl Shell {
             );
             alert
                 .width(px(540.))
-                .title(trn(
-                    count,
-                    "That isn't an ERC addon",
-                    "Those aren't ERC addons",
-                ))
+                .title(trn(count, "That isn't an ERC addon", "Those aren't ERC addons"))
                 .description(files)
                 .child(
                     v_flex()

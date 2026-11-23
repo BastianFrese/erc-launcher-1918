@@ -25,6 +25,7 @@
   "install/sweep.rs": 1,
   "online/modules/mod.rs": 2,
   "online/multiplayer/fingerprint.rs": 8,
+  "online/multiplayer/session.rs": 1,
   "online/multiplayer/types.rs": 1,
   "online/server/usage.rs": 2,
   "profile/conflicts.rs": 4,

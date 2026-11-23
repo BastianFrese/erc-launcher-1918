@@ -73,17 +73,17 @@ inline size_t utf8_at(const std::string &s, size_t i, uint32_t &cp)
 // zero-width and bidi marks, fillers, variation selectors, tags.
 inline bool invisible(uint32_t cp)
 {
-    return cp < 0x20 || (cp >= 0x7f && cp <= 0x9f) || cp == 0xad || cp == 0x34f || cp == 0x61c || cp == 0x115f ||
-           cp == 0x1160 || cp == 0x17b4 || cp == 0x17b5 || (cp >= 0x180b && cp <= 0x180f) ||
-           (cp >= 0x200b && cp <= 0x200f) || (cp >= 0x2028 && cp <= 0x202e) || (cp >= 0x2060 && cp <= 0x206f) ||
-           cp == 0x3164 || (cp >= 0xfe00 && cp <= 0xfe0f) || cp == 0xfeff || cp == 0xffa0 ||
-           (cp >= 0xfff9 && cp <= 0xfffb) || (cp >= 0x1d173 && cp <= 0x1d17a) || (cp >= 0xe0000 && cp <= 0xe0fff);
+    return cp < 0x20 || (cp >= 0x7f && cp <= 0x9f) || cp == 0xad || cp == 0x34f || cp == 0x61c || cp == 0x115f || cp == 0x1160 ||
+           cp == 0x17b4 || cp == 0x17b5 || (cp >= 0x180b && cp <= 0x180f) || (cp >= 0x200b && cp <= 0x200f) ||
+           (cp >= 0x2028 && cp <= 0x202e) || (cp >= 0x2060 && cp <= 0x206f) || cp == 0x3164 || (cp >= 0xfe00 && cp <= 0xfe0f) ||
+           cp == 0xfeff || cp == 0xffa0 || (cp >= 0xfff9 && cp <= 0xfffb) || (cp >= 0x1d173 && cp <= 0x1d17a) ||
+           (cp >= 0xe0000 && cp <= 0xe0fff);
 }
 
 inline bool blank(uint32_t cp)
 {
-    return cp == 0x20 || cp == 0xa0 || cp == 0x1680 || (cp >= 0x2000 && cp <= 0x200a) || cp == 0x202f ||
-           cp == 0x205f || cp == 0x3000;
+    return cp == 0x20 || cp == 0xa0 || cp == 0x1680 || (cp >= 0x2000 && cp <= 0x200a) || cp == 0x202f || cp == 0x205f ||
+           cp == 0x3000;
 }
 
 // The signed-in name as the game's driver carries it: invalid UTF-8, control and invisible characters
@@ -140,14 +140,22 @@ inline bool percent_decode(const std::string &in, std::string &out)
 inline const char *op_name(Op o)
 {
     switch (o) {
-    case Op::status: return "status";
-    case Op::configure: return "configure";
-    case Op::clear: return "clear";
-    case Op::host: return "host";
-    case Op::join: return "join";
-    case Op::leave: return "leave";
-    case Op::cancel: return "cancel";
-    default: return "none";
+    case Op::status:
+        return "status";
+    case Op::configure:
+        return "configure";
+    case Op::clear:
+        return "clear";
+    case Op::host:
+        return "host";
+    case Op::join:
+        return "join";
+    case Op::leave:
+        return "leave";
+    case Op::cancel:
+        return "cancel";
+    default:
+        return "none";
     }
 }
 
@@ -161,10 +169,7 @@ inline const char *screen_name(Screen s)
     return s == Screen::main_menu ? "main_menu" : s == Screen::lan_lobby ? "lan_lobby" : "other";
 }
 
-inline const char *role_name(Role r)
-{
-    return r == Role::host ? "host" : r == Role::client ? "client" : "none";
-}
+inline const char *role_name(Role r) { return r == Role::host ? "host" : r == Role::client ? "client" : "none"; }
 
 inline Category parse_category(const std::string &s)
 {
@@ -244,7 +249,8 @@ inline Command parse(const std::string &text)
         else if (c.base < 1 || c.base > 65281)
             c.error = "configure needs args.base, a port from 1 to 65281";
         else if (GAME_PORT > c.base && GAME_PORT <= c.base + 254)
-            c.error = "args.base " + std::to_string(c.base) + " puts the game port 21414 inside the bridge's ports (base+1 to base+254)";
+            c.error = "args.base " + std::to_string(c.base) +
+                      " puts the game port 21414 inside the bridge's ports (base+1 to base+254)";
         const json::Value &name = args["name"];
         if (name.type == json::Value::Str)
             c.name = driver_name(name.s);
@@ -393,20 +399,40 @@ inline std::string reply_json(const Command &c, const State &s, const std::strin
 // join the IP prompt (set_join_via_ip) is answered with ok once the address is in
 // ui_menu_data.lan_ip_address. The job then waits for StateOnlineLobby. Every wait has a deadline,
 // and a popup whose id names an error while the job runs ends it with that id.
-enum class Step { none, open_local_mp, wait_local_mp, switch_lan, check_lan, fire_lan, wait_dialog, answer_dialog,
-                  wait_ip_prompt, answer_ip, wait_lobby, headless, finished };
+enum class Step {
+    none,
+    open_local_mp,
+    wait_local_mp,
+    switch_lan,
+    check_lan,
+    fire_lan,
+    wait_dialog,
+    answer_dialog,
+    wait_ip_prompt,
+    answer_ip,
+    wait_lobby,
+    headless,
+    finished
+};
 enum class Do { nothing, fire_local_mp, mode_switch, fire_lan, answer_dialog, answer_ip };
 
 inline const char *do_name(Do d)
 {
     switch (d) {
-    case Do::nothing: return "nothing";
-    case Do::fire_local_mp: return "open Local Multiplayer";
-    case Do::mode_switch: return "switch to LAN mode";
-    case Do::fire_lan: return "open LAN Game";
-    case Do::answer_dialog: return "answer the LAN Game dialog";
-    case Do::answer_ip: return "enter the host IP";
-    default: return "unknown";
+    case Do::nothing:
+        return "nothing";
+    case Do::fire_local_mp:
+        return "open Local Multiplayer";
+    case Do::mode_switch:
+        return "switch to LAN mode";
+    case Do::fire_lan:
+        return "open LAN Game";
+    case Do::answer_dialog:
+        return "answer the LAN Game dialog";
+    case Do::answer_ip:
+        return "enter the host IP";
+    default:
+        return "unknown";
     }
 }
 
@@ -620,8 +646,7 @@ inline RoomRequest parse_room_request(const std::string &text)
     }
     int s = static_cast<int>(self.n), b = static_cast<int>(base.n);
     if (s != self.n || b != base.n || !runtime::netplay_session::valid(s, b)) {
-        r.error = "the direct start request's room was refused (self " + std::to_string(s) + ", base " +
-                  std::to_string(b) + ")";
+        r.error = "the direct start request's room was refused (self " + std::to_string(s) + ", base " + std::to_string(b) + ")";
         return r;
     }
     r.configured = true;
@@ -656,8 +681,7 @@ struct SkipFacts {
 // CYCLE_MS, long enough for a frame to see it. It ends at the home screen, the LAN lobby, or GIVE_UP_MS.
 class TitleSkip {
 public:
-    static constexpr uint64_t NOTICE_MS = 4000, HOLD_MS = 250, CYCLE_MS = 2000,
-                              GIVE_UP_MS = 15 * 60 * 1000;
+    static constexpr uint64_t NOTICE_MS = 4000, HOLD_MS = 250, CYCLE_MS = 2000, GIVE_UP_MS = 15 * 60 * 1000;
 
     void start(uint64_t now)
     {
@@ -727,10 +751,7 @@ public:
         step_ = Step::failed;
     }
 
-    static bool out_of_session(bool lobby, int session_role)
-    {
-        return session_role == 0 || (session_role < 0 && !lobby);
-    }
+    static bool out_of_session(bool lobby, int session_role) { return session_role == 0 || (session_role < 0 && !lobby); }
 
     bool tick(bool lobby, int session_role, uint64_t now)
     {

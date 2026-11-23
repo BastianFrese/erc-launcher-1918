@@ -46,8 +46,8 @@ void parse_list_entry(int *ordinal, const void *row_key, void *list, void *regis
             entries = (end - begin) / 8;
     }
     if (virtual_lists.parse_lines.note())
-        swofty::log("[era] entrant list parse: %s (ordinal %d an der Zeile, %lld Zeil(en) gelesen)", row.empty() ? "?" : row.c_str(),
-                    claimed, entries);
+        swofty::log("[era] entrant list parse: %s (ordinal %d an der Zeile, %lld Zeil(en) gelesen)",
+                    row.empty() ? "?" : row.c_str(), claimed, entries);
 }
 
 // The row of entrants.entrant_lists labelled `label` that the game did not load: the build's virtual-list step puts

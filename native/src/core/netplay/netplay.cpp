@@ -23,12 +23,15 @@ std::string hook_error(const safetyhook::MidHook::Error &e);
 namespace {
 
 const runtime::Sig S_HOST_GATE{"Game_SessionCreate_HostGate",
-                               "48 8B 4C 24 30 83 E1 01 48 39 C1 0F 85 ?? ?? ?? ??", 0x30ae4a2,
-                               runtime::Sig::addr, 0, 0xB, 0};
+                               "48 8B 4C 24 30 83 E1 01 48 39 C1 0F 85 ?? ?? ?? ??",
+                               0x30ae4a2,
+                               runtime::Sig::addr,
+                               0,
+                               0xB,
+                               0};
 
-const runtime::Sig S_ENCRYPT_SELECT{"Net_Socket_EncryptionSelect",
-                                    "48 85 C0 0F 84 ?? ?? ?? ?? 44 0F B6 7F 58", 0x405fa6d,
-                                    runtime::Sig::addr, 0, 9, 0};
+const runtime::Sig S_ENCRYPT_SELECT{
+    "Net_Socket_EncryptionSelect", "48 85 C0 0F 84 ?? ?? ?? ?? 44 0F B6 7F 58", 0x405fa6d, runtime::Sig::addr, 0, 9, 0};
 
 // Lobby-enter privilege re-check. While a session is active (session object +0x1a8 set, i.e. the
 // lobby has been entered), the session-update tick (base+0x30e0560) re-queries the same privilege
@@ -38,9 +41,13 @@ const runtime::Sig S_ENCRYPT_SELECT{"Net_Socket_EncryptionSelect",
 // skip; making it an unconditional jmp turns the re-check off while the provider query itself, the
 // remote-kick reasons and the content reconciliation stay untouched.
 const runtime::Sig S_LOBBY_KICK{"Net_SessionTick_KickForCheating",
-                                 "FF 90 30 01 00 00 0F B6 84 24 E0 02 00 00 48 8B 8C 24 E8 02 00 00"
-                                 " 83 E1 01 48 39 C1 74 ??",
-                                 0x30e6122, runtime::Sig::addr, 0, 0x1C, 0};
+                                "FF 90 30 01 00 00 0F B6 84 24 E0 02 00 00 48 8B 8C 24 E8 02 00 00"
+                                " 83 E1 01 48 39 C1 74 ??",
+                                0x30e6122,
+                                runtime::Sig::addr,
+                                0,
+                                0x1C,
+                                0};
 
 // Local Multiplayer list. FeTile_Build_List (base+0x173df80) builds menu_kind 2 as Splitscreen
 // (base+0x1747f90, button_1) and then an inline LAN tile (id "lan", item vtable base+0x5704740,
@@ -51,9 +58,18 @@ const runtime::Sig S_LOBBY_KICK{"Net_SessionTick_KickForCheating",
 // mode on the way to the LAN dialog, so netplay commands do that switch themselves.
 const runtime::Sig S_LAN_TILE{"FeTile_LocalMp_LanTile",
                               "4C 8D 05 ?? ?? ?? ?? 4C 89 F1 B2 01 E8 ?? ?? ?? ?? 48 C7 44 24 38 00 00 00 00",
-                              0x173e7a7, runtime::Sig::addr, 0, 0x11, 0};
-const runtime::Sig S_TILE_TAIL{"FeTile_Build_List_ItemsTail", "4C 89 F1 E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? B2 01",
-                               0x1745016, runtime::Sig::rel32, 8, 9, 5};
+                              0x173e7a7,
+                              runtime::Sig::addr,
+                              0,
+                              0x11,
+                              0};
+const runtime::Sig S_TILE_TAIL{"FeTile_Build_List_ItemsTail",
+                               "4C 89 F1 E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? B2 01",
+                               0x1745016,
+                               runtime::Sig::rel32,
+                               8,
+                               9,
+                               5};
 
 // Standings element walk. The season-online bughunt (22./23.11.2026) crashed every LAN-room
 // joiner of a season category the same way: ACCESS_VIOLATION (0xc0000005) reading 0x588 at
@@ -77,7 +93,11 @@ const runtime::Sig S_TILE_TAIL{"FeTile_Build_List_ItemsTail", "4C 89 F1 E8 ?? ??
 const runtime::Sig S_STANDINGS_WALK{"Session_Standings_PerParticipantWalk",
                                     "48 83 EC 48 C5 F8 29 7C 24 30 C5 F8 29 74 24 20 48 89 C8 48 8B 89 A8 02 00 00 "
                                     "44 0F B6 42 58",
-                                    0x120ebc0, runtime::Sig::addr, 0, 0, 0};
+                                    0x120ebc0,
+                                    runtime::Sig::addr,
+                                    0,
+                                    0,
+                                    0};
 
 // The game's own driver name in a network session is its presence name: on the way into LAN mode
 // (Game_NetworkSubsystem_ChangeMPMode, OnGameModeSelected, DeclareActivePresence) it adds this game's
@@ -86,12 +106,16 @@ const runtime::Sig S_STANDINGS_WALK{"Session_Standings_PerParticipantWalk",
 // HandleUpdatePresenceNameMessage. The local PlayerSet entry, the entrants and telemetry names all come
 // from it. While a room carries a signed-in name, every AddName call except the one for another member
 // (its return address is site_Game_PresenceNameRemoteAdded) gets that name instead.
-const runtime::Sig S_ADD_NAME{"Ne_PresenceNameResolverFixed_AddName", "56 57 53 48 81 EC 20 01 00 00 4C 89 C6",
-                              0x412a320, runtime::Sig::addr, 0, 0, 0};
+const runtime::Sig S_ADD_NAME{
+    "Ne_PresenceNameResolverFixed_AddName", "56 57 53 48 81 EC 20 01 00 00 4C 89 C6", 0x412a320, runtime::Sig::addr, 0, 0, 0};
 const runtime::Sig S_REMOTE_NAME{"site_Game_PresenceNameRemoteAdded",
                                  "48 8B 47 38 48 8B 88 50 05 00 00 4C 8D 46 50 48 8D 56 10 E8 ?? ?? ?? ?? 48 8B 47 38 C5 F8 "
                                  "10 46 10",
-                                 0x31691c4, runtime::Sig::addr, 0, 0x18, 0};
+                                 0x31691c4,
+                                 runtime::Sig::addr,
+                                 0,
+                                 0x18,
+                                 0};
 
 // Driver platform icons. Each driver row picks a platform icon key from the platform tag in byte 0 of the
 // entry's NePresenceUserID (1 Steam, 3 PlayStation, 4 Xbox, 6 Origin, 7 EA account) and resolves it
@@ -108,12 +132,12 @@ const runtime::Sig S_REMOTE_NAME{"site_Game_PresenceNameRemoteAdded",
 // 1 LAN, 2 crossplay) is crossplay; the jump is the row's hide path. While a room is configured the hook
 // clears ZF so the row hides the icon whatever the mode.
 const runtime::Sig S_ICON_GATES[] = {
-    {"site_Game_PlatformIconGate_SessionCars", "80 B8 50 07 00 00 02 75 40 80 B9 D8 10 00 00 00", 0x1775557,
-     runtime::Sig::addr, 0, 7, 0},
+    {"site_Game_PlatformIconGate_SessionCars", "80 B8 50 07 00 00 02 75 40 80 B9 D8 10 00 00 00", 0x1775557, runtime::Sig::addr,
+     0, 7, 0},
     {"site_Game_PlatformIconGate_GridList", "80 B8 50 07 00 00 02 0F 85 ?? ?? ?? ?? 80 B9 D8 10 00 00 00", 0x221b444,
      runtime::Sig::addr, 0, 7, 0},
-    {"site_Game_PlatformIconGate_Leaderboard", "80 B8 50 07 00 00 02 75 30 80 B9 D8 10 00 00 00", 0x18261cc,
-     runtime::Sig::addr, 0, 7, 0},
+    {"site_Game_PlatformIconGate_Leaderboard", "80 B8 50 07 00 00 02 75 30 80 B9 D8 10 00 00 00", 0x18261cc, runtime::Sig::addr,
+     0, 7, 0},
     {"site_Game_PlatformIconGate_FeaturedDriver",
      "80 B8 50 07 00 00 02 75 26 80 B9 D8 10 00 00 00 74 0B B0 01 80 B9 D7 10 00 00 00 75 14 48 8B 81 C8 03 00 00 0F "
      "B6 80 7C 02 00 00 34 01 EB 02 31 C0 88 84 24 70 01 00 00",
@@ -221,8 +245,7 @@ void icon_setup()
         }
         auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(at), icon_gate);
         if (!h) {
-            swofty::log("[netplay] platform icon gate %s: the hook failed: %s", s.what,
-                        runtime::hook_error(h.error()).c_str());
+            swofty::log("[netplay] platform icon gate %s: the hook failed: %s", s.what, runtime::hook_error(h.error()).c_str());
             missing += std::string(missing.empty() ? "" : ", ") + s.what;
             continue;
         }
@@ -231,8 +254,8 @@ void icon_setup()
     icon_sites = 1 + int(h_icon_gates.size());
     icons_armed = true;
     if (!missing.empty())
-        swofty::log("[netplay] driver platform icons: %zu of %zu row gates hooked; not hooked: %s",
-                    h_icon_gates.size(), sizeof S_ICON_GATES / sizeof *S_ICON_GATES, missing.c_str());
+        swofty::log("[netplay] driver platform icons: %zu of %zu row gates hooked; not hooked: %s", h_icon_gates.size(),
+                    sizeof S_ICON_GATES / sizeof *S_ICON_GATES, missing.c_str());
 }
 
 safetyhook::InlineHook h_add_name;
@@ -261,7 +284,9 @@ void name_setup()
         std::memcpy(&rel, reinterpret_cast<const void *>(remote_added - 4), sizeof rel);
     if (!add || !remote_added || remote_added + rel != add) {
         swofty::log("[netplay] signed-in driver name not hooked (AddName %s, remote call %s)", add ? "found" : "missing",
-                    !remote_added ? "missing" : remote_added + rel != add ? "calls elsewhere" : "found");
+                    !remote_added               ? "missing"
+                    : remote_added + rel != add ? "calls elsewhere"
+                                                : "found");
         return;
     }
     auto h = safetyhook::InlineHook::create(reinterpret_cast<void *>(add), reinterpret_cast<void *>(&add_name_hook));
@@ -313,8 +338,7 @@ float walk_missing_element(uintptr_t component, const uint8_t *row)
         if (!mem::read(component + 0x2a8, holder))
             holder = 0;
         using Lookup = void *(*)(void *, const void *);
-        void *next =
-            holder ? reinterpret_cast<Lookup>(walk_lookup)(reinterpret_cast<void *>(holder), row + 0x5c) : nullptr;
+        void *next = holder ? reinterpret_cast<Lookup>(walk_lookup)(reinterpret_cast<void *>(holder), row + 0x5c) : nullptr;
         uint8_t step = 0;
         if (next && mem::read(uintptr_t(next) + 0xceb, step))
             bonus = (float)step;
@@ -348,8 +372,8 @@ float standings_walk_hook(void *component, void *participant)
             swofty::log("[netplay] standings walk: participant key %u category %u entry %u: scale %u holder 0x%llx "
                         "slot 0x%llx list 0x%llx element NULL; the row is held at the constant stand-in "
                         "(-1.0 statt Strafsumme)",
-                        (unsigned)key, (unsigned)category, (unsigned)entry, (unsigned)scale,
-                        (unsigned long long)holder, (unsigned long long)slot, (unsigned long long)list);
+                        (unsigned)key, (unsigned)category, (unsigned)entry, (unsigned)scale, (unsigned long long)holder,
+                        (unsigned long long)slot, (unsigned long long)list);
         return walk_missing_element(reinterpret_cast<uintptr_t>(component), row);
     }
     float out = h_standings_walk.call<float>(component, participant);
@@ -428,8 +452,7 @@ void session_patches()
 
     bool lobby = patch(runtime::find(S_LOBBY_KICK, "netplay", "netplay"), skip_lobby_kick, sizeof skip_lobby_kick);
     swofty::log("[netplay] lobby privilege re-check %s",
-                lobby ? "neutralised (no kicked-for-cheating at lobby enter)"
-                      : "left unchanged (signature did not resolve)");
+                lobby ? "neutralised (no kicked-for-cheating at lobby enter)" : "left unchanged (signature did not resolve)");
 
     name_setup();
     icon_setup();
@@ -541,9 +564,6 @@ void netplay_privilege_commit()
                     PRIV_UPDATE);
 }
 
-void netplay_setup()
-{
-    setup();
-}
+void netplay_setup() { setup(); }
 
 }

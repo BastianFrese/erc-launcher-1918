@@ -91,10 +91,7 @@ inline std::string hex(uint64_t v)
     return b;
 }
 
-inline const char *role_name(Role r)
-{
-    return r == Role::host ? "host" : "join";
-}
+inline const char *role_name(Role r) { return r == Role::host ? "host" : "join"; }
 
 using Read = bool (*)(uint64_t address, void *out, size_t n, void *ctx);
 
@@ -104,10 +101,7 @@ struct Memory {
 
     template <class T> bool get(uint64_t address, T &out) const { return read(address, &out, sizeof out, ctx); }
 
-    bool ptr(uint64_t address, uint64_t &out) const
-    {
-        return get(address, out) && out >= 0x10000 && out < 0x0000800000000000ull;
-    }
+    bool ptr(uint64_t address, uint64_t &out) const { return get(address, out) && out >= 0x10000 && out < 0x0000800000000000ull; }
 };
 
 struct Write {
@@ -246,10 +240,7 @@ inline bool parse_ipv4(const std::string &s, uint32_t &out)
 }
 
 // The id the prompt gives the request: the port twice in one word, xor the address.
-inline uint32_t connection_id(uint32_t ip, uint16_t port)
-{
-    return (uint32_t(port) << 16 | port) ^ ip;
-}
+inline uint32_t connection_id(uint32_t ip, uint16_t port) { return (uint32_t(port) << 16 | port) ^ ip; }
 
 struct JoinPlan {
     uint64_t ns = 0, gsui = 0, request = 0, invites = 0;
@@ -341,10 +332,7 @@ inline InviteState invite_state(const Memory &m, uint64_t invites)
     return s;
 }
 
-inline uint32_t invite_type_for(Role r)
-{
-    return r == Role::host ? INVITE_CREATE_CUSTOM : INVITE_SESSION;
-}
+inline uint32_t invite_type_for(Role r) { return r == Role::host ? INVITE_CREATE_CUSTOM : INVITE_SESSION; }
 
 // The session's role (setRole in onCreateSessionComplete and the join's completion): 0 offline, 1 host,
 // 2 client. -1 when it cannot be read. This is the "session established" signal that does not depend on
@@ -358,11 +346,7 @@ inline int session_role(const Memory &m, uint64_t ns)
     return role;
 }
 
-inline int established_role(Role r)
-{
-    return r == Role::host ? 1 : 2;
-}
-
+inline int established_role(Role r) { return r == Role::host ? 1 : 2; }
 
 // The network subsystem without the LAN tile: the game manager keeps a services map at +0x30 and the
 // subsystem is the entry keyed by the address of a static (research/multiplayer/ns-resolve.md section 1).
@@ -385,13 +369,13 @@ inline std::string net_subsystem_check(const Memory &m, uint64_t ns, uint64_t ex
     if (!m.ptr(ns, vt))
         return "the service the map returned (" + hex_text(ns) + ") is not an object (its vtable is unreadable)";
     if (!expected_vtable || vt != expected_vtable)
-        return "the service the map returned (" + hex_text(ns) + ") is not the network subsystem: its vtable is " +
-               hex_text(vt) + ", the network subsystem's is " + hex_text(expected_vtable);
+        return "the service the map returned (" + hex_text(ns) + ") is not the network subsystem: its vtable is " + hex_text(vt) +
+               ", the network subsystem's is " + hex_text(expected_vtable);
     return {};
 }
 
-inline std::string find_net_subsystem(const Memory &m, uint64_t manager, uint64_t key, uint64_t expected_vtable,
-                                      ServiceFind find, void *ctx, uint64_t &ns)
+inline std::string find_net_subsystem(const Memory &m, uint64_t manager, uint64_t key, uint64_t expected_vtable, ServiceFind find,
+                                      void *ctx, uint64_t &ns)
 {
     ns = 0;
     uint64_t map = 0, items = 0, end = 0;
@@ -463,8 +447,7 @@ inline std::string mode_entity(const Memory &m, uint64_t modes, uint64_t index, 
         return "the game mode names have no online_custom (index " + hex(index) + ")";
     if (!m.ptr(modes + MODES_ENTRIES, entries))
         return "the game mode context has no mode entries at +0x58";
-    if (!m.ptr(entries + index * 8, entry) || !m.ptr(entry + ENTRY_HOLDER, holder) ||
-        !m.ptr(holder + HOLDER_ENTITY, out.entity))
+    if (!m.ptr(entries + index * 8, entry) || !m.ptr(entry + ENTRY_HOLDER, holder) || !m.ptr(holder + HOLDER_ENTITY, out.entity))
         return "the online_custom entry (index " + hex(index) + ") has no mode entity";
     if (!m.ptr(out.entity + ENTITY_MODE, out.mode))
         return "the online_custom mode entity has no mode at +0xf08";
@@ -614,19 +597,24 @@ struct Facts {
     InviteState invite;
 };
 
-constexpr uint64_t MODE_MS = 3000, PENDING_MS = 5000, INTERRUPT_MS = 4000, HOST_LOBBY_MS = 120000,
-                   JOIN_LOBBY_MS = 30000, JOIN_READY_MS = 90000;
+constexpr uint64_t MODE_MS = 3000, PENDING_MS = 5000, INTERRUPT_MS = 4000, HOST_LOBBY_MS = 120000, JOIN_LOBBY_MS = 30000,
+                   JOIN_READY_MS = 90000;
 
 enum class Do { nothing, mode_switch, host_call, join_write, fallback_notify };
 
 inline const char *do_name(Do d)
 {
     switch (d) {
-    case Do::mode_switch: return "switch to LAN mode";
-    case Do::host_call: return "write the Car Category values and call CustomCreate";
-    case Do::join_write: return "write the join request";
-    case Do::fallback_notify: return "request the join through onInviteJoinNotification";
-    default: return "nothing";
+    case Do::mode_switch:
+        return "switch to LAN mode";
+    case Do::host_call:
+        return "write the Car Category values and call CustomCreate";
+    case Do::join_write:
+        return "write the join request";
+    case Do::fallback_notify:
+        return "request the join through onInviteJoinNotification";
+    default:
+        return "nothing";
     }
 }
 

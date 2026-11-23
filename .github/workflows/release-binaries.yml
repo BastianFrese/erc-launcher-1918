@@ -51,7 +51,7 @@ jobs:
       # The usage address is where anonymised usage reports go; builds without it send none.
       # The ads address serves the launcher's ad slots; builds without it show none.
       - name: Build
-        run: cargo build --release -p swofty-cli -p swofty-launcher -p swofty-ads-helper
+        run: cargo build --release -p swofty-cli -p erc-launcher -p swofty-ads-helper
         env:
           SWOFTY_LOGS_URL: https://api.f1.swofty.net/v1/logs
           SWOFTY_USAGE_URL: https://api.f1.swofty.net
@@ -69,7 +69,7 @@ jobs:
 
       # Artefacts drop the executable bit, so the binaries travel in a tar.
       - name: Bundle the binaries
-        run: tar cf linux-binaries.tar target/release/swofty target/release/swofty-launcher target/release/swofty-ads dist/swofty-ui/swofty-ui
+        run: tar cf linux-binaries.tar target/release/swofty target/release/erc-launcher target/release/swofty-ads dist/swofty-ui/swofty-ui
 
       - uses: actions/upload-artifact@v7
         with:
@@ -111,7 +111,7 @@ jobs:
       # The usage address is where anonymised usage reports go; builds without it send none.
       # The ads address serves the launcher's ad slots; builds without it show none.
       - name: Build
-        run: cargo build --release -p swofty-cli -p swofty-launcher
+        run: cargo build --release -p swofty-cli -p erc-launcher
         env:
           SWOFTY_LOGS_URL: https://api.f1.swofty.net/v1/logs
           SWOFTY_USAGE_URL: https://api.f1.swofty.net
@@ -136,7 +136,7 @@ jobs:
           name: windows-binaries
           path: |
             target/release/swofty.exe
-            target/release/swofty-launcher.exe
+            target/release/erc-launcher.exe
             dist/swofty-ui/swofty-ui.exe
           if-no-files-found: error
           retention-days: ${{ inputs.retention-days }}

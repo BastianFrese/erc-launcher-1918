@@ -1,7 +1,7 @@
 ---
 title: Willkommen im ERC Launcher
 date: 2026-11-03
-description: Der Launcher für die ERC-Liga: Mods aus dem Katalog, ein Klick zum Rennen, und alles, was das Spiel verändert, wird wieder zurückgesetzt.
+description: "Der Launcher für die ERC-Liga: Mods aus dem Katalog, ein Klick zum Rennen, und alles, was das Spiel verändert, wird wieder zurückgesetzt."
 ---
 
 # Willkommen im ERC Launcher

@@ -69,20 +69,11 @@ struct Room {
     int self, base;
 };
 
-bool room(Room &r)
-{
-    return runtime::netplay_session::snapshot(r.self, r.base);
-}
+bool room(Room &r) { return runtime::netplay_session::snapshot(r.self, r.base); }
 
-uint16_t be16(uint16_t v)
-{
-    return __builtin_bswap16(v);
-}
+uint16_t be16(uint16_t v) { return __builtin_bswap16(v); }
 
-uint32_t be32(uint32_t v)
-{
-    return __builtin_bswap32(v);
-}
+uint32_t be32(uint32_t v) { return __builtin_bswap32(v); }
 
 bool number(const char *&p, long &out)
 {
@@ -142,11 +133,9 @@ void first(Dir d, int m, int base)
         return;
     DWORD err = GetLastError();
     if (d == D_OUT)
-        swofty::log("[netplay] first datagram to member %d: 10.77.0.%d:%u sent to 127.0.0.1:%d", m, m, GAME_PORT,
-                    base + m);
+        swofty::log("[netplay] first datagram to member %d: 10.77.0.%d:%u sent to 127.0.0.1:%d", m, m, GAME_PORT, base + m);
     else
-        swofty::log("[netplay] first datagram from member %d: 127.0.0.1:%d received as 10.77.0.%d:%u", m,
-                    base + m, m, GAME_PORT);
+        swofty::log("[netplay] first datagram from member %d: 127.0.0.1:%d received as 10.77.0.%d:%u", m, base + m, m, GAME_PORT);
     SetLastError(err);
 }
 
@@ -183,8 +172,7 @@ int WSAAPI h_recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr *from, i
 {
     int r = reinterpret_cast<RecvFromFn>(hooks[F_RECVFROM].orig)(s, buf, len, flags, from, fromlen);
     Room room_now;
-    if (r < 0 || !from || !fromlen || *fromlen < int(sizeof(sockaddr_in)) || from->sa_family != AF_INET ||
-        !room(room_now))
+    if (r < 0 || !from || !fromlen || *fromlen < int(sizeof(sockaddr_in)) || from->sa_family != AF_INET || !room(room_now))
         return r;
     auto *in = reinterpret_cast<sockaddr_in *>(from);
     int m = int(be16(in->sin_port)) - room_now.base;
@@ -204,8 +192,8 @@ void write_status()
         r = {0, 0};
     int port = game_port.load();
     char body[128];
-    snprintf(body, sizeof body, "{\"pid\":%lu,\"self\":%d,\"base\":%d,\"game_port\":%d}\n", GetCurrentProcessId(),
-             r.self, r.base, port);
+    snprintf(body, sizeof body, "{\"pid\":%lu,\"self\":%d,\"base\":%d,\"game_port\":%d}\n", GetCurrentProcessId(), r.self, r.base,
+             port);
     bool ok = runtime::write_file(status_path, body);
     if (ok)
         status_written = true;
@@ -214,8 +202,8 @@ void write_status()
     if (ok)
         swofty::log("[netplay] bridge on, self=%d base=%d game_port=%d", r.self, r.base, port);
     else
-        swofty::log("[netplay] bridge on, self=%d base=%d game_port=%d; swofty\\netplay.json not written (%lu)", r.self,
-                    r.base, port, err);
+        swofty::log("[netplay] bridge on, self=%d base=%d game_port=%d; swofty\\netplay.json not written (%lu)", r.self, r.base,
+                    port, err);
 }
 
 int WSAAPI h_bind(SOCKET s, const sockaddr *a, int len)
@@ -247,8 +235,8 @@ void own_address(IP_ADAPTER_ADDRESSES *a, int self)
     auto *in = reinterpret_cast<sockaddr_in *>(sa);
     auto *was = reinterpret_cast<const uint8_t *>(&in->sin_addr);
     if (say)
-        swofty::log("[netplay] own address: adapter %lu %u.%u.%u.%u reported as 10.77.0.%d", a->IfIndex, was[0], was[1],
-                    was[2], was[3], self);
+        swofty::log("[netplay] own address: adapter %lu %u.%u.%u.%u reported as 10.77.0.%d", a->IfIndex, was[0], was[1], was[2],
+                    was[3], self);
     in->sin_addr.s_addr = be32(VNET | uint32_t(self));
 }
 
@@ -274,8 +262,7 @@ void install(HMODULE lib, const char *dll, std::initializer_list<Fn> fns)
             void *cur = reinterpret_cast<void *>(*s.slot);
             if (h.orig && h.orig != cur) {
                 swofty::log("[netplay] %s table %d slot exe+0x%llx holds 0x%llx, not 0x%llx; left alone", h.name, s.table,
-                            (unsigned long long)s.rva, (unsigned long long)uintptr_t(cur),
-                            (unsigned long long)uintptr_t(h.orig));
+                            (unsigned long long)s.rva, (unsigned long long)uintptr_t(cur), (unsigned long long)uintptr_t(h.orig));
                 break;
             }
             void *was = h.orig;
@@ -344,10 +331,7 @@ void setup()
 
 namespace runtime {
 
-void netplay_bridge_setup()
-{
-    setup();
-}
+void netplay_bridge_setup() { setup(); }
 
 void netplay_bridge_status_changed()
 {
