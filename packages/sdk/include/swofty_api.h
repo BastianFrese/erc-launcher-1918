@@ -1233,6 +1233,7 @@ typedef struct SwoftyContentOps {
 #define SWOFTY_LIVE_HAVE_DRIVER_STATUS (1ull << 35)
 #define SWOFTY_LIVE_HAVE_PIT_TIMING (1ull << 36)
 #define SWOFTY_LIVE_HAVE_SECTOR_BESTS (1ull << 37)
+#define SWOFTY_LIVE_HAVE_SC_DELTA (1ull << 38)
 
 #define SWOFTY_LIVE_CAR_PLAYER (1u << 0)
 #define SWOFTY_LIVE_CAR_AI_DRIVING (1u << 1)
@@ -1430,12 +1431,15 @@ typedef struct SwoftyLiveTurn {
    SWOFTY_LIVE_HAVE_FIA_FLAG: fia_flag, the flag shown to the car (-1 invalid, 0 none, 1 green, 2 blue, 3 yellow).
    SWOFTY_LIVE_HAVE_DRIVER_STATUS: driver_status, 0 in the garage, 1 flying lap, 2 in lap, 3 out lap, 4 on track.
    SWOFTY_LIVE_HAVE_PIT_TIMING: pit_lane_timer_active, 1 while the car is in the pit lane; pit_lane_ms, the time in
-   the pit lane of the current or last visit; pit_stop_ms, the time stationary in the box.
+   the pit lane of the current visit, held at the last visit's time after the car leaves the lane; pit_stop_ms, the
+   time stationary in the box, held the same way.
    SWOFTY_LIVE_HAVE_IDENTITY: race_number; team_id and driver_id, the team and driver ids the game sends over UDP
    (before the core's stock id rewrite); team_colour, the livery's first colour as 0xRRGGBB (0 where the game sends
    none).
    SWOFTY_LIVE_HAVE_SECTOR_BESTS: personal_best_sector_ms, the car's best time in each sector this session, from any
-   lap (0 while it has none). */
+   lap (0 while it has none).
+   SWOFTY_LIVE_HAVE_SC_DELTA: safety_car_delta_s, the car's delta to the time the safety car or the virtual safety car
+   requires, in seconds as the game sends it (in every Lap Data packet; it has a meaning while one is out). */
 typedef struct SwoftyLiveCarDetail {
     uint32_t version;
     uint32_t size;
@@ -1468,7 +1472,8 @@ typedef struct SwoftyLiveCarDetail {
     uint16_t driver_id;
     uint8_t pad[2];
     uint32_t personal_best_sector_ms[3];
-    uint32_t reserved[7];
+    float safety_car_delta_s;
+    uint32_t reserved[6];
 } SwoftyLiveCarDetail;
 
 typedef struct SwoftyLiveImages SwoftyLiveImages;
