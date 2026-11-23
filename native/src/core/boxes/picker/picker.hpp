@@ -153,7 +153,6 @@ struct VirtualLists {
     std::atomic<bool> parse_list_bound{};
     std::map<std::string, std::array<uint8_t, LIST_VECTOR_SIZE>> parsed_lists;
     Cap<LOG_FIRST> virtual_lines;
-    Cap<LOG_FIRST * 3> parse_lines;
 };
 
 extern VirtualLists virtual_lists;

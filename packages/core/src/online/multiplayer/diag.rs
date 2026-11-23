@@ -51,6 +51,13 @@ pub fn path(data_root: &Path) -> PathBuf {
     data_root.join(FILE)
 }
 
+/// The data folder [`open`] named, so a caller can put a file beside the session log.
+pub fn data_root() -> Option<PathBuf> {
+    lock(&SINK)
+        .as_ref()
+        .and_then(|s| Some(s.path.parent()?.parent()?.to_path_buf()))
+}
+
 /// Saves `doc` as `<data>/state/multiplayer-prints/<name>.json` in the data folder [`open`] named,
 /// with registered secrets redacted, and keeps the newest [`PRINTS_KEPT`]. Nothing happens
 /// before [`open`].
