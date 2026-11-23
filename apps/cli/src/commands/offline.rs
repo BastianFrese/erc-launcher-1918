@@ -242,7 +242,9 @@ mod tests {
         let dir = offline::extension_dir(&root);
         std::fs::create_dir_all(&dir).unwrap();
         for name in offline::REQUIRED {
-            std::fs::write(dir.join(name), "x").unwrap();
+            let to = dir.join(name);
+            std::fs::create_dir_all(to.parent().unwrap()).unwrap();
+            std::fs::write(to, "x").unwrap();
         }
         std::fs::remove_file(dir.join("f1op_stub.exe")).unwrap();
         let e = offline::artifacts(&root).unwrap_err();
