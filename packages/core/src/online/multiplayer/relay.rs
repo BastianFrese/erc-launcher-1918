@@ -573,33 +573,23 @@ impl RelayUdp {
         }
     }
 
-    /// Kam das von einem Gegenüber, dessen Adresse der Relay genannt hat?
-    fn ist_peer(&self, from: SocketAddr) -> bool {
-        self.erlaubt
-            && self
-                .wege
-                .read()
-                .unwrap_or_else(|e| e.into_inner())
-                .tabelle
-                .values()
-                .any(|a| *a == from)
-    }
-
-    /// Ein Paket von der Tabellenadresse beweist den Direktweg.
+    /// Ein Paket von einem Mitglied beweist den Direktweg — auch aus einer Adresse,
+    /// die der Relay nicht genannt hat. Die ist hinter einem symmetrischen NAT die
+    /// einzige erreichbare: unser Prüfruf geht dort von einem anderen Port hinaus als
+    /// beim Relay. Dass das Gegenüber wirklich das Mitglied ist, prüft erst das Siegel
+    /// der Spielschicht; hier wird nur der Weg gemerkt.
     fn weg_bestaetigen(&self, kennung: u8, from: SocketAddr) {
         let mut wege = self.wege.write().unwrap_or_else(|e| e.into_inner());
-        if wege.tabelle.get(&kennung) == Some(&from)
-            || wege.direkt.get(&kennung).map(|(a, _)| *a) == Some(from)
-        {
-            // Nur der Wechsel wird geschrieben, nicht jedes Paket: der Test von Hand
-            // soll im Protokoll sehen, ob zwei Anschluesse direkt zueinander kommen.
-            let neu = !wege.direkt.contains_key(&kennung);
-            wege.direkt.insert(kennung, (from, Instant::now()));
-            wege.versuch.remove(&kennung);
-            drop(wege);
-            if neu {
-                diag::line(format!("direct path to member {kennung}: {from}"));
-            }
+        // Nur der Wechsel wird geschrieben, nicht jedes Paket: der Test von Hand
+        // soll im Protokoll sehen, ob zwei Anschluesse direkt zueinander kommen.
+        let vorher = wege.direkt.get(&kennung).map(|(a, _)| *a);
+        let aus_tabelle = wege.tabelle.get(&kennung) == Some(&from);
+        wege.direkt.insert(kennung, (from, Instant::now()));
+        wege.versuch.remove(&kennung);
+        drop(wege);
+        if vorher != Some(from) {
+            let woher = if aus_tabelle { "" } else { " (learned at the punch)" };
+            diag::line(format!("direct path to member {kennung}: {from}{woher}"));
         }
     }
 }
@@ -673,16 +663,19 @@ impl Transport for RelayUdp {
                         self.tabelle_lesen(&packet[..n]);
                         continue;
                     }
-                    // Der Relay darf immer reden; ein Gegenüber nur, wenn der Relay
-                    // seine Adresse genannt hat.
-                    let vom_relay = from.ip() == self.relay.ip();
-                    if !vom_relay && !self.ist_peer(from) {
-                        self.unknown.fetch_add(1, Ordering::Relaxed);
-                        continue;
-                    }
+                    // Der Relay darf immer reden. Ein Gegenüber nur, wenn es ein Mitglied
+                    // dieses Raums ist — und dann auch von einer Adresse, die der Relay
+                    // nicht genannt hat: hinter einem symmetrischen NAT ist die Adresse,
+                    // die der Relay sieht, für uns nicht erreichbar, und die einzige, die
+                    // es ist, verrät das Gegenüber erst beim Lochen.
+                    let vom_relay = from == self.relay;
                     let Some((sender, payload)) = self.unframe(&packet[..n]) else {
                         continue;
                     };
+                    if !vom_relay && !self.permitted(sender) {
+                        self.unknown.fetch_add(1, Ordering::Relaxed);
+                        continue;
+                    }
                     if !vom_relay {
                         self.weg_bestaetigen(sender, from);
                     }
@@ -900,6 +893,73 @@ mod tests {
         // Eine leere Tabelle räumt die alte ab.
         a.tabelle_lesen(b"ERC-PEERSABCD\n");
         assert!(a.wege.read().unwrap().tabelle.is_empty());
+    }
+
+    #[test]
+    fn ein_paket_aus_fremder_adresse_beweist_den_direktweg() {
+        let t = RelayUdp::new("127.0.0.1:9", "ABCD", 1).unwrap();
+        t.wege
+            .write()
+            .unwrap()
+            .tabelle
+            .insert(2, "1.2.3.4:5000".parse().unwrap());
+        // Hinter einem symmetrischen NAT geht der Prüfruf von einem anderen Port
+        // hinaus als beim Relay — genau die Adresse, die das Gegenüber sieht.
+        let gelocht: SocketAddr = "9.9.9.9:7000".parse().unwrap();
+        t.weg_bestaetigen(2, gelocht);
+        assert_eq!(
+            t.wege.read().unwrap().direkt.get(&2).map(|(a, _)| *a),
+            Some(gelocht),
+            "der gelochte Weg muss den aus der Tabelle schlagen"
+        );
+
+        // Wechselt das Gegenüber die Adresse, folgt der Weg.
+        let neu: SocketAddr = "9.9.9.9:7001".parse().unwrap();
+        t.weg_bestaetigen(2, neu);
+        assert_eq!(
+            t.wege.read().unwrap().direkt.get(&2).map(|(a, _)| *a),
+            Some(neu)
+        );
+    }
+
+    #[test]
+    fn ein_mitglied_darf_auch_von_einer_unbekannten_adresse_kommen() {
+        let (relay, stop) = fake_relay();
+        let t = RelayUdp::new(relay, "ABCD", 1).unwrap();
+        t.set_peers(&HashMap::from([(2, relay)])).unwrap();
+        // Der Relay nennt für Mitglied 2 keine Adresse — es meldet sich selbst, von
+        // einem anderen Port als dem des Relays.
+        let ziel = SocketAddr::from(([127, 0, 0, 1], t.socket.local_addr().unwrap().port()));
+        let gegen = UdpSocket::bind("127.0.0.1:0").unwrap();
+        let mut paket = Vec::new();
+        paket.extend_from_slice(HEAD);
+        paket.extend_from_slice(b"ABCD");
+        paket.push(2);
+        paket.extend_from_slice(b"hallo");
+        gegen.send_to(&paket, ziel).unwrap();
+
+        let mut buf = [0u8; MAX_DATAGRAM];
+        assert_eq!(
+            t.recv(&mut buf, Duration::from_secs(2)).unwrap(),
+            Some((2, 5))
+        );
+        assert_eq!(&buf[..5], b"hallo");
+        assert_eq!(
+            t.wege.read().unwrap().direkt.get(&2).map(|(a, _)| *a),
+            Some(gegen.local_addr().unwrap())
+        );
+
+        // Ein Mitglied, das die Brücke nicht kennt, kommt weiterhin nicht durch.
+        let fremd = UdpSocket::bind("127.0.0.1:0").unwrap();
+        let mut paket = Vec::new();
+        paket.extend_from_slice(HEAD);
+        paket.extend_from_slice(b"ABCD");
+        paket.push(9);
+        paket.extend_from_slice(b"fremd");
+        fremd.send_to(&paket, ziel).unwrap();
+        assert_eq!(t.recv(&mut buf, Duration::from_millis(400)).unwrap(), None);
+
+        stop.store(true, Ordering::Relaxed);
     }
 
     #[test]
