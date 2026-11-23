@@ -114,6 +114,7 @@ struct CategoryHooks : runtime::loader::HookSet<std::recursive_mutex> {
     runtime::loader::Original<Game_CreateSessionDlcSelectTab_BuildTiles_t> build_tiles;
     runtime::loader::Original<Game_CreateSessionDlcSelectTab_HandleCommand_t> handle_command;
     runtime::loader::Original<Game_Network_CategoryOptionUsing_t> option_using;
+    runtime::loader::Original<Game_Network_SetScenario_t> set_scenario;
 };
 
 CategoryHooks hooks;
@@ -125,6 +126,7 @@ std::string chosen;
 Forced forced;
 constinit swofty_core::guards::LogFirst<LOG_FIRST> build_lines, value_lines, refused_lines, setup_lines, scenario_lines;
 constinit swofty_core::guards::LogFirst<LOG_FIRST> setup_now_lines;
+constinit swofty_core::guards::LogFirst<LOG_FIRST * 2> scenario_now_lines;
 constinit swofty_core::guards::LogFirst<16> unknown_lines;
 thread_local bool applying;
 
@@ -431,6 +433,30 @@ void play_scenario(void *self, const std::string &want)
                 at<uint8_t>(session, SESSION_SCENARIO), role, role == 1 ? "; the host sends it to the players" : "");
 }
 
+// Season-Absturz (23.11., Beweislauf 2): was spielt die Session, und wer ruft SetScenario? Der
+// Gast verfolgte bislang nichts davon. Der Wrap loggt den vorher/nachher-Stand und die Rolle,
+// begrenzt; es schließt an, was setupFromUnranked ohne eigene Wahl meldet.
+void scenario_entry(void *session, uint8_t stat_id, const void *spec)
+{
+    namespace mem = swofty::mem;
+    if (!mem::readable(session, SESSION_SCENARIO + 1)) {
+        hooks.set_scenario(session, stat_id, spec);
+        return;
+    }
+    uint8_t before = at<uint8_t>(session, SESSION_SCENARIO);
+    hooks.set_scenario(session, stat_id, spec);
+    if (scenario_now_lines.note()) {
+        int role = at<int>(session, SESSION_ROLE);
+        std::string name;
+        for (const auto &s : scenarios())
+            if (s.stat_id == stat_id)
+                name = s.name;
+        swofty::log("[car-category] SetScenario: %u -> %u (role %d%s%s), stat %u%s%s", before,
+                    at<uint8_t>(session, SESSION_SCENARIO), role, spec ? ", mit spec" : "", spec ? "" : "",
+                    (unsigned)stat_id, name.empty() ? "" : " = ", name.empty() ? "" : name.c_str());
+    }
+}
+
 void setup_entry(void *self)
 {
     if (applying) {
@@ -536,7 +562,8 @@ static std::vector<CoreMixins> car_category_mixins()
          {{"Game_CreateSessionDlcSelectTab_BuildTiles", SWOFTY_MIXIN_WRAP, 100, (void *)&build_entry, hooks.build_tiles.slot()},
           {"Game_CreateSessionDlcSelectTab_HandleCommand", SWOFTY_MIXIN_WRAP, 100, (void *)&press_entry,
            hooks.handle_command.slot()},
-          {"Game_Network_CategoryOptionUsing", SWOFTY_MIXIN_WRAP, 100, (void *)&setup_entry, hooks.option_using.slot()}}});
+          {"Game_Network_CategoryOptionUsing", SWOFTY_MIXIN_WRAP, 100, (void *)&setup_entry, hooks.option_using.slot()},
+          {"Game_Network_SetScenario", SWOFTY_MIXIN_WRAP, 100, (void *)&scenario_entry, hooks.set_scenario.slot()}}});
     swofty::log("[car-category] %zu era box(es) registered; offering the Car Category hooks", era_boxes().size());
     return out;
 }
