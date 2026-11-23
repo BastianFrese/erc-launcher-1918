@@ -124,6 +124,7 @@ uint8_t *built_vm;
 std::string chosen;
 Forced forced;
 constinit swofty_core::guards::LogFirst<LOG_FIRST> build_lines, value_lines, refused_lines, setup_lines, scenario_lines;
+constinit swofty_core::guards::LogFirst<LOG_FIRST> setup_now_lines;
 constinit swofty_core::guards::LogFirst<16> unknown_lines;
 thread_local bool applying;
 
@@ -381,15 +382,33 @@ bool hold_category(const std::string &want)
 }
 
 // Plays the scenario of the remembered value's name on the session setupFromUnranked just set up.
-void play_scenario(void *self, const std::string &want)
+// Die Session-Rolle liest ein kleiner Helfer: SELF_NETWORK -> NETWORK_SESSION -> int bei SESSION_ROLE.
+uint8_t *session_of(void *self)
 {
+    namespace mem = swofty::mem;
     auto *network = mem::readable(self, SELF_NETWORK + 8) ? at<uint8_t *>(self, SELF_NETWORK) : nullptr;
     auto *session = mem::readable(network, NETWORK_SESSION + 8) ? at<uint8_t *>(network, NETWORK_SESSION) : nullptr;
-    if (!mem::readable(session, SESSION_SPAN)) {
+    return (session && mem::readable(session, SESSION_SPAN)) ? session : nullptr;
+}
+
+int session_role_of(void *self)
+{
+    auto *session = session_of(self);
+    return session ? at<int>(session, SESSION_ROLE) : -1;
+}
+
+void play_scenario(void *self, const std::string &want)
+{
+    auto *session = session_of(self);
+    if (!session) {
         swofty::log("[car-category] setupFromUnranked: scenario for %s not played: the session is not readable", want.c_str());
         return;
     }
     int role = at<int>(session, SESSION_ROLE);
+    if (role < 0) {
+        swofty::log("[car-category] setupFromUnranked: scenario for %s not played: the session is not readable", want.c_str());
+        return;
+    }
     if (!logic::decides_scenario(role)) {
         if (scenario_lines.note())
             swofty::log("[car-category] setupFromUnranked: session role %d takes the host's scenario", role);
@@ -422,6 +441,21 @@ void setup_entry(void *self)
     std::unique_lock<std::recursive_mutex> g(hooks.lock);
     std::string want = chosen;
     if (want.empty()) {
+        // Diagnose Season-Absturz (Beweislauf 23.11.): welchem Kategoriewert folgt das Setup, wenn
+        // keine eigene Wahl vorliegt — und welche Rolle hat die Session danach? Beim Gast war bis
+        // hierher nichts sichtbar (die Zeile fehlte in seinem Protokoll).
+        if (setup_now_lines.note()) {
+            std::string why;
+            void *option = category_option(why);
+            std::vector<logic::Value> values = option ? values_of(option) : std::vector<logic::Value>{};
+            int index = -1;
+            std::string name;
+            if (option && store::get_index(option, index) && index >= 0 && size_t(index) < values.size())
+                name = values[size_t(index)].name;
+            swofty::log("[car-category] setupFromUnranked without an addon category: session role %d, category "
+                        "option is %s (index %d, %zu value(s))",
+                        session_role_of(self), name.empty() ? "(unlesbar)" : name.c_str(), index, values.size());
+        }
         if (forced.option && setup_lines.note())
             swofty::log("[car-category] setupFromUnranked with no addon category chosen; the forced index stays until "
                         "the next build or stock press");
