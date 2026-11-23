@@ -271,6 +271,21 @@ static void unavailable_without_core()
     CHECK(from_json(to_json(profile), round) && round.power_scale == 0.9725f && round.limiter_offset_rpm == -300 &&
           round.ai_grip_scale == 0.87f && round.when.size() == 2 && !round.fuel_modes);
     CHECK(std::string(cars::profiles.name()) == "car.profile" && !cars::profiles.schema().empty());
+    CHECK(std::string(cars::setup_layouts.name()) == "setup.layout" &&
+          cars::setup_layouts.schema().find("\"x-version\":\"1.0\"") != std::string::npos &&
+          cars::setup_layouts.schema().find("\"sections\"") != std::string::npos);
+    cars::SetupLayout layout_round;
+    cars::SetupLayoutRow lean_row;
+    lean_row.slider = "brake_cooling_front";
+    lean_row.name = "Lean";
+    lean_row.unit = "%";
+    lean_row.min = 83.3f;
+    lean_row.max = 100.f;
+    lean_row.steps = 20;
+    layout_round.sections.push_back({json::Value(int64_t(0)), "Fuel", {lean_row}});
+    cars::SetupLayout layout_back;
+    CHECK(from_json(to_json(layout_round), layout_back) && layout_back.sections.size() == 1 &&
+          layout_back.sections[0].rows[0].steps == 20 && layout_back.sections[0].rows[0].min == 83.3f);
     cars::Profile team;
     team.cars.team = {"mercedes"};
     team.cars.driver = {"game/lewis_hamilton"};
