@@ -7,6 +7,7 @@
 
 #include <safetyhook.hpp>
 #include <swofty/game.hpp>
+#include <swofty/mem.hpp>
 #include <swofty/mixin.hpp>
 
 #include <atomic>
@@ -53,6 +54,30 @@ const runtime::Sig S_LAN_TILE{"FeTile_LocalMp_LanTile",
                               0x173e7a7, runtime::Sig::addr, 0, 0x11, 0};
 const runtime::Sig S_TILE_TAIL{"FeTile_Build_List_ItemsTail", "4C 89 F1 E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? B2 01",
                                0x1745016, runtime::Sig::rel32, 8, 9, 5};
+
+// Standings element walk. The season-online bughunt (22./23.11.2026) crashed every LAN-room
+// joiner of a season category the same way: ACCESS_VIOLATION (0xc0000005) reading 0x588 at
+// base+0x120ec05, five runs, identical signature. The walk reads back:
+//
+//   base+0x120ebc0 (unnamed) is the score of one participant row that a standings component's
+//   document update calls per row through its vtable (+0x268). The component's rcx holds the
+//   penalty scale at +0x2a4 and the holder pointer at +0x2a8; the participant row in rdx holds its
+//   key at +0x50 (the LAN room's member number), a category byte at +0x58 and a list entry word at
+//   +0x5a. The row's category selects a slot in [holder+0x2c8 + byte*16]; the slot's +8 is a list
+//   origin and the entry selects [(origin) + word*16 + 8], the object whose flag byte at +0x588
+//   (its penalty points at +0x584) feeds the row's score. In the bughunt dumps the walk always
+//   died on the joiner's own row (key 2, category 0), whose entry (535 and 503 across runs) named
+//   a NULL element: the category's list has no object for the row the session handed it, which
+//   fits the same walk's second symptom, that the joiner sees no drivers to pick. Solo with the
+//   same season builds that list (the host's own log shows session vehicles), so the diagnostic
+//   wraps the walk to log, per row, how far the chain resolves; the game's behaviour is untouched.
+//
+// The wrap is the bughunt's instrument, not a fix: the crash inside the original stays, and the
+// lines it leaves behind name the missing link. Diagnostic runs only; goes out again with the fix.
+const runtime::Sig S_STANDINGS_WALK{"Session_Standings_PerParticipantWalk",
+                                    "48 83 EC 48 C5 F8 29 7C 24 30 C5 F8 29 74 24 20 48 89 C8 48 8B 89 A8 02 00 00 "
+                                    "44 0F B6 42 58",
+                                    0x120ebc0, runtime::Sig::addr, 0, 0, 0};
 
 // The game's own driver name in a network session is its presence name: on the way into LAN mode
 // (Game_NetworkSubsystem_ChangeMPMode, OnGameModeSelected, DeclareActivePresence) it adds this game's
@@ -251,6 +276,66 @@ void name_setup()
                 (unsigned long long)(remote_added - swofty::api->module_base()));
 }
 
+// The standings walk's rows: the bughunt's counters, one line per row until they run out. Rows that
+// resolve to a NULL element always log, so the line before the crash is among them.
+safetyhook::InlineHook h_standings_walk;
+std::atomic<uint32_t> walk_lines{0}, walk_nulls{0};
+
+float standings_walk_hook(void *component, void *participant)
+{
+    namespace mem = swofty::mem;
+    const uint8_t *row = static_cast<const uint8_t *>(participant);
+    uint32_t key = 0;
+    uint8_t category = 0;
+    uint16_t entry = 0;
+    if (row && mem::readable(uintptr_t(row), 0x5c)) {
+        std::memcpy(&key, row + 0x50, sizeof key);
+        std::memcpy(&category, row + 0x58, sizeof category);
+        std::memcpy(&entry, row + 0x5a, sizeof entry);
+    }
+    uintptr_t holder = 0, slot = 0, list = 0, element = 0, scale = 0;
+    const uint8_t *c = static_cast<const uint8_t *>(component);
+    if (c && mem::read(uintptr_t(c) + 0x2a4, scale) && mem::read(uintptr_t(c) + 0x2a8, holder) && holder) {
+        mem::read(holder + 0x2c8, slot); // every bughunt row names category 0, so the first slot is the one the walk reads
+        if (slot)
+            mem::read(slot + 8, list);
+        if (list)
+            mem::read(list + (uintptr_t)entry * 16 + 8, element);
+    }
+    float out = h_standings_walk.call<float>(component, participant);
+    if (element) {
+        if (walk_lines.load() >= 16)
+            return out;
+        walk_lines.fetch_add(1);
+    } else {
+        if (walk_nulls.fetch_add(1) >= 8)
+            return out;
+    }
+    swofty::log("[netplay] standings walk: participant key %u category %u entry %u: scale %u holder 0x%llx slot 0x%llx "
+                "list 0x%llx element 0x%llx%s -> %+.3f",
+                (unsigned)key, (unsigned)category, (unsigned)entry, (unsigned)scale, (unsigned long long)holder,
+                (unsigned long long)slot, (unsigned long long)list, (unsigned long long)element, element ? "" : " (NULL)",
+                (double)out);
+    return out;
+}
+
+void standings_diag()
+{
+    uintptr_t at = runtime::find(S_STANDINGS_WALK, "netplay", "netplay");
+    if (!at) {
+        swofty::log("[netplay] standings walk not hooked (signature did not resolve)");
+        return;
+    }
+    auto h = safetyhook::InlineHook::create(reinterpret_cast<void *>(at), reinterpret_cast<void *>(&standings_walk_hook));
+    if (!h) {
+        swofty::log("[netplay] standings walk: the hook failed: %s", runtime::hook_error(h.error()).c_str());
+        return;
+    }
+    h_standings_walk = std::move(*h);
+    swofty::log("[netplay] standings walk hooked at base+0x%llx (rows and their element resolutions are logged)",
+                (unsigned long long)(at - swofty::api->module_base()));
+}
+
 bool patch(uintptr_t at, const uint8_t *bytes, size_t n)
 {
     if (!at)
@@ -303,6 +388,7 @@ void session_patches()
 
     name_setup();
     icon_setup();
+    standings_diag();
 }
 
 void setup()

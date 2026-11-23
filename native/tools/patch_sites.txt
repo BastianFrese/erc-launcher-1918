@@ -268,6 +268,7 @@ core/netplay/netplay.cpp: bool lobby = patch(runtime::find(S_LOBBY_KICK, "netpla
 core/netplay/netplay.cpp: hidden = patch(lan, skip_lan, sizeof skip_lan); => bytes=9 sig S_LAN_TILE S_TILE_TAIL
 core/netplay/netplay.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(at), icon_gate); => mid sigs-in core/netplay/netplay.cpp
 core/netplay/netplay.cpp: auto h = safetyhook::InlineHook::create(reinterpret_cast<void *>(add), reinterpret_cast<void *>(&add_name_hook)); => inline sig S_ADD_NAME
+core/netplay/netplay.cpp: auto h = safetyhook::InlineHook::create(reinterpret_cast<void *>(at), reinterpret_cast<void *>(&standings_walk_hook)); => inline sig S_STANDINGS_WALK
 core/netplay/netplay_bridge.cpp: void install(HMODULE lib, const char *dll, std::initializer_list<Fn> fns) => via
 core/netplay/netplay_bridge.cpp: if (!runtime::write_slot(s.slot, h.detour)) { => import ws2_32.dll!* iphlpapi.dll!*
 core/netplay/netplay_bridge.cpp: install(ws, "ws2_32.dll", {F_SENDTO, F_RECVFROM, F_BIND}); => import ws2_32.dll!*
