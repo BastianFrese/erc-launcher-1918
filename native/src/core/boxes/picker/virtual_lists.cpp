@@ -24,30 +24,7 @@ void parse_list_entry(int *ordinal, const void *row_key, void *list, void *regis
 {
     if (registry)
         virtual_lists.boot_registry = registry;
-    // Diagnose Season-Absturz (Beweislauf 23.11., Raum 49EH): welche Entrant-Liste liest das
-    // Spiel, in welchem Pfad und mit wie vielen Zeilen? Der Joiner einer Season-Kategorie crasht
-    // an einem Eintrag, den seine Registry nie geladen hat; diese Zeilen zeigen, was stattdessen
-    // geparst wird — und ob die Season-Liste überhaupt ankommt.
-    std::string row;
-    int claimed = ordinal ? *ordinal : -1;
-    if (row_key) {
-        const char *begin = reinterpret_cast<const char *>(static_cast<const uint8_t *>(row_key) + KEY_ROW);
-        size_t len = strnlen(begin, KEY_ROW - 1);
-        if (len)
-            row.assign(begin, len);
-    }
     virtual_lists.parse_list_orig(ordinal, row_key, list, registry);
-    int64_t entries = -1;
-    if (list && mem::readable(list, LIST_VECTOR + LIST_VECTOR_SIZE)) {
-        uintptr_t begin = 0, end = 0;
-        memcpy(&begin, static_cast<uint8_t *>(list) + LIST_VECTOR + 8, 8);
-        memcpy(&end, static_cast<uint8_t *>(list) + LIST_VECTOR + 16, 8);
-        if (begin && end && end >= begin && (end - begin) % 8 == 0 && (end - begin) / 8 <= 4096)
-            entries = (end - begin) / 8;
-    }
-    if (virtual_lists.parse_lines.note())
-        swofty::log("[era] entrant list parse: %s (ordinal %d an der Zeile, %lld Zeil(en) gelesen)", row.empty() ? "?" : row.c_str(),
-                    claimed, entries);
 }
 
 // The row of entrants.entrant_lists labelled `label` that the game did not load: the build's virtual-list step puts

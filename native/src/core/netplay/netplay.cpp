@@ -276,14 +276,11 @@ void name_setup()
                 (unsigned long long)(remote_added - swofty::api->module_base()));
 }
 
-// The standings walk's rows. Runde 2 (nach dem Beweislauf am 23.11. 10:41): der Host loest die
-// Gastzeile (key 2, entry 535) auf ein echtes Element auf (+20.000), der Gast crasht auf NULL —
-// und das vorausgegangene Instrument loggte nach dem Originalaufruf, also genau in den Crash
-// hinein; der Gast-Satz fiel unter den Tisch. Jetzt loggt jede Zeile VOR dem Aufruf, und eine
-// Zeile mit NULL-Element geht nicht mehr ins Original: der Nullpfad folgt dem Spalt des Spiels
-// (Penalitäts-Bestandteil bleibt der Konstantwert C1) mit dem Rest der Funktion an ihren
-// Festen Adressen — so bleibt der Gast im Raum, wählt (oder sieht, dass die Fahrerliste leer
-// bleibt) und der Beweislauf trägt beide Seiten.
+// The standings walk's rows. Der Gast hielt eine Gastzeile, deren Element NULL war, und starb
+// daran (F1_25.exe+0x120ec05, reading 0x588). Die Zeile geht deshalb nicht mehr ins Original:
+// der Nullpfad folgt dem Spalt des Spiels (der Penalitäts-Bestandteil bleibt der Konstantwert C1)
+// mit dem Rest der Funktion an ihren festen Adressen. Die Diagnose dazu (welche Eintrags-ID, welche
+// Liste) ist mit 1.5.19 raus; eine Zeile bleibt, damit ein Rückfall nicht stumm ist.
 //
 // Der Spalt der Funktion (base+0x120ebc0, per Disassembly):
 //   score = (bonus - strafe) * 10.0
@@ -294,7 +291,7 @@ void name_setup()
 // Die Konstanten stehen im Bild: C1 base+0x5384220, C2 base+0x5383188 — beide per movss-Ladung
 // der Funktion, beide an dieser Build-Fassung gebunden (die Signatur oben gilt nur hier).
 safetyhook::InlineHook h_standings_walk;
-std::atomic<uint32_t> walk_lines{0}, walk_nulls{0};
+std::atomic<uint32_t> walk_nulls{0};
 
 uintptr_t walk_lookup = 0; // base+0x2441910: (holder, row+0x5c) -> Zeiger oder 0; gesetzt in standings_diag()
 
@@ -327,16 +324,14 @@ float standings_walk_hook(void *component, void *participant)
     namespace mem = swofty::mem;
     const uint8_t *row = static_cast<const uint8_t *>(participant);
     uint32_t key = 0;
-    uint8_t category = 0;
     uint16_t entry = 0;
     if (row && mem::readable(uintptr_t(row), 0x5c)) {
         std::memcpy(&key, row + 0x50, sizeof key);
-        std::memcpy(&category, row + 0x58, sizeof category);
         std::memcpy(&entry, row + 0x5a, sizeof entry);
     }
-    uintptr_t holder = 0, slot = 0, list = 0, element = 0, scale = 0;
+    uintptr_t holder = 0, slot = 0, list = 0, element = 0;
     const uint8_t *c = static_cast<const uint8_t *>(component);
-    if (c && mem::read(uintptr_t(c) + 0x2a4, scale) && mem::read(uintptr_t(c) + 0x2a8, holder) && holder) {
+    if (c && mem::read(uintptr_t(c) + 0x2a8, holder) && holder) {
         mem::read(holder + 0x2c8, slot); // every bughunt row names category 0, so the first slot is the one the walk reads
         if (slot)
             mem::read(slot + 8, list);
@@ -345,22 +340,12 @@ float standings_walk_hook(void *component, void *participant)
     }
     if (element == 0) {
         if (walk_nulls.exchange(1) == 0)
-            swofty::log("[netplay] standings walk: participant key %u category %u entry %u: scale %u holder 0x%llx "
-                        "slot 0x%llx list 0x%llx element NULL; the row is held at the constant stand-in "
-                        "(-1.0 statt Strafsumme)",
-                        (unsigned)key, (unsigned)category, (unsigned)entry, (unsigned)scale,
-                        (unsigned long long)holder, (unsigned long long)slot, (unsigned long long)list);
+            swofty::log("[netplay] standings walk: participant key %u entry %u has no element; its row is held at the "
+                        "constant stand-in",
+                        (unsigned)key, (unsigned)entry);
         return walk_missing_element(reinterpret_cast<uintptr_t>(component), row);
     }
-    float out = h_standings_walk.call<float>(component, participant);
-    if (walk_lines.load() >= 16)
-        return out;
-    walk_lines.fetch_add(1);
-    swofty::log("[netplay] standings walk: participant key %u category %u entry %u: scale %u holder 0x%llx slot 0x%llx "
-                "list 0x%llx element 0x%llx -> %+.3f",
-                (unsigned)key, (unsigned)category, (unsigned)entry, (unsigned)scale, (unsigned long long)holder,
-                (unsigned long long)slot, (unsigned long long)list, (unsigned long long)element, (double)out);
-    return out;
+    return h_standings_walk.call<float>(component, participant);
 }
 
 void standings_diag()
@@ -377,7 +362,7 @@ void standings_diag()
     }
     h_standings_walk = std::move(*h);
     walk_lookup = swofty::api->module_base() + 0x2441910;
-    swofty::log("[netplay] standings walk hooked at base+0x%llx (rows and their element resolutions are logged)",
+    swofty::log("[netplay] standings walk guarded at base+0x%llx (a row whose element is missing is held)",
                 (unsigned long long)(at - swofty::api->module_base()));
 }
 

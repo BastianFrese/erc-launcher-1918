@@ -1189,6 +1189,23 @@ impl Worker {
                 "launch: asking the launcher to {} F1 25 for the room ({why}; host ids for {id_addons} addon(s), load order for {ordered} addon(s), {setting_values} option value(s))",
                 if restart { "restart" } else { "start" }
             ));
+            // Diagnose 23.11.: der Ausgleich kam beim Spiel nie an. Diese Zeile sagt, was die
+            // Sitzung der Startanfrage mitgibt — Registry-IDs zählte die Zeile darüber nicht.
+            diag::line(format!(
+                "launch: the ask carries {} row addon(s), {} registry addon(s), {} in the load order",
+                row_ids.as_ref().map_or(0, |o| o.rows.len()),
+                row_ids.as_ref().map_or(0, |o| o.registry.len()),
+                row_ids.as_ref().map_or(0, |o| o.order.len())
+            ));
+            // Der Ausgleich fiel auf dem Weg zum Spiel weg (23.11.): die Sitzung legt ihn deshalb
+            // selbst ab, und ein Raumstart ohne ihn in der Umgebung nimmt diese Datei.
+            if let (Some(ids), Some(root)) = (row_ids.as_ref(), diag::data_root()) {
+                let dir = root.join("state");
+                std::fs::create_dir_all(&dir).ok();
+                if let Err(e) = ids.write(&dir.join("room-row-ids.json")) {
+                    diag::line(format!("launch: the host's ids couldn't be saved for the game start: {e}"));
+                }
+            }
             if ordered > 0 || setting_values > 0 {
                 diag::line(format!(
                     "launch: using the host's load order and {setting_values} option value(s) for {setting_addons} addon(s)"

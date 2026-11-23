@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::time::Instant;
 
-use swofty_core::online::multiplayer::client::Session;
+use swofty_core::online::multiplayer::client::{self as diag, Session};
 use swofty_core::online::multiplayer::types::LaunchAsk;
 
 use super::model::exit_leaves;
@@ -111,6 +111,12 @@ impl RoomGame {
             }
             None => None,
         };
+        // Diagnose 23.11.: sag, ob dieser Start die Host-IDs mitbekommt — die Datei fehlte im
+        // Protokoll des Absturzlaufs, und niemand sagte, ob sie geschrieben wurde.
+        diag::line(match &row_ids {
+            Some(file) => format!("room launch: the host's ids are written for the build ({})", file.display()),
+            None => "room launch: this start carries no host ids".to_owned(),
+        });
         self.ask_seq = ask.seq;
         self.seen = false;
         self.launching = true;

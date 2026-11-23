@@ -79,15 +79,20 @@ pub(crate) fn run(store: &Store, profile: &str, args: &RunArgs, g: &Game) -> Res
     }
     crate::stores::client::ensure_client(store, source, &game, args.no_start_store)?;
     let id = format!("{:x}{:x}", std::process::id(), (now_secs() * 1e6) as u64);
+    let netplay = std::env::var(NETPLAY_ENV).ok().filter(|v| !v.is_empty());
+    // Der Ausgleich der Host-IDs kam beim Spiel nie an, wenn die Startanfrage ihn verlor (23.11.).
+    // Die Sitzung legt ihn deshalb selbst als Datei ab; für einen Raumstart gilt sie, solange sie frisch ist.
+    let row_ids = std::env::var_os(swofty_core::row_ids::ENV)
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| netplay.is_some().then(|| saved_room_row_ids(&store.root)).flatten());
     let request = LaunchRequest {
         id: id.clone(),
         winedebug: Some(args.winedebug.clone()),
         profile: Some(profile.into()),
         apply: args.apply,
-        netplay: std::env::var(NETPLAY_ENV).ok().filter(|v| !v.is_empty()),
-        row_ids: std::env::var_os(swofty_core::row_ids::ENV)
-            .filter(|v| !v.is_empty())
-            .map(PathBuf::from),
+        netplay,
+        row_ids,
         steam_saves_once: args.steam_saves_once,
     };
     swofty_core::write_json(&store.root.join("state/launch.json"), &request)?;
@@ -335,4 +340,12 @@ fn relay_lines(r: &mut Follower) {
 /// The wrapper's refusal of this launch (asked at `since`), once written.
 pub(crate) fn refused(store: &Store, since: f64) -> Option<quarantine::Report> {
     quarantine::Report::read(&store.root).filter(|r| r.stage == Stage::BeforeLaunch && r.at >= since)
+}
+
+/// The host's ids the room's session saved for this start, while they are fresh (30 minutes): the way
+/// in for a room start whose launch request lost them on the way to the launcher (23.11.).
+fn saved_room_row_ids(root: &std::path::Path) -> Option<PathBuf> {
+    let file = root.join("state/room-row-ids.json");
+    let age = std::fs::metadata(&file).ok()?.modified().ok()?.elapsed().ok()?;
+    (age < Duration::from_secs(30 * 60)).then_some(file)
 }
