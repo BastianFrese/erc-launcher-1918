@@ -156,10 +156,16 @@ pub fn laden(angebot: &Angebot) -> Result<PathBuf, String> {
 ///
 /// Der Installer kann die laufende `.exe` nicht ersetzen, also endet dieser
 /// Prozess gleich danach. Das Setup wartet, bis die Datei frei ist, kopiert und
-/// startet den Launcher am Ende selbst wieder (`.onInstSuccess` im Skript).
+/// startet den Launcher am Ende selbst wieder.
+///
+/// `/R` ist fuer den Sprung auf die 2.0er-Reihe da: deren Installer aus dem
+/// Tauri-Bau startet das Programm im stillen Lauf nur mit diesem Schalter wieder
+/// (`installer.nsi`, `.onInstSuccess`), waehrend das eigene Setup aus
+/// `packaging/erc-launcher.nsi` ihn nicht kennt und ohnehin selbst startet.
 pub fn einspielen(setup: &PathBuf) -> Result<(), String> {
     std::process::Command::new(setup)
         .arg("/S")
+        .arg("/R")
         .spawn()
         .map(|_| ())
         .map_err(|e| format!("Das Setup liess sich nicht starten: {e}"))
