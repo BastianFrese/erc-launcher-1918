@@ -18,8 +18,9 @@ const LISTE_ENV: &str = "ERC_UPDATES_URL";
 const TIMEOUT: Duration = Duration::from_secs(15);
 const SETUP_NAME: &str = "erc-launcher-setup.exe";
 /// Wie oft im Betrieb nachgesehen wird, damit eine neue Fassung ohne Neustart
-/// auftaucht. Die Liste ist ein paar hundert Bytes.
-const NACHSEHEN: Duration = Duration::from_secs(600);
+/// auftaucht. Die Liste ist ein paar hundert Bytes; eine Minute ist billig genug,
+/// damit der Knopf nach dem Veroeffentlichen fast sofort dasteht.
+const NACHSEHEN: Duration = Duration::from_secs(60);
 
 /// Eine Liste fuer alle. Den Beta-Kanal gibt es seit 18.11.2026 nicht mehr: eine Fassung, die
 /// sich als Vorabfassung ausgibt, zieht trotzdem die feste Liste — sonst bliebe sie auf einem
