@@ -166,8 +166,8 @@ impl Local {
     }
 
     /// The fingerprint of `profile` on the game `game`, with the cached Addon Browser listing.
-    pub fn read(store: &Store, profile: &Profile, game: &Identity) -> crate::Result<Local> {
-        let fingerprint = fingerprint::fingerprint(store, profile, game)?;
+    pub fn read(store: &Store, profile: &Profile, game: &crate::install::Game) -> crate::Result<Local> {
+        let fingerprint = fingerprint::fingerprint(store, profile, &game.identity, game.version())?;
         let installed = store.addons()?;
         let categories = fingerprint
             .addons

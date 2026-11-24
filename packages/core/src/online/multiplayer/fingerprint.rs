@@ -1927,7 +1927,13 @@ impl Fingerprint {
                 mine.extend(values.iter().map(|(k, v)| (k.clone(), v.clone())));
             }
         }
-        Fingerprint::new(self.game_build.clone(), addons, options, self.dlc)
+        Fingerprint::new(
+            self.game_build.clone(),
+            self.game_version.clone(),
+            addons,
+            options,
+            self.dlc,
+        )
     }
 }
 
