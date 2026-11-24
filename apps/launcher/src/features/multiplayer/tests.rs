@@ -1017,6 +1017,7 @@ mod room_fit {
             matching: Some(Own {
                 launcher: "1.10.14".into(),
                 exe_sha256: Some(sha('e')),
+                game_version: None,
                 dlc: None,
                 have: have
                     .iter()

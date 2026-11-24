@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 #include <swofty/live_images.h>
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 #include <swofty_api.h>
+#include <swofty/db.hpp>
+#include <swofty/lang.hpp>
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -267,6 +270,181 @@ inline std::optional<uint8_t> pit_status(const Car &c)
 inline std::optional<uint8_t> pit_stops(const Car &c)
 {
     return has(c, SWOFTY_LIVE_HAVE_PIT_LANE) ? std::optional<uint8_t>(c.pit_stops) : std::nullopt;
+}
+
+enum class DriverStatus : uint8_t { garage = 0, flying_lap = 1, in_lap = 2, out_lap = 3, on_track = 4 };
+
+// The session clock and lap count, from the game's UDP Session packet (see live.md for each field's source).
+inline std::optional<float> time_left_s(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_TIME_LEFT) ? std::optional<float>(s.time_left_s) : std::nullopt;
+}
+
+inline std::optional<uint32_t> total_laps(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_TOTAL_LAPS) ? std::optional<uint32_t>(s.total_laps) : std::nullopt;
+}
+
+struct FastestLap {
+    uint32_t vehicle;
+    uint32_t lap_ms;
+};
+
+inline std::optional<FastestLap> fastest_lap(const Session &s)
+{
+    if (!has(s, SWOFTY_LIVE_SHAVE_FASTEST_LAP) || !s.fastest_lap_ms)
+        return std::nullopt;
+    return FastestLap{s.fastest_lap_vehicle, s.fastest_lap_ms};
+}
+
+inline std::optional<uint8_t> safety_car_phase(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_SAFETY_CAR_PHASE) ? std::optional<uint8_t>(s.safety_car_phase) : std::nullopt;
+}
+
+inline std::optional<bool> drs_enabled(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_DRS) ? std::optional<bool>(s.drs_enabled != 0) : std::nullopt;
+}
+
+inline std::optional<uint8_t> start_lights(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_START_LIGHTS) ? std::optional<uint8_t>(s.start_lights) : std::nullopt;
+}
+
+// Whether the game shows its race HUD now: false through menus, the track intro, the grid, cutscenes,
+// replays, photo mode and the pause menu. Empty when the core cannot tell (no flow states seen).
+inline std::optional<bool> hud_visible(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_HUD) ? std::optional<bool>(s.hud_visible != 0) : std::nullopt;
+}
+
+// What hides the race HUD, SWOFTY_LIVE_HUD_* bits; 0 while it shows or when the bit is clear.
+inline uint8_t hud_hidden_by(const Session &s)
+{
+    return has(s, SWOFTY_LIVE_SHAVE_HUD) ? s.hud_hidden_by : 0;
+}
+
+struct PitWindow {
+    uint8_t ideal_lap, latest_lap, rejoin_position;
+};
+
+inline std::optional<PitWindow> pit_window(const Session &s)
+{
+    if (!has(s, SWOFTY_LIVE_SHAVE_PIT_WINDOW))
+        return std::nullopt;
+    return PitWindow{s.pit_window_ideal_lap, s.pit_window_latest_lap, s.pit_rejoin_position};
+}
+
+inline std::optional<bool> drs_allowed(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_DRS_ALLOWED) ? std::optional<bool>(d.drs_allowed != 0) : std::nullopt;
+}
+
+inline std::optional<bool> pit_limiter(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_PIT_LIMITER) ? std::optional<bool>(d.pit_limiter != 0) : std::nullopt;
+}
+
+inline std::optional<int8_t> fia_flag(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_FIA_FLAG) ? std::optional<int8_t>(d.fia_flag) : std::nullopt;
+}
+
+inline std::optional<DriverStatus> driver_status(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_DRIVER_STATUS) && d.driver_status <= 4
+               ? std::optional<DriverStatus>(static_cast<DriverStatus>(d.driver_status))
+               : std::nullopt;
+}
+
+inline std::optional<uint8_t> race_number(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_IDENTITY) ? std::optional<uint8_t>(d.race_number) : std::nullopt;
+}
+
+inline std::optional<uint32_t> team_colour(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_IDENTITY) && d.team_colour ? std::optional<uint32_t>(d.team_colour) : std::nullopt;
+}
+
+// The car's delta to the safety car's or the virtual safety car's required time, in seconds as the game sends it.
+inline std::optional<float> safety_car_delta_s(const CarDetail &d)
+{
+    return has(d, SWOFTY_LIVE_HAVE_SC_DELTA) ? std::optional<float>(d.safety_car_delta_s) : std::nullopt;
+}
+
+// The car's best time in each sector this session, 0 for a sector it has no time in yet.
+inline std::optional<std::array<uint32_t, 3>> sector_bests(const CarDetail &d)
+{
+    if (!has(d, SWOFTY_LIVE_HAVE_SECTOR_BESTS))
+        return std::nullopt;
+    return std::array<uint32_t, 3>{d.personal_best_sector_ms[0], d.personal_best_sector_ms[1], d.personal_best_sector_ms[2]};
+}
+
+// A car's driver by name, from the entrants.drivers row whose stat_id is the car's driver_id: code is the row's
+// initials ("VER"), first_name and last_name its names in the game's language (the lng_* text, or the stored
+// string when it is not a key), label the row's _metadata_, name_reversed its is_name_reversed (family name first).
+struct DriverIdentity {
+    uint32_t stat_id = 0;
+    std::string code, first_name, last_name, label;
+    bool name_reversed = false;
+};
+
+namespace detail {
+
+inline std::string driver_text(const db::Cursor *c, const char *field)
+{
+    db::Value v{};
+    if (db::cell(c, field, &v) != db::Result::ok || !v.s || !v.s[0])
+        return {};
+    std::string stored = v.s;
+    if (stored.rfind("lng_", 0) != 0)
+        return stored == "default" ? std::string{} : stored;
+    return lang::text(stored).value_or(std::string{});
+}
+
+}
+
+// The driver of the entrants.drivers row with this stat_id. Empty while the database is not loaded, when no row has
+// it, and when the id is ambiguous: the 2024 and 2025 UDP formats carry one byte, so a driver id below 255 that is
+// also the low byte of an added driver's stat_id names no single row. Reads the database at each call.
+inline std::optional<DriverIdentity> driver_identity(uint32_t driver_id)
+{
+    if (driver_id == 255 || !db::available())
+        return std::nullopt;
+    std::optional<DriverIdentity> found;
+    int matches = 0;
+    db::Cursor cur{};
+    for (db::Result r = db::open("entrants.drivers", &cur); r == db::Result::ok; r = db::step(&cur)) {
+        db::Value id{};
+        if (db::cell(&cur, "stat_id", &id) != db::Result::ok || id.i < 0)
+            continue;
+        uint32_t stat = static_cast<uint32_t>(id.i);
+        if (stat != driver_id && !(driver_id < 255 && (stat & 0xff) == driver_id))
+            continue;
+        if (++matches > 1)
+            return std::nullopt;
+        DriverIdentity d;
+        d.stat_id = stat;
+        d.code = detail::driver_text(&cur, "initials");
+        d.first_name = detail::driver_text(&cur, "first_name");
+        d.last_name = detail::driver_text(&cur, "last_name");
+        if (const char *label = db::row_name(&cur))
+            d.label = label;
+        db::Value reversed{};
+        d.name_reversed = db::cell(&cur, "is_name_reversed", &reversed) == db::Result::ok && reversed.i != 0;
+        found = std::move(d);
+    }
+    return found;
+}
+
+// The car's driver by name (driver_identity above), from its UDP driver id; empty without SWOFTY_LIVE_HAVE_IDENTITY.
+inline std::optional<DriverIdentity> driver_identity(const CarDetail &d)
+{
+    if (!has(d, SWOFTY_LIVE_HAVE_IDENTITY))
+        return std::nullopt;
+    return driver_identity(d.driver_id);
 }
 
 inline GameMode game_mode(const Session &s)

@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 use std::path::Path;
 
+use crate::addons::other_game::Packed;
 use crate::install::LOADER_DIR;
 use crate::manifest::{AddonManifest, Category};
 use crate::profile::conflicts::Pair;
@@ -48,6 +49,11 @@ pub struct Evidence {
     pub game_version: Option<String>,
     /// The game exe's size and PE link timestamp, the pair that identifies a build.
     pub game_build: Option<(u64, u32)>,
+    /// The enabled addons that put F1 25's packed game data, by id, in load order; only a crash reads them.
+    pub packed: Vec<(String, Packed)>,
+    /// The enabled addons whose installed version was withdrawn from the Addon Browser
+    /// ([`crate::catalog::withdrawn`]): each id with that version, in load order.
+    pub withdrawn: Vec<(String, String)>,
 }
 
 impl Evidence {
@@ -144,6 +150,7 @@ impl Evidence {
             self.conflicts = report.pairs;
             self.kept_lists = report.kept_lists;
         }
+        self.withdrawn = withdrawn_on(store, &profile, &self.enabled, &self.builtin, addons);
         self.plugins = self
             .enabled
             .iter()
@@ -157,15 +164,68 @@ impl Evidence {
             .collect();
         self
     }
+
+    /// The enabled addons that put F1 25's packed game data ([`crate::addons::other_game::scan`]).
+    pub fn with_packed(mut self, store: &Store, addons: &BTreeMap<String, AddonManifest>) -> Self {
+        self.packed = self
+            .enabled
+            .iter()
+            .filter(|id| !self.builtin.contains(*id))
+            .filter_map(|id| {
+                let packed = crate::addons::other_game::scan(&store.addons_dir().join(id), addons.get(id)?)?;
+                Some((id.clone(), packed))
+            })
+            .collect();
+        self
+    }
+}
+
+/// The addons on in `profile` whose installed version was withdrawn: those of its last build, or of
+/// the profile itself when it has none.
+pub(super) fn withdrawn_on(
+    store: &Store,
+    profile: &str,
+    built: &[String],
+    builtin: &BTreeSet<String>,
+    addons: &BTreeMap<String, AddonManifest>,
+) -> Vec<(String, String)> {
+    let checks = crate::catalog::withdrawn::Checks::load(&store.root);
+    if checks.0.values().all(|c| !c.withdrawn) {
+        return Vec::new();
+    }
+    let saved: Vec<String> = match built.is_empty() {
+        true => store
+            .profile(profile)
+            .map(|p| p.enabled().map(str::to_owned).collect())
+            .unwrap_or_default(),
+        false => Vec::new(),
+    };
+    let on = if built.is_empty() { &saved } else { built };
+    checks
+        .among(
+            addons,
+            on.iter().map(String::as_str).filter(|id| !builtin.contains(*id)),
+        )
+        .into_iter()
+        .map(|w| (w.id, w.version.to_string()))
+        .collect()
 }
 
 pub(super) fn evidence(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Evidence {
-    let addons = store.addons().unwrap_or_default();
+    evidence_with(session, game, store, &store.addons().unwrap_or_default())
+}
+
+pub(super) fn evidence_with(
+    session: &SessionRecord,
+    game: Option<&Path>,
+    store: &Store,
+    addons: &BTreeMap<String, AddonManifest>,
+) -> Evidence {
     let names = addons
         .iter()
         .map(|(id, m)| (id.clone(), m.name.clone()))
         .collect();
-    Evidence::read(session, game, names, Some(&store.root)).with_profile(store, &addons)
+    Evidence::read(session, game, names, Some(&store.root)).with_profile(store, addons)
 }
 
 pub(crate) fn read_perf(dir: &Path) -> Option<String> {

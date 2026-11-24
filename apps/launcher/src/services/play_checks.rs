@@ -91,6 +91,8 @@ pub(crate) struct Checked {
     pub lines: Vec<String>,
     /// On addons whose files are not what their install wrote.
     pub damaged: Vec<Damaged>,
+    /// The notes hold the last build's HUD customisation warning.
+    pub hud_noted: bool,
 }
 
 pub(crate) fn run(inputs: Inputs) -> Checked {
@@ -110,6 +112,7 @@ pub(crate) fn run(inputs: Inputs) -> Checked {
     let mut notes = Vec::new();
     let mut lines = Vec::new();
     let mut damaged = Vec::new();
+    let mut hud_noted = false;
     let verdict = match (
         timings.time("profile", || store.profile(&profile)),
         timings.time("addons", || store.addons()),
@@ -136,6 +139,18 @@ pub(crate) fn run(inputs: Inputs) -> Checked {
                 timings.time("lonely", || {
                     notes.extend(lonely(&store, &p, &installed, &catalog))
                 });
+                if !p.is_vanilla() {
+                    let found = timings.time("withdrawn", || {
+                        swofty_core::catalog::withdrawn::enabled(&store, p.enabled())
+                    });
+                    if !found.is_empty() {
+                        let labels: Vec<String> = found.iter().map(|w| w.label()).collect();
+                        let mut line = String::new();
+                        let _ = write!(line, "[play] withdrawn addons on: {}", labels.join(", "));
+                        lines.push(line);
+                        notes.push(withdrawn_note(&labels));
+                    }
+                }
                 let all = match p.is_vanilla() {
                     true => Default::default(),
                     false => timings.time("deps", || swofty_core::stdlib::deps::read_all(&store, &installed)),
@@ -145,6 +160,13 @@ pub(crate) fn run(inputs: Inputs) -> Checked {
                     notes.extend(note);
                     lines.extend(line);
                 });
+                if !p.is_vanilla() {
+                    let last = timings.time("hud", || swofty_core::profile::conflicts::last(&store, &p.name));
+                    if let Some(note) = hud_editor_note(last.as_ref(), &p) {
+                        hud_noted = true;
+                        notes.push(note);
+                    }
+                }
                 registry(&store, &game, &p, &installed, &all, &mut notes, &mut timings)
             }
         }
@@ -161,7 +183,30 @@ pub(crate) fn run(inputs: Inputs) -> Checked {
         timings,
         lines,
         damaged,
+        hud_noted,
     }
+}
+
+pub(crate) fn hud_editor_title() -> &'static str {
+    tr("HUD customisation closes the game")
+}
+
+/// The HUD customisation warning of the profile's last build, while the profile turns on the same
+/// addons in the same order.
+pub(crate) fn hud_editor_note(
+    last: Option<&swofty_core::profile::conflicts::Report>,
+    profile: &swofty_core::profile::Profile,
+) -> Option<Note> {
+    let text = last.filter(|r| r.is_current(profile))?.hud_editor.clone()?;
+    Some(Note::warning(hud_editor_title(), text))
+}
+
+/// The HUD customisation warning of a build made at or after `since`.
+pub(crate) fn fresh_hud_editor(
+    last: Option<swofty_core::profile::conflicts::Report>,
+    since: f64,
+) -> Option<String> {
+    last.filter(|r| r.built_at >= since)?.hud_editor
 }
 
 /// What stops Play when the build would fail on a damaged addon.
@@ -343,6 +388,27 @@ fn lonely(
     notes
 }
 
+/// The notice for addons that are on whose installed version was withdrawn from the Addon Browser.
+fn withdrawn_note(labels: &[String]) -> Note {
+    let list = labels.join(", ");
+    match labels {
+        [one] => Note::warning(
+            &trf!("{addon} was withdrawn", addon = one),
+            trf!(
+                "{addon} was withdrawn from the Addon Browser. Turn it off on the Addons page.",
+                addon = one
+            ),
+        ),
+        _ => Note::warning(
+            tr("Withdrawn addons are on"),
+            trf!(
+                "{addons} were withdrawn from the Addon Browser. Turn them off on the Addons page.",
+                addons = list
+            ),
+        ),
+    }
+}
+
 fn lonely_note(base: &str, family: &[String]) -> Note {
     let shown = family.iter().take(4).cloned().collect::<Vec<_>>().join(", ");
     let more = family.len().saturating_sub(4);
@@ -381,16 +447,29 @@ fn registry(
         notes.extend(vanilla_note(using));
         return Verdict::Go;
     }
-    let Ok(plan) = timings.time("resolve", || {
+    let plan = match timings.time("resolve", || {
         swofty_core::profile::resolver::resolve(profile, installed)
-    }) else {
-        return Verdict::Go;
+    }) {
+        Ok(plan) => plan,
+        Err(swofty_core::Error::AddonConflict { addon, other }) => {
+            return Verdict::Stop(conflict_stop(&addon, &other));
+        }
+        Err(_) => return Verdict::Go,
     };
     let report = timings.time("deps check", || {
         deps::for_order(&profile.name, &plan.order, installed, all)
     });
     let findings = report.findings.iter().map(finding_note).collect();
     assemble(findings, report.stop_text(), notes)
+}
+
+/// What stops Play when two addons that are on conflict.
+fn conflict_stop(addon: &str, other: &str) -> String {
+    trf!(
+        "{addon} conflicts with {other}. Turn one of them off on the Addons page",
+        addon = addon,
+        other = other
+    )
 }
 
 fn vanilla_note(using: usize) -> Option<Note> {
@@ -473,6 +552,54 @@ impl Pending {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use swofty_core::profile::conflicts::Report;
+
+    fn hud_report(order: Vec<String>, built_at: f64, hud_editor: Option<&str>) -> Report {
+        Report {
+            profile: "p".into(),
+            built_at,
+            order,
+            hud_editor: hud_editor.map(str::to_owned),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn play_warns_with_the_last_builds_hud_customisation_text_while_the_load_order_holds() {
+        let mut p = swofty_core::profile::Profile::new("p");
+        for id in ["t.a", "t.b"] {
+            p.set_enabled(id, true).unwrap();
+        }
+        let order: Vec<String> = p.enabled().map(str::to_owned).collect();
+        let moved: Vec<String> = order.iter().rev().cloned().collect();
+        let text = "A and B together make the Track Position list too big for HUD customisation";
+        let last = hud_report(order.clone(), 1.0, Some(text));
+        let note = hud_editor_note(Some(&last), &p).expect("a note");
+        assert_eq!(
+            (note.level, note.title.as_str(), note.body.as_str(), note.sticky),
+            (
+                NoteLevel::Warning,
+                "HUD customisation closes the game",
+                text,
+                true
+            )
+        );
+        assert!(hud_editor_note(Some(&hud_report(moved, 1.0, Some(text))), &p).is_none());
+        assert!(hud_editor_note(Some(&hud_report(order, 1.0, None)), &p).is_none());
+        assert!(hud_editor_note(None, &p).is_none());
+    }
+
+    #[test]
+    fn a_launch_shows_the_hud_customisation_text_of_its_own_build_only() {
+        let text = "too big for HUD customisation";
+        assert_eq!(
+            fresh_hud_editor(Some(hud_report(Vec::new(), 20.0, Some(text))), 10.0).as_deref(),
+            Some(text)
+        );
+        assert!(fresh_hud_editor(Some(hud_report(Vec::new(), 5.0, Some(text))), 10.0).is_none());
+        assert!(fresh_hud_editor(Some(hud_report(Vec::new(), 20.0, None)), 10.0).is_none());
+        assert!(fresh_hud_editor(None, 10.0).is_none());
+    }
 
     fn note(body: &str) -> Note {
         Note {
@@ -503,6 +630,24 @@ mod tests {
         assert!(vanilla_note(0).is_none());
         assert!(vanilla_note(1).unwrap().body.starts_with("1 career uses addons"));
         assert!(vanilla_note(3).unwrap().body.starts_with("3 careers use addons"));
+    }
+
+    #[test]
+    fn withdrawn_note_names_every_withdrawn_addon_that_is_on() {
+        let one = withdrawn_note(&["BMW 2026 Testing 1.0.7".to_owned()]);
+        assert_eq!(one.title, "BMW 2026 Testing 1.0.7 was withdrawn");
+        assert_eq!(
+            one.body,
+            "BMW 2026 Testing 1.0.7 was withdrawn from the Addon Browser. Turn it off on the Addons page."
+        );
+        assert_eq!(one.level, NoteLevel::Warning);
+        assert!(one.sticky);
+        let two = withdrawn_note(&["A 1.0.0".to_owned(), "B 2.0.0".to_owned()]);
+        assert_eq!(two.title, "Withdrawn addons are on");
+        assert_eq!(
+            two.body,
+            "A 1.0.0, B 2.0.0 were withdrawn from the Addon Browser. Turn them off on the Addons page."
+        );
     }
 
     #[test]
@@ -718,6 +863,71 @@ mod tests {
             checked.lines
         );
         assert!(checked.timings.line().contains("files "));
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn play_stops_before_the_launch_on_two_addons_that_conflict_and_names_them() {
+        let root = std::env::temp_dir().join(format!("swofty-play-conflict-{}", std::process::id()));
+        std::fs::remove_dir_all(&root).ok();
+        let store = Store::new(root.join("data")).with_builtins(swofty_builtins::all());
+        for (id, name, extra) in [
+            (
+                "william09leo.heavier-damage-realism",
+                "Heavier Damage + 2026 Realism Performance",
+                r#","conflicts":[{"id":"formula-nascar.handling"}]"#,
+            ),
+            ("formula-nascar.handling", "Formula NASCAR", ""),
+            ("a.needs", "Needs Missing", r#","requires":[{"id":"a.missing"}]"#),
+        ] {
+            let src = root.join("src").join(id);
+            std::fs::create_dir_all(&src).unwrap();
+            std::fs::write(
+                src.join("swofty.json"),
+                format!(
+                    r#"{{"schema_version":1,"id":"{id}","name":"{name}","version":"1.0.0","author":"a"{extra}}}"#
+                ),
+            )
+            .unwrap();
+            store.install_addon(&src).unwrap();
+        }
+        store.create_profile("p", None).unwrap();
+        let on = |ids: &[&str]| {
+            store
+                .update_profile("p", |p| {
+                    for id in [
+                        "william09leo.heavier-damage-realism",
+                        "formula-nascar.handling",
+                        "a.needs",
+                    ] {
+                        p.set_enabled(id, ids.contains(&id))?;
+                    }
+                    Ok(())
+                })
+                .unwrap();
+            run(Inputs {
+                store: store.clone(),
+                profile: "p".into(),
+                game: root.join("game"),
+                build_id: None,
+            })
+        };
+        let checked = on(&["william09leo.heavier-damage-realism", "formula-nascar.handling"]);
+        assert_eq!(
+            checked.verdict,
+            Verdict::Stop(
+                "Heavier Damage + 2026 Realism Performance conflicts with Formula NASCAR. Turn one of them off \
+                 on the Addons page"
+                    .into()
+            )
+        );
+        assert!(checked.timings.line().contains("resolve "));
+        assert_eq!(on(&["formula-nascar.handling"]).verdict, Verdict::Go);
+        assert_eq!(
+            on(&["a.needs"]).verdict,
+            Verdict::Go,
+            "the build reports the other resolver errors"
+        );
         std::fs::remove_dir_all(&root).ok();
     }
 

@@ -26,6 +26,7 @@ pub mod template;
 pub mod textures;
 pub mod units;
 pub mod walk;
+pub mod yields;
 
 use std::path::{Path, PathBuf};
 
@@ -76,6 +77,8 @@ pub struct Built {
 pub struct Output {
     pub archives: Vec<Built>,
     pub lines: Vec<String>,
+    /// The standings board makes HUD customisation's tree too big.
+    pub editor: Option<walk::EditorOver>,
 }
 
 impl Output {

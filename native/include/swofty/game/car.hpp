@@ -488,6 +488,7 @@ inline constexpr address<"Car_FrontWing_OnCollision"> Car_FrontWing_OnCollision{
 inline constexpr address<"Car_FuelEcu_Reset_Thunk"> Car_FuelEcu_Reset_Thunk{}; // L2 experimental
 inline constexpr address<"Car_FuelEcu_SetMode_Thunk"> Car_FuelEcu_SetMode_Thunk{}; // L2 experimental
 inline constexpr address<"Car_FuelTank_StepBurn"> Car_FuelTank_StepBurn{}; // L2 experimental
+inline constexpr address<"Car_GearBox_Update"> Car_GearBox_Update{}; // L2 experimental
 using Car_GearBox_UpdateShiftTimersAndFaults_t = void(void *gearbox, float dt);
 inline constexpr fn<"Car_GearBox_UpdateShiftTimersAndFaults", Car_GearBox_UpdateShiftTimersAndFaults_t> Car_GearBox_UpdateShiftTimersAndFaults{}; // L2 experimental
 inline constexpr address<"Car_Load_Vtf"> Car_Load_Vtf{}; // L2 experimental
@@ -559,6 +560,7 @@ inline constexpr site<"site_Car_ErsGearModifierLoad"> site_Car_ErsGearModifierLo
 inline constexpr site<"site_Car_FuelFlowStore"> site_Car_FuelFlowStore{}; // L2 experimental
 inline constexpr site<"site_Car_FuelMassStore"> site_Car_FuelMassStore{}; // L2 experimental
 inline constexpr site<"site_Car_LiveCarBuilt"> site_Car_LiveCarBuilt{}; // L3 stable
+inline constexpr site<"site_Car_RearWingRenderFraction"> site_Car_RearWingRenderFraction{}; // L2 experimental
 inline constexpr site<"site_Car_RegisterVehicleId"> site_Car_RegisterVehicleId{}; // L3 experimental
 inline constexpr site<"site_Car_SetupTuningApplied"> site_Car_SetupTuningApplied{}; // L3 stable
 inline constexpr site<"site_Car_UpgradeSectionApplyCall"> site_Car_UpgradeSectionApplyCall{}; // L2 experimental

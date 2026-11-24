@@ -44,6 +44,7 @@ An antivirus such as Windows Defender can delete, quarantine or block the launch
 
 - Before the game starts, the launcher checks that the files it put in the game folder are still there. If one is missing or changed, F1 25 is not started: the game folder goes back to vanilla and a **Your antivirus removed mod files** dialog names the files.
 - When `swofty.exe` is gone from the launcher's `bin` folder, **Play** shows **Could not launch F1 25** with how to restore it from quarantine, which folder to exclude, and to reinstall the launcher if it isn't there.
+- When `swofty.exe` crashes before it writes why, **Play** says **the swofty command crashed** with its exit code, such as `0xc0000005`, and to reinstall the launcher with the [installer](/guide/installation#install-with-the-installer). Your addons and settings are kept.
 - On the EA app copy, the launcher checks offline play's `EAAntiCheat.GameServiceLauncher.exe` in the game folder 2 seconds after placing it, before it sends the EA app the launch link. If the file is gone, the EA app is not asked to start F1 25 and starts no repair: the game folder goes back to vanilla and a **Your antivirus blocked a Swofty program** dialog names the file and the folder to exclude. The same dialog ends the wait at once when the EA app logs that it can't find that file after the link.
 - When `f1op_stub.exe` alone is gone from `%LOCALAPPDATA%\Swofty\extensions\offline-play`, **Play** downloads it again, and `state\wrapper-run.log` says an antivirus most likely removed it, what to restore and what to exclude.
 - When `bin\simplified-helper.exe` is gone from Simplified for Swofty's folder, **Play** downloads and installs Simplified for Swofty again. When another addon's helper program is gone, the error names it and says to allow the addon's folder in the antivirus, then reinstall the addon.
@@ -84,6 +85,8 @@ Smart App Control on Windows 11, and app control policies on work or school PCs,
 | 4556 to 4559, 4580 to 4582 | Smart App Control |
 | 1260, 786 | A Windows policy set by whoever manages the PC |
 | 225, 226 | An antivirus, see [If the mods don't load](#if-the-mods-don-t-load) |
+
+When Smart App Control blocks a Swofty file inside F1 25, Windows shows an **F1_25.exe - Bad Image** message that names the file, such as `swofty_core.dll`, with error status `0xc0e90002`. The fix is the same.
 
 Smart App Control has no exceptions for single apps. To use the launcher, turn it off:
 

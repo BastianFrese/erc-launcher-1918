@@ -13,7 +13,7 @@ You draw an immediate-mode 2D overlay on top of the game by registering a paint 
 | Namespace | `swofty::overlay` |
 | Table | `SwoftyApi::overlay` (`SwoftyOverlay`) |
 | Feature | `overlay` — experimental, on while an addon lists it in `experimental_features` |
-| API version | 5 |
+| API version | 6 |
 | Thread | Render thread (the swapchain present path) for paint callbacks |
 
 Position your overlay in framebuffer pixels, measured from the top-left. The drawable size changes with the window, so query it each frame. Colours use `0xRRGGBBAA`.
@@ -38,7 +38,7 @@ To check whether `on_paint`, `remove` or `load_image` succeeded, use the returne
 
 ## Text
 
-The built-in font is Titillium Web SemiBold ([SIL Open Font License 1.1](https://openfontlicense.org)), drawn from a signed distance field atlas, so it stays sharp from 12 to 72 pixels and beyond. It covers ASCII, Latin-1, curly quotes, dashes, the bullet, the ellipsis, `€` and `™`, and applies the font's kerning. `font_size` is the font's em size in pixels and the height of one line box; the capitals and descenders sit centred in it. Lines after the first advance by `line_height × font_size`.
+The built-in font is Titillium Web SemiBold ([SIL Open Font License 1.1](https://openfontlicense.org)), drawn from a signed distance field atlas, so it stays sharp from 12 to 72 pixels and beyond. It covers ASCII, Latin-1, curly quotes, dashes, the bullet, the ellipsis, `€` and `™`, and applies the font's kerning; an addon can also load its own fonts ([v5](#fonts-and-concave-shapes-v5)). `font_size` is the font's em size in pixels and the height of one line box; the capitals and descenders sit centred in it. Lines after the first advance by `line_height × font_size`.
 
 ## v2 calls
 
@@ -102,13 +102,15 @@ What an addon's `Input` holds depends on the focus:
 
 | Focus | `Input` |
 |---|---|
-| Nobody holds it | `x`, `y` (the cursor in framebuffer pixels), the keys (`keys_down`, `keys_pressed`, `keys_typed`) and the gamepad (`pad_*`). `focused` is 0 |
-| The addon holds it | everything: also `buttons`, `pressed`, `released` (`mouse::left`, `mouse::right`, `mouse::middle`), `wheel` (notches, positive away from the player) and up to 16 typed characters in `chars` (UTF-32, `char_count`). `focused` is 1 |
+| Nobody holds it | `x`, `y` (the cursor in framebuffer pixels), the mouse buttons (`buttons`, `pressed`, `released`: `mouse::left`, `mouse::right`, `mouse::middle`; from version 6, before it only the focus holder got them), the keys (`keys_down`, `keys_pressed`, `keys_typed`), the gamepad (`pad_*`) and game controllers (`joy_*`, [v6](#game-controllers-v6)). `focused` is 0 |
+| The addon holds it | everything: also `wheel` (notches, positive away from the player) and up to 16 typed characters in `chars` (UTF-32, `char_count`). `focused` is 1 |
 | Another addon holds it | `x` and `y` are -1 and nothing else is set |
 
-`key_down(vk)`, `key_pressed(vk)`, `key_typed(vk)`, `clicked(button)`, `held(button)`, `pad_held(button)`, `pad_hit(button)` and `inside(x, y, w, h)` read an `Input`. Keys are Windows virtual-key codes; `keys_pressed` holds the keys that went down this frame and `keys_typed` also their auto-repeats.
+`key_down(vk)`, `key_pressed(vk)`, `key_typed(vk)`, `clicked(button)`, `held(button)`, `pad_held(button)`, `pad_hit(button)`, `joy_held(n)`, `joy_hit(n)`, `any_pressed()` and `inside(x, y, w, h)` read an `Input`. Keys are Windows virtual-key codes; `keys_pressed` holds the keys that went down this frame and `keys_typed` also their auto-repeats.
 
 While the game has a text box open (naming a team, for example) an addon that does not hold focus gets no keys, so a hotkey does not fire from typed letters.
+
+A click an addon sees without focus also reaches the game: only the focus holder keeps the mouse from it. The [toolkit](#toolkit)'s widgets react only while their addon holds focus.
 
 The gamepad fields come from `xinput1_4.dll!XInputGetState`, read while an addon calls `input()`:
 
@@ -120,7 +122,7 @@ The gamepad fields come from `xinput1_4.dll!XInputGetState`, read while an addon
 | `pad_lx`, `pad_ly`, `pad_rx`, `pad_ry` | the first connected pad's sticks, -1 to 1 with a deadzone, up positive |
 | `pad_lt`, `pad_rt` | the triggers, 0 to 1 |
 
-While an addon holds focus, the core keeps mouse moves, button presses, the wheel, typed characters, key presses and raw input (`WM_INPUT`) from the game and draws a cursor. Button and key releases and Alt key combinations still reach the game. The newest `focus(true)` wins. The focus goes back by itself when its addon has not painted for 2 s, and `swofty/loader.log` says so. Gamepads and wheels still reach the game while an addon holds focus: the core reads XInput but does not block it, and the game also reads controllers through DirectInput and Windows.Gaming.Input.
+While an addon holds focus, the core keeps mouse moves, button presses, the wheel, typed characters, key presses and raw input (`WM_INPUT`) from the game and draws a cursor. Button and key releases and Alt key combinations still reach the game. The newest `focus(true)` wins. The focus goes back by itself when its addon has not painted for 2 s, and `swofty/loader.log` says so. Gamepads and wheels still reach the game while an addon holds focus: the core reads XInput and watches the game's DirectInput reads but blocks neither.
 
 ## Images from memory (v4)
 
@@ -141,6 +143,126 @@ if (ov::load_image_rgba("atlas", 256, 64, px.data()) == ov::Result::ok)
 ```text [swofty/loader.log]
 [overlay] api: author.my-addon load_image_rgba atlas (256x64) -> ok (slot 3)
 ```
+
+## Fonts and concave shapes (v5)
+
+A core whose `SwoftyCoreOverlayVersion` returns 5 or more also loads fonts and fills concave polygons; `v5()` returns `true` there.
+
+```cpp [native/src/my_plugin.cpp]
+#include <swofty/overlay.hpp>
+
+#include <iterator>
+#include <vector>
+
+namespace ov = swofty::overlay;
+
+static std::vector<float> tab;
+
+static void paint(SwoftyPaint *p, void *)
+{
+    float s = ov::ui_scale(p);
+    ov::TextStyle title;
+    title.font = "display";
+    title.size = 48 * s;
+    title.tracking = 1 * s;
+    title.outline = 0x000000ff;
+    title.outline_px = 2 * s;
+    ov::text(p, 100 * s, 100 * s, title, "FASTEST LAP");
+
+    float w = 0, h = 0;
+    ov::measure(p, title, "FASTEST LAP", &w, &h);
+    ov::rect(p, 100 * s, 100 * s + h, w, 4 * s, 0xe10600ff);
+
+    ov::TextStyle number = title;
+    number.font = "numbers";
+    number.align = ov::align::right | ov::align::baseline;
+    ov::text(p, 1820 * s, 140 * s, number, "1:23.456");
+
+    ov::push_scale(p, s, s);
+    ov::polygon_concave(p, tab.data(), uint32_t(tab.size() / 2), 0x15151ce0);
+    ov::polyline(p, tab.data(), uint32_t(tab.size() / 2), 2, 0xe10600ff, true);
+    ov::pop_transform(p);
+}
+
+SWOFTY_ON_LOAD
+{
+    if (!ov::available() || !ov::v5())
+        return;
+    ov::load_font("display", "fonts/Display-Bold.ttf");
+    ov::load_font("numbers", "fonts/Numbers-Black.otf");
+
+    // x, y, in tangent, out tangent; tangents are relative to their vertex, as After Effects stores shape paths.
+    const ov::PathVertex shape[] = {
+        {1500, 200, 0, 0, 0, 0},   {1700, 200, 0, 0, 40, 0}, {1740, 240, 0, -40, 0, 0},
+        {1700, 280, 40, 0, 0, 0},  {1500, 280, 0, 0, 0, 0},  {1540, 240, 0, 0, 0, 0},
+    };
+    ov::flatten_path(shape, std::size(shape), true, tab);
+    ov::on_paint(paint);
+}
+```
+
+An addon that unpacks a font itself passes the bytes; the core copies them:
+
+```cpp
+std::vector<uint8_t> bytes = unpack_font();
+ov::load_font_memory("numbers", bytes.data(), bytes.size());
+```
+
+| Call | Does |
+|---|---|
+| `v5()` | `true` when the core implements the calls below |
+| `load_font(id, file)` | loads a TrueType or OpenType font (TrueType or CFF outlines) from the addon folder under `id`. Loading an `id` again replaces it. `invalid` for an empty id, a path outside the addon folder, a missing, empty or unreadable file, a file over 32 MB, or bytes that are not a font; `unavailable` on a core before version 5 |
+| `load_font_memory(id, bytes, size)` | loads a font from `size` bytes in memory; the core copies them. Same results as `load_font` |
+| `TextStyle::font` | the id of a font the addon loaded; `text`, `text_in` and `measure` with the style draw and measure in it. Empty, or an id the addon has not loaded, is the built-in font, and so is every font on a core before version 5 |
+| `polygon_concave(paint, xy, count, rgba)` | filled simple polygon through `count` points, convex or concave, either winding, with the one-pixel anti-aliased edge of `polygon`. A last point equal to the first is dropped. Up to 2048 points; draws nothing on a core before version 5 |
+| `PathVertex`, `flatten_path(vertices, count, closed, xy, tolerance = 0.25f)` | in `swofty/overlay_path.hpp`, which `swofty/overlay.hpp` includes: flattens a cubic bezier path into points (`x0, y0, x1, y1, …`) for `polygon_concave`, `polygon` and `polyline` and returns how many. A segment runs from a vertex along its out tangent (`out_x`, `out_y`) to the next vertex's in tangent (`in_x`, `in_y`); tangents are relative to their vertex and zero tangents make a straight segment. A closed path also runs from the last vertex back to the first and does not repeat the first point. Points stay within `tolerance` of the curve, in the path's units |
+
+A font draws like the built-in font: `size` is its em size and one line box, with its capitals (the height of `H`) and descenders (the lowest of `g`, `j`, `p`, `q`, `y`) centred in the box. Kerning comes from the font's `kern` table or its GPOS pair adjustments; tracking, line height, wrapping, alignment, outline and shadow apply as they do to the built-in font. A codepoint the font lacks draws from the built-in font, and one neither has draws as the built-in `?`; a tab and a no-break space draw as the font's space. One codepoint draws one glyph: ligatures and other GSUB substitutions are not applied.
+
+Each glyph is rasterised into a signed distance field the first time it draws, at 64 pixels per em with an 8 pixel spread, onto 1024×1024 atlas pages, so it stays sharp at any size. `load_font` rasterises printable ASCII (U+0020 to U+007E) before it returns. A font holds up to 8 pages, and each page takes one of the overlay's image slots; a glyph past them draws nothing. Fonts belong to the addon that loaded them.
+
+```text [swofty/loader.log]
+[overlay] api: author.my-addon load_font display (swofty/addons/author.my-addon/fonts/Display-Bold.ttf: Display Bold, TrueType outlines, 95 glyphs on 1 page(s)) -> ok
+```
+
+The C table reads the font id from `SwoftyTextStyle.font_id` (`const char *`, v5); `NULL` or `""` is the built-in font.
+
+## Game controllers (v6)
+
+A core whose `SwoftyCoreOverlayVersion` returns 6 or more fills three more `Input` fields, appended after `pad_rt`, and gives every addon the mouse buttons while nobody holds focus; `v6()` returns `true` there.
+
+F1 25 reads wheels, joysticks and other game controllers through DirectInput only, and XInput does not list a wheel such as a Logitech G920 under Wine or Proton, so `pad_*` never sees it. The first time an addon calls `input()`, the core hooks `IDirectInputDevice8::GetDeviceState` in `dinput8.dll` and reads each joystick state (`DIJOYSTATE2` or `DIJOYSTATE`) the call hands the game, after the game's call and without changing it. Keyboard and mouse states are left alone.
+
+| Field | Holds |
+|---|---|
+| `joy_connected` | a bit per controller the game read in the last 2 s (up to 8) |
+| `joy_buttons` | the first 32 buttons held on any controller; bit `n` is DirectInput button `n` |
+| `joy_pressed` | the buttons that went down since the last frame; a press shorter than a frame still shows once. A button already held when the core first sees the controller is not a press |
+
+`joy_held(n)` and `joy_hit(n)` read button `n` (0 to 31). `any_pressed()` is `true` when a key, a mouse button, a gamepad button or a game controller button went down this frame:
+
+```cpp
+void paint_intro(ov::Paint *p, void *)
+{
+    if (!intro_open)
+        return;
+    draw_grid_card(p);
+    if (ov::input(p).any_pressed())
+        intro_open = false;
+}
+```
+
+A controller's buttons are numbered as DirectInput numbers them, which can differ from the labels on it. The POV hat (a wheel's d-pad) is not a button. A gamepad the game also reads through DirectInput shows in both `pad_*` and `joy_*`.
+
+`swofty/loader.log` says where the hook sits, each controller the game reads, and the first presses:
+
+```text
+[overlay] input: IDirectInputDevice8W::GetDeviceState hooked at dinput8.dll+0x4f30; addons read wheel and joystick buttons from the game's own reads
+[overlay] input: game controller 000000000A3C1D48 read by the game through DirectInput (DIJOYSTATE2), slot 0
+[overlay] input: game controller slot 0 buttons 0x00000001 went down
+```
+
+`SWOFTY_OVERLAY_KILL=joy` (or `"overlay_kill": ["joy"]` in `swofty/assets.json`) leaves `dinput8.dll` unhooked and the `joy_*` fields 0.
 
 ## Toolkit
 
@@ -208,7 +330,7 @@ static void paint(SwoftyPaint *p, void *)
 
 ## Limits
 
-A frame holds up to 131,072 vertices across every paint callback; primitives past that are dropped, and `swofty/loader.log` says so once. The core keeps the layouts of up to 512 recently drawn strings, so a string drawn every frame with the same style is laid out once. The core holds up to 255 loaded images. Each image uploads to the GPU once, the first frame after `load_image`; loading the same `id` again replaces it.
+A frame holds up to 131,072 vertices across every paint callback; primitives past that are dropped, and `swofty/loader.log` says so once. The core keeps the layouts of up to 512 recently drawn strings, so a string drawn every frame with the same style is laid out once. The core holds up to 255 loaded images, font atlas pages included. Each image uploads to the GPU once, the first frame after `load_image`; loading the same `id` again replaces it.
 
 ## Callbacks
 

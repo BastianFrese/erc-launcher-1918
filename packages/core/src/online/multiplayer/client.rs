@@ -27,7 +27,7 @@ fn step_as(step: super::progress::Step) -> super::types::Step {
     }
 }
 use crate::catalog::{self, Addon};
-use crate::game_folder::baseline::Identity;
+use crate::install::Game;
 use crate::online::modules::library::{Hooks, Library};
 use crate::online::modules::{self, Unavailable};
 use crate::online::server::api::Api;
@@ -438,8 +438,8 @@ impl Local {
     }
 
     /// The fingerprint of `profile` on the game `game`, with the cached Addon Browser listing.
-    pub fn read(store: &Store, profile: &Profile, game: &Identity) -> crate::Result<Local> {
-        let fingerprint = fingerprint::fingerprint(store, profile, game)?;
+    pub fn read(store: &Store, profile: &Profile, game: &Game) -> crate::Result<Local> {
+        let fingerprint = fingerprint::fingerprint(store, profile, &game.identity, game.version())?;
         let installed = store.addons()?;
         let categories = fingerprint
             .addons
@@ -704,12 +704,13 @@ mod tests {
             }),
             stat_ids: BTreeMap::new(),
         };
-        let game = Identity {
+        let game = crate::game_folder::baseline::Identity {
             build_id: "25251167".into(),
             exe_sha256: "a".repeat(64),
         };
         let f = Fingerprint::new(
             game,
+            None,
             vec![print("t.cars", &["a.erp", "t.other:b.erp"]), print("t.none", &[])],
             BTreeMap::new(),
             None,

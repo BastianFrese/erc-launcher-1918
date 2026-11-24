@@ -128,12 +128,15 @@ The session sets `SWOFTY_LAUNCHER_SAVES=off` for the game, through `swofty/sessi
 
 The EA app copy's save device reads and writes plain files under `<title folder>\<save>\<file>`. With **Use launcher saves** on, the core points that device at `$DATA/saves/<profile>/ea`, so the profile save is `$DATA/saves/<profile>/ea/profile/`, and the copy's own `%LOCALAPPDATA%\F1 25\savegame\ea` folder is not opened. The first session copies the copy's profile save into an empty store.
 
+The game keeps the title folder twice: in the save system, which opens the files, and in the save system's user interface, which compares the two before every load. The core replaces it in both. With the two different, the game asks `import profile data?` before it loads the profile save.
+
 ```text
 [saves] launcher saves are on for profile main: the game's profile save is served from Z:\...\saves\main\ea\profile
-[saves] launcher saves armed (profile main): the EA save device's title folder C:\users\steamuser\AppData\Local\F1 25\savegame\ea is replaced by Z:\...\saves\main\ea; saves are read and written there; the EA copy's own savegame folder is not opened
+[saves] launcher saves armed (profile main): the EA save device's title folder C:\users\steamuser\AppData\Local\F1 25\savegame\ea is replaced by Z:\...\saves\main\ea in the save system and in its user interface's copy of the title config (F1 25); saves are read and written there; the EA copy's own savegame folder is not opened
+[saves] profile load 1: read from launcher saves (profile main, Z:\...\saves\main\ea\profile); the EA save device reads the profile folder in place
 ```
 
-If the save device is not the expected one, the session ends with exit code 93 before the game loads a save, as on Steam.
+If the save device or its user interface is not the expected one, the session ends with exit code 93 before the game loads a save, as on Steam.
 
 ### The save the career list reads
 
@@ -519,7 +522,7 @@ The change alone raises no notice. The file's size decides nothing: a notice com
 
 A profile save last played with addon content that is off now (a career, livery or item from an addon the profile or Vanilla leaves out) can keep F1 25 on Loading... after Press any button: the spinner turns and team radio plays, and the main menu never comes. It does the same from Steam or the EA app without the launcher, through Verify and reinstalls, because the save is the cause.
 
-The save is encrypted, so the launcher learns such a save from its sessions. A session stalled on the save when the core logged a profile load and the session's perf.log (kept from `state/perf-fallback.log` in the data folder when the game can't write in its folder) ends on `screen splash_transition` for 120 s or more (99 in 100 menu loads take under 82 s), with no addon known to stall the boot on. Two such sessions on the same save, or one of 15 minutes, make it a stalling save, keyed by the SHA-256 of `savegame@profile#NXDSMWW.BWW` from the session's `before-session` snapshot. A save that any session got past the boot screens with, or that the game wrote during the session, never counts. `$DATA/state/stalled-saves.json` keeps what was learned and offered:
+The save is encrypted, so the launcher learns such a save from its sessions. A session stalled on the save when the core logged a profile load and the session's perf.log (kept from `state/perf-fallback.log` in the data folder when the game can't write in its folder) ends on `screen splash_transition` for 120 s or more (99 in 100 menu loads take under 82 s), with no addon known to stall the boot on and no [withdrawn](/using/addons#withdrawn) addon on. Two such sessions on the same save, or one of 15 minutes, make it a stalling save, keyed by the SHA-256 of `savegame@profile#NXDSMWW.BWW` from the session's `before-session` snapshot. A save that any session got past the boot screens with, or that the game wrote during the session, never counts. `$DATA/state/stalled-saves.json` keeps what was learned and offered:
 
 ```json
 {

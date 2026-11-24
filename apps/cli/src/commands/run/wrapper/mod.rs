@@ -106,6 +106,17 @@ pub(crate) fn run(store: &Store, profile: &str, args: &RunArgs, g: &Game) -> Res
                 ),
             );
         }
+        if !p.is_vanilla() {
+            for w in swofty_core::catalog::withdrawn::enabled(store, p.enabled()) {
+                say(
+                    "warning",
+                    &format!(
+                        "{} ({}) {} was withdrawn from the Addon Browser; turn it off",
+                        w.name, w.id, w.version
+                    ),
+                );
+            }
+        }
     }
     if let Some(cpus) = config.launch.cpu_affinity.as_deref().and_then(parse_cpu_list) {
         set_affinity(&cpus);
@@ -114,6 +125,7 @@ pub(crate) fn run(store: &Store, profile: &str, args: &RunArgs, g: &Game) -> Res
     let apply = (request.apply || args.apply) && !stock;
     quarantine::Report::clear(&store.root).ok();
     launch::Failure::clear(&store.root).ok();
+    crate::commands::laps::note_integrity(store, None, false, &info);
     let session = Session {
         store,
         game: g,

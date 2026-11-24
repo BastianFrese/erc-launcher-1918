@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "core/live/live_snapshot.hpp"
+#include "core/live/live_udp.hpp"
 
 // Race control from the live snapshot (std lib race_control, swofty/systems/race_control.hpp): the tracker keeps the
 // last state it read and turns each new snapshot into the moments that changed, in the order the core fires them:
@@ -24,7 +25,11 @@ namespace rc = swofty::race_control;
 inline bool fires(std::string_view point)
 {
     return point == rc::events::Flag::point || point == rc::events::SafetyCar::point || point == rc::events::RedFlag::point ||
-           point == rc::events::Sector::point || point == rc::events::CarStatus::point;
+           point == rc::events::Sector::point || point == rc::events::CarStatus::point || point == rc::events::Penalty::point ||
+           point == rc::events::PenaltyServed::point || point == rc::events::Drs::point ||
+           point == rc::events::StartLights::point || point == rc::events::SafetyCarPhase::point ||
+           point == rc::events::FastestLap::point || point == rc::events::Classification::point ||
+           point == rc::events::StartReaction::point;
 }
 
 struct Moments {
@@ -33,10 +38,16 @@ struct Moments {
     std::vector<rc::events::Flag> flags;
     std::vector<rc::events::CarStatus> statuses;
     std::vector<rc::events::Sector> sectors;
+    std::vector<rc::events::Drs> drs;
+    std::vector<rc::events::StartLights> lights;
+    std::vector<rc::events::SafetyCarPhase> phases;
+    std::vector<rc::events::FastestLap> fastest;
+    std::vector<rc::events::StartReaction> reactions;
 
     bool empty() const
     {
-        return red_flags.empty() && safety_cars.empty() && flags.empty() && statuses.empty() && sectors.empty();
+        return red_flags.empty() && safety_cars.empty() && flags.empty() && statuses.empty() && sectors.empty() && drs.empty() &&
+               lights.empty() && phases.empty() && fastest.empty() && reactions.empty();
     }
 };
 
@@ -88,6 +99,8 @@ public:
     {
         primed_ = false;
         flag_known_ = sc_known_ = red_known_ = false;
+        broadcast_ = Broadcast{};
+        start_ = Start{};
         for (CarSeen &c : cars_)
             c = CarSeen{};
     }
@@ -95,7 +108,7 @@ public:
     bool primed() const { return primed_; }
     uint64_t sessions() const { return sessions_; }
 
-    Moments step(const Snapshot *s)
+    Moments step(const Snapshot *s, uint64_t now_ms = 0)
     {
         Moments out;
         if (!s || !s->valid) {
@@ -111,6 +124,8 @@ public:
         }
         rc::State st = rc::read(s->ses, leader_lap(*s));
         session_moments(st, out);
+        broadcast_moments(*s, st, out);
+        start_moments(*s, now_ms, out);
         car_moments(*s, out);
         return out;
     }
@@ -170,6 +185,127 @@ private:
         }
     }
 
+    // The values the UDP source fills from race control's own messages: absent is a value of its own, so the first
+    // DRS, start light, safety car phase and fastest lap of a session fire once the session's first read is done.
+    struct Broadcast {
+        bool seen = false;
+        uint8_t drs = 0xff, lights = 0xff, phase = 0xff;
+        uint32_t fastest_car = SWOFTY_LIVE_NO_CAR, fastest_ms = 0;
+    };
+
+    void broadcast_moments(const Snapshot &s, const rc::State &st, Moments &out)
+    {
+        const SwoftyLiveSession &ses = s.ses;
+        Broadcast now;
+        now.seen = true;
+        if (ses.have & SWOFTY_LIVE_SHAVE_DRS)
+            now.drs = ses.drs_enabled;
+        if (ses.have & SWOFTY_LIVE_SHAVE_START_LIGHTS)
+            now.lights = ses.start_lights;
+        if (ses.have & SWOFTY_LIVE_SHAVE_SAFETY_CAR_PHASE)
+            now.phase = ses.safety_car_phase;
+        if (ses.have & SWOFTY_LIVE_SHAVE_FASTEST_LAP)
+            now.fastest_car = ses.fastest_lap_vehicle, now.fastest_ms = ses.fastest_lap_ms;
+        Broadcast was = broadcast_;
+        broadcast_ = now;
+        if (!was.seen)
+            return;
+        if (now.drs != 0xff && now.drs != was.drs) {
+            auto e = payload<rc::events::Drs>();
+            e.enabled = now.drs;
+            e.reason = ses.drs_reason;
+            e.lap = st.lap;
+            out.drs.push_back(e);
+        }
+        if (now.lights != 0xff && now.lights != was.lights && (now.lights || was.lights != 0xff)) {
+            auto e = payload<rc::events::StartLights>();
+            e.lights = now.lights;
+            e.out = now.lights == 0;
+            e.lap = st.lap;
+            out.lights.push_back(e);
+        }
+        if (now.phase != 0xff && now.phase != was.phase) {
+            auto e = payload<rc::events::SafetyCarPhase>();
+            e.deployment = st.safety_car;
+            e.phase = now.phase;
+            e.previous = was.phase;
+            e.lap = st.lap;
+            out.phases.push_back(e);
+        }
+        if (now.fastest_ms && (now.fastest_car != was.fastest_car || now.fastest_ms != was.fastest_ms)) {
+            auto e = payload<rc::events::FastestLap>();
+            e.car = now.fastest_car;
+            e.lap_ms = now.fastest_ms;
+            e.previous_car = was.fastest_car;
+            e.previous_ms = was.fastest_ms;
+            uint32_t id = now.fastest_car;
+            e.lap =
+                id < SWOFTY_LIVE_MAX_CARS && s.present[id] && (s.cars[id].have & SWOFTY_LIVE_HAVE_PROGRESS) ? s.cars[id].lap : 0;
+            out.fastest.push_back(e);
+        }
+    }
+
+    // The start. Other cars' speed refreshes about every 100 ms, so a car's move-off time is extrapolated back from its
+    // first two readings over MOVING at constant acceleration, clamped between lights out and the first reading.
+    static constexpr float MOVING = 0.5f;
+    static constexpr uint64_t REACTION_WINDOW_MS = 10000, SECOND_READING_MS = 500;
+    struct Start {
+        bool lit = false, out = false;
+        uint64_t out_at = 0;
+        uint32_t jumped = 0, reported = 0, moving = 0;
+        float first_v[SWOFTY_LIVE_MAX_CARS] = {};
+        uint64_t first_at[SWOFTY_LIVE_MAX_CARS] = {};
+    };
+
+    void start_moments(const Snapshot &s, uint64_t now, Moments &out)
+    {
+        const SwoftyLiveSession &ses = s.ses;
+        bool known = ses.have & SWOFTY_LIVE_SHAVE_START_LIGHTS;
+        if (known && ses.start_lights) {
+            if (start_.out)
+                start_ = Start{};
+            start_.lit = true;
+        } else if (known && start_.lit && !start_.out) {
+            start_.out = true;
+            start_.out_at = now;
+        }
+        if (!start_.lit || (start_.out && now - start_.out_at > REACTION_WINDOW_MS))
+            return;
+        for (uint32_t id = 0; id < SWOFTY_LIVE_MAX_CARS; id++) {
+            uint32_t bit = 1u << id;
+            if (!s.present[id] || !(s.cars[id].have & SWOFTY_LIVE_HAVE_SPEED) || (start_.reported & bit))
+                continue;
+            float v = s.cars[id].speed;
+            if (v <= MOVING)
+                continue;
+            if (!start_.out) {
+                start_.jumped |= bit;
+                continue;
+            }
+            if (!(start_.moving & bit)) {
+                start_.moving |= bit;
+                start_.first_v[id] = v;
+                start_.first_at[id] = now;
+                continue;
+            }
+            uint64_t t1 = start_.first_at[id];
+            float v1 = start_.first_v[id];
+            if (v == v1 && now - t1 < SECOND_READING_MS)
+                continue;
+            uint64_t moved = t1;
+            if (v > v1 && now > t1) {
+                double back = double(v1) * double(now - t1) / double(v - v1);
+                moved = back >= double(t1 - start_.out_at) ? start_.out_at : t1 - uint64_t(back);
+            }
+            auto e = payload<rc::events::StartReaction>();
+            e.car = id;
+            e.reaction_ms = uint32_t(moved - start_.out_at);
+            e.jumped = (start_.jumped & bit) != 0;
+            out.reactions.push_back(e);
+            start_.reported |= bit;
+        }
+    }
+
     void car_moments(const Snapshot &s, Moments &out)
     {
         for (uint32_t id = 0; id < SWOFTY_LIVE_MAX_CARS; id++) {
@@ -217,6 +353,8 @@ private:
     uint8_t yellow_ = 0;
     rc::Deployment sc_ = rc::Deployment::unknown;
     rc::RedFlag red_ = rc::RedFlag::unknown;
+    Broadcast broadcast_;
+    Start start_;
     CarSeen cars_[SWOFTY_LIVE_MAX_CARS];
 };
 
@@ -226,5 +364,8 @@ namespace runtime {
 
 // Once per live tick, on the flow thread: reads the live state's published snapshot and fires what changed.
 void race_control_tick(const swofty_core::live::Snapshot &published);
+
+// The penalties and served penalties the live state's UDP source decoded since the last call (live_state.cpp).
+swofty_core::live::udp::Moments live_udp_take();
 
 }

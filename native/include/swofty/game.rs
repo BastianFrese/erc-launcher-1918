@@ -4340,6 +4340,12 @@ pub type Ent_Deserialise_EntrantVector_t =
     unsafe extern "C" fn(vector_object: *mut c_void, bag: *mut c_void) -> c_int;
 pub type Ent_EntrantsSystem_ReplaceVehicle_t =
     unsafe extern "C" fn(entrants: *mut c_void, handle: u32, vehicle: *const c_void) -> c_int;
+pub type Ent_Fill_EntrantsFromList_t = unsafe extern "C" fn(
+    entrants_system: *mut c_void,
+    mode_entity: *mut c_void,
+    params: *mut c_void,
+    entrant_list: *mut c_void,
+);
 pub type FeHome_Add_CareerTile_t = unsafe extern "C" fn(list: *mut TileList, index: u8);
 pub type FeHome_Handle_Command_t =
     unsafe extern "C" fn(vm: *mut FEHomeViewModel, cmd: *mut *mut NeStr) -> u64;
@@ -4426,6 +4432,8 @@ pub type Game_CareerWizard_StartsInF1_t = unsafe extern "C" fn(
 ) -> bool;
 pub type Game_Career_IsDriverCareerMode_t = unsafe extern "C" fn(championship: *const c_void) -> bool;
 pub type Game_ChallengeCareer_BuildTrackTiles_t = unsafe extern "C" fn(vm: *mut c_void);
+pub type Game_ChampionshipRounds_AddTrack_Thunk_t =
+    unsafe extern "C" fn(comp: *mut c_void, track_desc: *mut c_void);
 pub type Game_Championship_VirtualisePendingSessions_t = unsafe extern "C" fn(self_: *mut c_void) -> u64;
 pub type Game_Check_ReturnToGarageTimeLimit_t = unsafe extern "C" fn(self_: *mut c_void) -> bool;
 pub type Game_ContractTeamSelect_OnEnter_t = unsafe extern "C" fn(state: *mut c_void) -> u64;
@@ -4495,6 +4503,8 @@ pub type Game_F1WRankedComponent_Init_t = unsafe extern "C" fn(
     serviceProvider: *mut c_void,
     componentMap: *mut c_void,
 ) -> c_int;
+pub type Game_F1WorldActivityContainer_HandleCommand_t =
+    unsafe extern "C" fn(container: *mut c_void, message: *mut c_void, data: *mut c_void);
 pub type Game_F1WorldActivityContainer_SelectEntrantList_t =
     unsafe extern "C" fn(container: *mut c_void, entrant_list: *const c_char);
 pub type Game_F1WorldHub_HandleCommand_t =
@@ -4513,6 +4523,11 @@ pub type Game_FullRaceReplaySystem_Init_t = unsafe extern "C" fn(
     serviceProvider: *mut c_void,
     componentMap: *mut c_void,
 ) -> c_int;
+pub type Game_GameModeEntity_SetSetupMode_t =
+    unsafe extern "C" fn(mode_entity: *mut c_void, setup_mode: *mut c_void, flags: c_int);
+pub type Game_GameMode_IsGrandPrix_t = unsafe extern "C" fn(mode: *mut c_void) -> bool;
+pub type Game_GameModes_FindByPredicate_t =
+    unsafe extern "C" fn(modes: *mut c_void, predicate: *mut *mut c_void) -> *mut c_void;
 pub type Game_Game_HandleInterruptEvent_t =
     unsafe extern "C" fn(game: *mut c_void, event: *const c_void) -> u64;
 pub type Game_Game_SetCurrentGameMode_t = unsafe extern "C" fn(mode_context: *mut c_void, mode: *mut c_void);
@@ -4550,6 +4565,10 @@ pub type Game_Load_TrackDatabaseFull_t = unsafe extern "C" fn(
     a4: *mut c_void,
     a5: *mut c_void,
 );
+pub type Game_MessageBus_PostEntrantChangeBegin_t =
+    unsafe extern "C" fn(bus: *mut c_void, message: *mut c_void);
+pub type Game_MessageBus_PostEntrantChangeEnd_t =
+    unsafe extern "C" fn(bus: *mut c_void, message: *mut c_void);
 pub type Game_Mfd_FuelMixUp_t = unsafe extern "C" fn(mfd_car_settings_vm: *mut c_void) -> c_int;
 pub type Game_MusicOptions_CreateOption_t =
     unsafe extern "C" fn(mgr: *mut c_void, optionId: u64) -> *mut c_void;
@@ -5057,6 +5076,7 @@ pub type Vm_GetOrCreate_ListChild_t =
     unsafe extern "C" fn(registry: *mut c_void, parent: *mut c_void, hash: *const u32) -> *mut *mut c_void;
 pub type Vm_Init_UpgradeLoadoutSlot_t = unsafe extern "C" fn(self_: *mut c_void) -> *mut c_void;
 pub type Vm_List_AppendChild_t = unsafe extern "C" fn(list: *mut c_void) -> *mut *mut c_void;
+pub type Vm_Node_Clear_t = unsafe extern "C" fn(unused: *mut c_void, node: *mut c_void) -> bool;
 pub type Vm_NotificationButton_BuildNameCommand_t =
     unsafe extern "C" fn(out: *mut c_void, src: *mut c_void, a3: *mut c_void, a4: *mut c_void) -> *mut c_void;
 pub type Vm_Release_FinanceTabNodes_t = unsafe extern "C" fn(self_: *mut c_void);
@@ -5723,6 +5743,11 @@ pub mod bindings {
     };
     pub const Car_FuelTank_StepBurn: Binding = Binding {
         id: "Car_FuelTank_StepBurn",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Car_GearBox_Update: Binding = Binding {
+        id: "Car_GearBox_Update",
         kind: "func",
         status: Status::Experimental,
     };
@@ -8641,6 +8666,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Ent_Fill_EntrantsFromList: Binding = Binding {
+        id: "Ent_Fill_EntrantsFromList",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const FeFlow_Set_StateStatus: Binding = Binding {
         id: "FeFlow_Set_StateStatus",
         kind: "func",
@@ -9176,6 +9206,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_ChampionshipRounds_AddTrack_Thunk: Binding = Binding {
+        id: "Game_ChampionshipRounds_AddTrack_Thunk",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_Championship_AddSessionDefaultLength: Binding = Binding {
         id: "Game_Championship_AddSessionDefaultLength",
         kind: "func",
@@ -9338,6 +9373,11 @@ pub mod bindings {
     };
     pub const Game_CustomDriverNetworkMessageHandler_UpdateReplicatedDriver: Binding = Binding {
         id: "Game_CustomDriverNetworkMessageHandler_UpdateReplicatedDriver",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_CustomSeason_RebuildFromRounds: Binding = Binding {
+        id: "Game_CustomSeason_RebuildFromRounds",
         kind: "func",
         status: Status::Experimental,
     };
@@ -9963,6 +10003,11 @@ pub mod bindings {
     };
     pub const Game_F1WorldActivityContainer_GoHome: Binding = Binding {
         id: "Game_F1WorldActivityContainer_GoHome",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_F1WorldActivityContainer_HandleCommand: Binding = Binding {
+        id: "Game_F1WorldActivityContainer_HandleCommand",
         kind: "func",
         status: Status::Experimental,
     };
@@ -10916,8 +10961,23 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_GameModeEntity_SetSetupMode: Binding = Binding {
+        id: "Game_GameModeEntity_SetSetupMode",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_GameMode_IsGrandPrix: Binding = Binding {
+        id: "Game_GameMode_IsGrandPrix",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_GameModes_BuildMode: Binding = Binding {
         id: "Game_GameModes_BuildMode",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_GameModes_FindByPredicate: Binding = Binding {
+        id: "Game_GameModes_FindByPredicate",
         kind: "func",
         status: Status::Experimental,
     };
@@ -11456,6 +11516,16 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Game_MessageBus_PostEntrantChangeBegin: Binding = Binding {
+        id: "Game_MessageBus_PostEntrantChangeBegin",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_MessageBus_PostEntrantChangeEnd: Binding = Binding {
+        id: "Game_MessageBus_PostEntrantChangeEnd",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Game_Mfd_FuelMixUp: Binding = Binding {
         id: "Game_Mfd_FuelMixUp",
         kind: "func",
@@ -11808,6 +11878,11 @@ pub mod bindings {
     };
     pub const Game_Network_SetScenario: Binding = Binding {
         id: "Game_Network_SetScenario",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_Network_SkippingLightsMPReasons: Binding = Binding {
+        id: "Game_Network_SkippingLightsMPReasons",
         kind: "func",
         status: Status::Experimental,
     };
@@ -13533,6 +13608,11 @@ pub mod bindings {
     };
     pub const Game_VehicleAntiStallSystem_IsStartPromptActive: Binding = Binding {
         id: "Game_VehicleAntiStallSystem_IsStartPromptActive",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Game_VehicleAntiStallSystem_Update: Binding = Binding {
+        id: "Game_VehicleAntiStallSystem_Update",
         kind: "func",
         status: Status::Experimental,
     };
@@ -17991,6 +18071,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Sess_Build_DevWeekendStructure: Binding = Binding {
+        id: "Sess_Build_DevWeekendStructure",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Sess_Build_GroupResult: Binding = Binding {
         id: "Sess_Build_GroupResult",
         kind: "func",
@@ -20941,6 +21026,11 @@ pub mod bindings {
         kind: "func",
         status: Status::Experimental,
     };
+    pub const Vm_Fire_Route: Binding = Binding {
+        id: "Vm_Fire_Route",
+        kind: "func",
+        status: Status::Experimental,
+    };
     pub const Vm_Format_LoyaltyRewardIncomeText: Binding = Binding {
         id: "Vm_Format_LoyaltyRewardIncomeText",
         kind: "func",
@@ -21003,6 +21093,16 @@ pub mod bindings {
     };
     pub const Vm_MyTeamWorkforce_Bind: Binding = Binding {
         id: "Vm_MyTeamWorkforce_Bind",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Vm_NodeSet_Bool: Binding = Binding {
+        id: "Vm_NodeSet_Bool",
+        kind: "func",
+        status: Status::Experimental,
+    };
+    pub const Vm_Node_Clear: Binding = Binding {
+        id: "Vm_Node_Clear",
         kind: "func",
         status: Status::Experimental,
     };
@@ -21676,6 +21776,11 @@ pub mod bindings {
         kind: "data",
         status: Status::Experimental,
     };
+    pub const k_Game_CustomTrackListComponentDesc: Binding = Binding {
+        id: "k_Game_CustomTrackListComponentDesc",
+        kind: "data",
+        status: Status::Experimental,
+    };
     pub const k_Game_TrackListComponentDesc: Binding = Binding {
         id: "k_Game_TrackListComponentDesc",
         kind: "data",
@@ -21791,6 +21896,11 @@ pub mod bindings {
         kind: "data",
         status: Status::Experimental,
     };
+    pub const k_Sess_WeekendSetupComponentDesc: Binding = Binding {
+        id: "k_Sess_WeekendSetupComponentDesc",
+        kind: "data",
+        status: Status::Experimental,
+    };
     pub const k_Vm_EmptyNodeHandle: Binding = Binding {
         id: "k_Vm_EmptyNodeHandle",
         kind: "data",
@@ -21870,6 +21980,11 @@ pub mod bindings {
         id: "site_Car_LiveCarBuilt",
         kind: "site",
         status: Status::Stable,
+    };
+    pub const site_Car_RearWingRenderFraction: Binding = Binding {
+        id: "site_Car_RearWingRenderFraction",
+        kind: "site",
+        status: Status::Experimental,
     };
     pub const site_Car_RegisterVehicleId: Binding = Binding {
         id: "site_Car_RegisterVehicleId",
@@ -22641,6 +22756,11 @@ pub mod bindings {
         kind: "site",
         status: Status::Experimental,
     };
+    pub const site_FeFlow_AfterStateLink: Binding = Binding {
+        id: "site_FeFlow_AfterStateLink",
+        kind: "site",
+        status: Status::Experimental,
+    };
     pub const site_FeFlow_SetStateStatus: Binding = Binding {
         id: "site_FeFlow_SetStateStatus",
         kind: "site",
@@ -22916,6 +23036,11 @@ pub mod bindings {
         kind: "site",
         status: Status::Experimental,
     };
+    pub const site_Game_Mfd_FuelMixMaxRaceGate: Binding = Binding {
+        id: "site_Game_Mfd_FuelMixMaxRaceGate",
+        kind: "site",
+        status: Status::Experimental,
+    };
     pub const site_Game_MyTeamVehicleBases_AiConfigLoad: Binding = Binding {
         id: "site_Game_MyTeamVehicleBases_AiConfigLoad",
         kind: "site",
@@ -22928,6 +23053,11 @@ pub mod bindings {
     };
     pub const site_Game_MyTeamVehicleBases_SaveRecord: Binding = Binding {
         id: "site_Game_MyTeamVehicleBases_SaveRecord",
+        kind: "site",
+        status: Status::Experimental,
+    };
+    pub const site_Game_PhysicsWorldConfigOverrides: Binding = Binding {
+        id: "site_Game_PhysicsWorldConfigOverrides",
         kind: "site",
         status: Status::Experimental,
     };
@@ -23563,6 +23693,16 @@ pub mod bindings {
     };
     pub const vt_Game_DriverCareerSlotPredicate: Binding = Binding {
         id: "vt_Game_DriverCareerSlotPredicate",
+        kind: "vtable",
+        status: Status::Experimental,
+    };
+    pub const vt_Game_EntrantsDocumentClosedMsg: Binding = Binding {
+        id: "vt_Game_EntrantsDocumentClosedMsg",
+        kind: "vtable",
+        status: Status::Experimental,
+    };
+    pub const vt_Game_EntrantsDocumentOpenedMsg: Binding = Binding {
+        id: "vt_Game_EntrantsDocumentOpenedMsg",
         kind: "vtable",
         status: Status::Experimental,
     };

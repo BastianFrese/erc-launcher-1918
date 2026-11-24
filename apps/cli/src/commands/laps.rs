@@ -271,6 +271,7 @@ pub fn begin(
     g: &Game,
 ) -> Option<Watcher> {
     barred_for_launch(store, profile, &g.dir);
+    hand_over_integrity(&g.dir, session_integrity().as_ref());
     let Some(_) = token(&store.root, config) else {
         timetrial::clear_session_keys(&g.dir);
         return None;
@@ -315,7 +316,8 @@ pub fn begin(
 pub type Asked = (Result<Module, integrity::Unavailable>, bool);
 
 /// The verified integrity module for a session when Time Trial boards is on and the player is signed in, or
-/// `None` when the session does not ask for it. Any trouble is one log line and the session goes on without it.
+/// `None` when the session does not ask for it. Any trouble is one log line; the session goes on without it and
+/// Time Trial is blocked in game.
 pub fn integrity(store: &Store, out: &dyn Fn(&str)) -> Option<Asked> {
     let token = token(&store.root, &store.config())?;
     let asked = match integrity::local() {
@@ -336,9 +338,13 @@ pub fn integrity(store: &Store, out: &dyn Fn(&str)) -> Option<Asked> {
 
 static SESSION_INTEGRITY: std::sync::Mutex<Option<integrity::State>> = std::sync::Mutex::new(None);
 
+/// The line a session prints when it blocks Time Trial in game.
+pub const BLOCKED_LINE: &str = "integrity module: Time Trial is blocked in game this session, as its laps would not count; \
+     start the game again with a working connection, or turn off Time Trial boards to play it without the boards";
+
 /// Keep what this session did about the integrity module: as the note the launcher shows at Play when none was
-/// placed, and for the laps the session records. `core` is whether the build runs the core; one without it
-/// records no laps, so it asked for nothing.
+/// placed, for the core when the game starts ([`begin`]) and for the laps the session records. `core` is whether
+/// the build runs the core; one without it records no laps, so it asked for nothing.
 pub fn note_integrity(store: &Store, asked: Option<&Asked>, core: bool, out: &dyn Fn(&str)) {
     let asked = asked.filter(|_| core);
     let state = asked.map(|(found, local)| integrity::State::of(found, *local));
@@ -347,6 +353,9 @@ pub fn note_integrity(store: &Store, asked: Option<&Asked>, core: bool, out: &dy
         out(&format!(
             "integrity module: could not keep the note for the launcher: {e}"
         ));
+    }
+    if state.as_ref().and_then(integrity::State::blocked).is_some() {
+        out(BLOCKED_LINE);
     }
     *SESSION_INTEGRITY.lock().unwrap_or_else(|e| e.into_inner()) = state;
 }
@@ -358,10 +367,20 @@ fn session_integrity() -> Option<integrity::State> {
         .clone()
 }
 
+fn hand_over_integrity(game: &std::path::Path, state: Option<&integrity::State>) {
+    if let Err(e) = integrity::write_session(game, state) {
+        say(
+            "laps",
+            &format!("integrity module: the session file is not writable: {e}"),
+        );
+    }
+}
+
 pub fn end(watcher: Option<Watcher>, game: &std::path::Path) {
     if let Some(w) = watcher {
         w.finish();
         timetrial::clear_session_keys(game);
     }
     barred::write_session(game, &[]).ok();
+    hand_over_integrity(game, None);
 }
