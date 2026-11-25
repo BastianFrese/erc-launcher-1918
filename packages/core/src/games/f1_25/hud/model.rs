@@ -458,6 +458,10 @@ pub struct Editor {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct StockNodes {
+    /// The game screen file the template node is in (`screens/broadcast_persistent.ui`), on a yield
+    /// record; absent: the HUD template.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ui: Option<String>,
     pub template: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scene: Option<String>,
@@ -469,6 +473,16 @@ pub struct StockNodes {
     pub wrap: Vec<String>,
     #[serde(default, rename = "while", skip_serializing_if = "Option::is_none")]
     pub while_: Option<Bind>,
+}
+
+/// Parts of the HUD hidden whole, stock and every record on them, while `while` is true.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Yield {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub parts: Vec<String>,
+    #[serde(rename = "while")]
+    pub while_: Bind,
 }
 
 /// One fill quad refilled from a sprite through its mesh slot.
@@ -648,6 +662,9 @@ pub struct HudElement {
     pub clock: Option<Clock>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub variants: BTreeMap<String, Variant>,
+    /// The parts this record hides whole while its leaf is on, in place of a dial, scene or screen.
+    #[serde(default, rename = "yield", skip_serializing_if = "Option::is_none")]
+    pub yields: Option<Yield>,
     #[serde(flatten)]
     pub extra: BTreeMap<String, serde_json::Value>,
 }
@@ -673,20 +690,20 @@ impl HudElement {
         let mut v = value.clone();
         if let Some(o) = v.as_object_mut() {
             o.remove("$comment");
-            let targets = ["dial", "scene", "screen"]
+            let targets = ["dial", "scene", "screen", "yield"]
                 .iter()
                 .filter(|k| o.contains_key(**k))
                 .count();
             match targets {
                 0 => {
                     return Err(err(
-                        "record: missing field `dial` (or `scene` and `parent_ui`, or `screen`)",
+                        "record: missing field `dial` (or `scene` and `parent_ui`, `screen` or `yield`)",
                     ));
                 }
                 1 => {}
                 _ => {
                     return Err(err(
-                        "record: a record has a dial, a scene target or a screen, not two",
+                        "record: a record has a dial, a scene target, a screen or a yield, not two",
                     ));
                 }
             }
@@ -790,6 +807,15 @@ impl HudElement {
     /// removes or replaces is free inside that variant, its placements name elements that are
     /// there, and its decisions show elements that are there.
     pub fn check(&self) -> Result<()> {
+        if let Some(y) = &self.yields {
+            return self.check_yield(y);
+        }
+        if let Some(s) = self.stock_nodes.iter().find(|s| s.ui.is_some()) {
+            return Err(err(format!(
+                "stock_nodes {}: an entry with ui goes on a yield record",
+                s.template
+            )));
+        }
         self.check_scene_target()?;
         check_tree(&self.elements, &self.decisions)?;
         for e in &self.elements {
@@ -827,6 +853,47 @@ impl HudElement {
             return Err(err(
                 "a scene target does not take motion: its triggers need the record's control group (a dial or screen record)",
             ));
+        }
+        Ok(())
+    }
+
+    fn check_yield(&self, y: &Yield) -> Result<()> {
+        let bare = Self {
+            prefix: self.prefix.clone(),
+            yields: self.yields.clone(),
+            stock_nodes: self.stock_nodes.clone(),
+            ..serde_json::from_value(serde_json::json!({ "dial": "f1_26" })).expect("a bare record")
+        };
+        if *self != bare {
+            return Err(err(
+                "a yield record takes yield, prefix and stock_nodes only: it hides parts and draws nothing",
+            ));
+        }
+        if let Some(s) = self.stock_nodes.iter().find(|s| s.ui.is_none()) {
+            return Err(err(format!(
+                "stock_nodes {}: a yield record's stock_nodes name the game screen they hide nodes of with ui",
+                s.template
+            )));
+        }
+        if y.parts.is_empty() && self.stock_nodes.is_empty() {
+            return Err(err(
+                "yield: parts names at least one part, or stock_nodes a screen node",
+            ));
+        }
+        for p in &y.parts {
+            if super::yields::part(p).is_none() {
+                return Err(err(format!(
+                    "yield: {p} is none of {}",
+                    super::yields::KEYS.join(", ")
+                )));
+            }
+        }
+        y.while_.check()?;
+        if y.while_.view_model.is_none() && y.while_.path.is_none() {
+            return Err(err("yield: while is a view_model leaf or a path"));
+        }
+        for s in &self.stock_nodes {
+            super::screen_nodes::check_entry(s)?;
         }
         Ok(())
     }

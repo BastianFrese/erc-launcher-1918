@@ -11,6 +11,8 @@
 # reads it, under each unit's rank; the build fails unless it is the order of the mixins and on-load sections. After
 # an intended change, copy native/build/init-order.txt here.
 init
+  src/core/guards/tracks/collision_pool_guard.cpp
+  src/core/guards/ai/ai_marker_cap_guard.cpp
   src/core/guards/engine/phys_nonfinite_guard.cpp
   src/core/audio/speech.cpp
   src/core/guards/engine/anim_packet_time_guard.cpp
@@ -44,6 +46,7 @@ init
   src/core/guards/session/team_slots.cpp
   src/core/apply/tracks/boot.cpp
   src/core/apply/content/logos.cpp
+  src/core/hooks/setup_layout_hooks.cpp
   src/core/hooks/car_live.cpp
   src/core/hooks/session_points.cpp
   src/core/hooks/game_points.cpp
@@ -120,6 +123,7 @@ init
   src/core/telemetry/telemetry.cpp
   src/core/frontend/view_state.cpp
   src/core/render/postfx.cpp
+  src/core/render/portraits/driver_portraits.cpp
   src/core/render/badges/badge_images.cpp
   src/core/render/grade.cpp
   src/core/render/d3d12/arm_gate.cpp
@@ -174,6 +178,7 @@ inline
   src/core/hooks/core_events.cpp  swofty::cars::packages
   src/core/hooks/core_events.cpp  swofty::cars::handling
   src/core/hooks/core_events.cpp  swofty::cars::profiles
+  src/core/hooks/core_events.cpp  swofty::cars::setup_layouts
   src/core/hooks/core_events.cpp  swofty::sessions::points
   src/core/hooks/core_events.cpp  swofty::content::packages
   src/core/hooks/core_events.cpp  swofty::content::era_boxes
@@ -255,6 +260,7 @@ exit
   src/core/render/d3d12/arm_gate.cpp
   src/core/render/grade.cpp
   src/core/render/badges/badge_images.cpp
+  src/core/render/portraits/driver_portraits.cpp
   src/core/render/postfx.cpp
   src/core/frontend/view_state.cpp
   src/core/telemetry/telemetry.cpp
@@ -304,6 +310,7 @@ exit
   src/core/guards/career/myteam_vehicle_keep.cpp
   src/core/guards/engine/watchdog_grace.cpp
   src/core/guards/cars/tyre_slots.cpp
+  src/core/diagnostics/tyre_models.cpp
   src/core/career/hub_tab.cpp
   src/core/hooks/hooks.cpp
   src/core/hooks/core_events.cpp
@@ -332,6 +339,7 @@ exit
   src/core/hooks/game_points.cpp
   src/core/hooks/session_points.cpp
   src/core/hooks/car_live.cpp
+  src/core/hooks/setup_layout_hooks.cpp
   src/core/apply/content/logos.cpp
   src/core/apply/tracks/boot.cpp
   src/core/guards/session/team_slots.cpp
@@ -363,6 +371,8 @@ exit
   src/core/guards/engine/anim_packet_time_guard.cpp
   src/core/audio/speech.cpp
   src/core/guards/engine/phys_nonfinite_guard.cpp
+  src/core/guards/ai/ai_marker_cap_guard.cpp
+  src/core/guards/tracks/collision_pool_guard.cpp
 mixins
   src/core/guards/garage/pit_garage_state.cpp  SWOFTY_HOOK_GUARD(pit_garage_state)
   src/core/diagnostics/session_job_probe.cpp  SWOFTY_ON_LOAD

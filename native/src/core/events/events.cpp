@@ -2,9 +2,11 @@
 #include "core/runtime/runtime.hpp"
 #include "core/runtime/settings.hpp"
 #include "core/frontend/main_menu.hpp"
+#include "core/frontend/tt_blocked.hpp"
 #include "core/hud/toast.hpp"
 #include "core/services/lap_host.hpp"
 #include "core/render/badges/badge_images.hpp"
+#include "core/render/portraits/driver_portraits.hpp"
 
 #include <safetyhook.hpp>
 #include <swofty/mem.hpp>
@@ -91,6 +93,7 @@ const Step STEPS[] = {
     {"lap_host::tick", [] { runtime::lap_host::tick(); }},
     {"popup_tick", [] { runtime::popup_tick(); }},
     {"main_menu::tick", [] { frontend::main_menu::tick(); }},
+    {"tt_blocked::tick", [] { frontend::tt_blocked::tick(); }},
     {"mfd_tick", [] { runtime::mfd_tick(); }},
     {"netplay_tick", [] { runtime::netplay_tick(); }},
     {"career_content_tick", [] { runtime::career_content_tick(); }},
@@ -404,6 +407,7 @@ void session_emit(const session_life::Emit &e)
     }
     if (e.unload) {
         badge_images::session_unloaded();
+        driver_portraits::session_unloaded();
         swofty::log("[events] session.unload (StateUnloadSession entering)");
         events_fire(SWOFTY_EVENT_SESSION_UNLOAD, 0, 0, nullptr);
         runtime::hud_rebuilt();
@@ -416,6 +420,7 @@ void session_flow(const char *known, int to)
         return;
     if (to == 1 && !std::strcmp(known, "StateLoadSession")) {
         note_kind();
+        driver_portraits::session_loading();
         std::lock_guard<std::mutex> g(lifecycle_lock);
         session_loading.emplace();
     }

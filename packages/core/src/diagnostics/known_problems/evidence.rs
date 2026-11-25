@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
+use crate::addons::other_game::Packed;
 use crate::install::LOADER_DIR;
 use crate::manifest::{AddonManifest, Category};
 use crate::profile::conflicts::Pair;
@@ -12,6 +13,9 @@ use super::crash_record::report_name;
 
 /// The most of a loader.log or crash report that is read.
 pub(super) const READ_CAP: u64 = 32 << 20;
+
+/// Of a file over [`READ_CAP`], the start that is kept: the boot, build and system lines.
+const HEAD_CAP: u64 = 4 << 20;
 
 /// What a crashed session left behind, as the rules read it.
 #[derive(Debug, Clone, Default)]
@@ -48,6 +52,11 @@ pub struct Evidence {
     pub game_version: Option<String>,
     /// The game exe's size and PE link timestamp, the pair that identifies a build.
     pub game_build: Option<(u64, u32)>,
+    /// The enabled addons that put F1 25's packed game data, by id, in load order; only a crash reads them.
+    pub packed: Vec<(String, Packed)>,
+    /// The enabled addons whose installed version was withdrawn from the Addon Browser
+    /// ([`crate::catalog::withdrawn`]): each id with that version, in load order.
+    pub withdrawn: Vec<(String, String)>,
 }
 
 impl Evidence {
@@ -144,6 +153,7 @@ impl Evidence {
             self.conflicts = report.pairs;
             self.kept_lists = report.kept_lists;
         }
+        self.withdrawn = withdrawn_on(store, &profile, &self.enabled, &self.builtin, addons);
         self.plugins = self
             .enabled
             .iter()
@@ -157,15 +167,68 @@ impl Evidence {
             .collect();
         self
     }
+
+    /// The enabled addons that put F1 25's packed game data ([`crate::addons::other_game::scan`]).
+    pub fn with_packed(mut self, store: &Store, addons: &BTreeMap<String, AddonManifest>) -> Self {
+        self.packed = self
+            .enabled
+            .iter()
+            .filter(|id| !self.builtin.contains(*id))
+            .filter_map(|id| {
+                let packed = crate::addons::other_game::scan(&store.addons_dir().join(id), addons.get(id)?)?;
+                Some((id.clone(), packed))
+            })
+            .collect();
+        self
+    }
+}
+
+/// The addons on in `profile` whose installed version was withdrawn: those of its last build, or of
+/// the profile itself when it has none.
+pub(super) fn withdrawn_on(
+    store: &Store,
+    profile: &str,
+    built: &[String],
+    builtin: &BTreeSet<String>,
+    addons: &BTreeMap<String, AddonManifest>,
+) -> Vec<(String, String)> {
+    let checks = crate::catalog::withdrawn::Checks::load(&store.root);
+    if checks.0.values().all(|c| !c.withdrawn) {
+        return Vec::new();
+    }
+    let saved: Vec<String> = match built.is_empty() {
+        true => store
+            .profile(profile)
+            .map(|p| p.enabled().map(str::to_owned).collect())
+            .unwrap_or_default(),
+        false => Vec::new(),
+    };
+    let on = if built.is_empty() { &saved } else { built };
+    checks
+        .among(
+            addons,
+            on.iter().map(String::as_str).filter(|id| !builtin.contains(*id)),
+        )
+        .into_iter()
+        .map(|w| (w.id, w.version.to_string()))
+        .collect()
 }
 
 pub(super) fn evidence(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Evidence {
-    let addons = store.addons().unwrap_or_default();
+    evidence_with(session, game, store, &store.addons().unwrap_or_default())
+}
+
+pub(super) fn evidence_with(
+    session: &SessionRecord,
+    game: Option<&Path>,
+    store: &Store,
+    addons: &BTreeMap<String, AddonManifest>,
+) -> Evidence {
     let names = addons
         .iter()
         .map(|(id, m)| (id.clone(), m.name.clone()))
         .collect();
-    Evidence::read(session, game, names, Some(&store.root)).with_profile(store, &addons)
+    Evidence::read(session, game, names, Some(&store.root)).with_profile(store, addons)
 }
 
 pub(crate) fn read_perf(dir: &Path) -> Option<String> {
@@ -175,11 +238,31 @@ pub(crate) fn read_perf(dir: &Path) -> Option<String> {
 }
 
 pub(super) fn read_capped(path: &Path) -> Option<String> {
-    let mut bytes = Vec::new();
-    std::fs::File::open(path)
-        .ok()?
-        .take(READ_CAP)
-        .read_to_end(&mut bytes)
-        .ok()?;
-    Some(String::from_utf8_lossy(&bytes).into_owned())
+    read_head_and_tail(std::fs::File::open(path).ok()?, READ_CAP, HEAD_CAP)
+}
+
+pub(super) fn read_head_and_tail<R: Read + Seek>(mut file: R, cap: u64, head: u64) -> Option<String> {
+    let len = file.seek(SeekFrom::End(0)).ok()?;
+    file.seek(SeekFrom::Start(0)).ok()?;
+    if len <= cap {
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes).ok()?;
+        return Some(String::from_utf8_lossy(&bytes).into_owned());
+    }
+    let mut start = vec![0; head as usize];
+    file.read_exact(&mut start).ok()?;
+    let keep = start.iter().rposition(|b| *b == b'\n').map_or(0, |i| i + 1);
+    start.truncate(keep);
+    let tail_len = cap - head;
+    file.seek(SeekFrom::Start(len - tail_len)).ok()?;
+    let mut end = Vec::with_capacity(tail_len as usize);
+    file.read_to_end(&mut end).ok()?;
+    let skip = end.iter().position(|b| *b == b'\n').map_or(0, |i| i + 1);
+    let mut text = String::from_utf8_lossy(&start).into_owned();
+    text.push_str(&format!(
+        "[log] {} bytes of the middle of this log were not read\n",
+        len - start.len() as u64 - (end.len() - skip) as u64
+    ));
+    text.push_str(&String::from_utf8_lossy(&end[skip..]));
+    Some(text)
 }

@@ -20,9 +20,11 @@ mod package_ids;
 mod saves;
 mod slow_init;
 mod stall;
+mod startup;
 mod system;
 mod tyres;
 pub mod weekend;
+mod withdrawn;
 mod wording;
 
 #[cfg(test)]
@@ -41,16 +43,16 @@ use broken_addons::{
 };
 pub use career::stuck_weekend;
 use career::{
-    calendar_event_missing, career_content_off, career_driver_missing, career_track_crash,
+    calendar_event_missing, career_content_off, career_driver_missing, career_over_grid, career_track_crash,
     entrant_list_crash, imported_calendar_crash, imported_calendar_empty_season, missing_entrant_list,
-    missing_track_stat, morph_driver_crash, race_driver_missing, retirement_driver_crash, sent_to_team_hq,
-    sent_to_team_hq_crash, sequencer_record_crash, third_car_line, third_car_line_crash,
-    weekends_track_crash, weekends_track_record_bad_index,
+    missing_track_stat, morph_driver_crash, null_vehicle_crash, over_grid_crash, race_driver_missing,
+    retirement_driver_crash, sent_to_team_hq, sent_to_team_hq_crash, sequencer_record_crash, third_car_line,
+    third_car_line_crash, weekends_track_crash, weekends_track_record_bad_index,
 };
 use crash_record::{Fatal, fatal, loaded_modules, wine};
 pub use evidence::Evidence;
-use evidence::evidence;
 pub(crate) use evidence::read_perf;
+use evidence::{evidence, evidence_with};
 pub use game_version::{LATEST_GAME_VERSION, older_game, outdated_exe, outdated_game};
 use graphics::graphics_mods;
 use hang::{hang, hang_watchdog};
@@ -66,6 +68,7 @@ use system::{
     quit_fault, quit_fault_diagnosis,
 };
 pub use tyres::unplaced_tyres;
+use withdrawn::{noted, withdrawn_crash};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Diagnosis {
@@ -89,7 +92,8 @@ impl Diagnosis {
 
 /// The cause of the crash `session` ended with, when a rule recognises it.
 pub fn crash(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Option<Diagnosis> {
-    diagnose(&evidence(session, game, store))
+    let addons = store.addons().unwrap_or_default();
+    diagnose(&evidence_with(session, game, store, &addons).with_packed(store, &addons))
 }
 
 /// Why `session`, which ended without a crash, never got going, when a rule
@@ -114,7 +118,14 @@ pub fn tyres(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Opt
 /// Why `session`, which ended without a crash, ran without its addons' team
 /// logos, when its log says the game could not write them.
 pub fn logos(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Option<Diagnosis> {
-    unbuilt_logos(&evidence(session, game, store))
+    let move_hint = game.map_or("", |g| {
+        crate::game_folder::copies::move_hint(crate::install::Source::detect(g))
+    });
+    unbuilt_logos(
+        &evidence(session, game, store),
+        crate::platform::run_as_admin::elevated,
+        move_hint,
+    )
 }
 
 /// Why `session`, which ended without a crash, could not save the profile,
@@ -124,10 +135,11 @@ pub fn saves(session: &SessionRecord, game: Option<&Path>, store: &Store) -> Opt
 }
 
 /// The cause of a crash, from the first rule that recognises it. A crash no
-/// rule recognises, on an F1 25 older than [`LATEST_GAME_VERSION`], is put down
-/// to the old build.
+/// rule recognises names the withdrawn addons that are on, or, on an F1 25
+/// older than [`LATEST_GAME_VERSION`], is put down to the old build. Any other
+/// diagnosis ends with a step naming the withdrawn addons that are on.
 pub fn diagnose(e: &Evidence) -> Option<Diagnosis> {
-    matched(e).or_else(|| {
+    let d = matched(e).or_else(|| withdrawn_crash(e)).or_else(|| {
         let mut d = outdated_exe(e.game_version.as_deref())?;
         d.what = format!(
             "Your F1 25 is {}. Mods are made for {LATEST_GAME_VERSION}, the latest update, and F1 25 crashed on \
@@ -135,7 +147,8 @@ pub fn diagnose(e: &Evidence) -> Option<Diagnosis> {
             e.game_version.as_deref().unwrap_or_default().trim()
         );
         Some(d)
-    })
+    })?;
+    Some(noted(d, e))
 }
 
 /// A crash as the rules read it: the evidence, with what every rule needs from it worked out once.
@@ -168,6 +181,7 @@ const RULES: &[Rule] = &[
     |c| (c.evidence.code == Some(APP_CONTROL)).then(app_control),
     |c| quit_fault(c.evidence).then(|| stuck_weekend(c.evidence).unwrap_or_else(quit_fault_diagnosis)),
     hooks::crash_in_hook,
+    startup::packed_game_data,
     |c| aggressive_ai_crash(c.evidence, &c.fatal).then(|| aggressive_ai(c.evidence)),
     |c| skip_cutscenes_crash(c.evidence, &c.fatal).then(|| skip_cutscenes(c.evidence)),
     hooks::stray_jump,
@@ -193,11 +207,13 @@ const RULES: &[Rule] = &[
     |c| weekends_track_crash(&c.fatal).then(weekends_track_record_bad_index),
     |c| imported_calendar_crash(c.evidence, &c.fatal).then(|| imported_calendar_empty_season(c.evidence)),
     |c| third_car_line_crash(c.evidence, &c.fatal).then(|| third_car_line(c.evidence)),
+    |c| null_vehicle_crash(&c.fatal).then(|| career_over_grid(c.evidence, &c.fatal)),
     graphics::device_removed,
     graphics::out_of_graphics_memory,
     graphics::graphics_mod_crash,
     graphics::driver_crash,
     graphics::frame_generation_crash,
+    |c| over_grid_crash(c.evidence, &c.fatal).then(|| career_over_grid(c.evidence, &c.fatal)),
 ];
 
 fn matched(e: &Evidence) -> Option<Diagnosis> {

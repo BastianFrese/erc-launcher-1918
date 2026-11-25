@@ -11,7 +11,10 @@ use swofty_formats::erp::{ErpFile, Packer};
 use swofty_formats::pkg::Pkg;
 
 use super::conflict::{self, Conflict, Kind};
-use super::{Input, Layered, Output, Stock, TemplateBase, compose_with, dials, screen_build, screens};
+use super::{
+    Input, Layered, Output, ScreenBase, Stock, TemplateBase, compose_with, dials, screen_build, screen_nodes,
+    screens, walk,
+};
 use crate::erp::ErpBuild;
 use crate::store::Store;
 use crate::{Error, Result};
@@ -26,6 +29,9 @@ pub struct Context<'a> {
     pub baseline: &'a dyn Fn(&str) -> PathBuf,
     pub puts: &'a [String],
     pub name: &'a dyn Fn(&str) -> String,
+    /// Whether another addon on in the profile requires the addon, so turning it off only trades the
+    /// refusal for a missing requirement.
+    pub required: &'a dyn Fn(&str) -> bool,
     /// The build's packer, which reuses the compressed frames of earlier builds.
     pub packer: &'a Packer,
 }
@@ -35,6 +41,8 @@ pub struct Composed {
     pub ops: Vec<Op>,
     pub lines: Vec<String>,
     pub warnings: Vec<String>,
+    /// The warning that HUD customisation closes the game, also in `warnings`.
+    pub editor: Option<String>,
 }
 
 /// The archives screen records write beyond the dials' (`hud/screens.rs`).
@@ -45,11 +53,17 @@ pub const SCREEN_ERPS: [&str; 4] = [
     "2025_asset_groups/ui_package/flow_options.erp",
 ];
 
-/// The resources the composer writes that `op` changes; empty when it changes none of them.
-fn touched(op: &ErpOp, written: &BTreeSet<&str>, source: &dyn Fn() -> Option<PathBuf>) -> Vec<String> {
+/// The resources the composer writes that `op` changes; empty when it changes none of them. `also`
+/// holds the archives of the game screens yield records hide nodes of.
+fn touched(
+    op: &ErpOp,
+    written: &BTreeSet<&str>,
+    also: &BTreeSet<String>,
+    source: &dyn Fn() -> Option<PathBuf>,
+) -> Vec<String> {
     let ours = |erps: &[&str]| {
         erps.iter()
-            .any(|e| dials::SCENE_ERPS.contains(e) || SCREEN_ERPS.contains(e))
+            .any(|e| dials::SCENE_ERPS.contains(e) || SCREEN_ERPS.contains(e) || also.contains(*e))
     };
     let one = |erp: &str, name: &str| match ours(&[erp]) && written.contains(name) {
         true => vec![name.to_owned()],
@@ -107,6 +121,31 @@ fn or_list(names: &[String]) -> String {
     }
 }
 
+/// The warning for a standings board that races fit and HUD customisation's tree does not: every
+/// addon on the board, and the ones whose removal alone brings the tree inside the limit.
+pub fn editor_text(name: &dyn Fn(&str) -> String, e: &walk::EditorOver) -> String {
+    let ours: Vec<String> = e.addons.iter().map(|a| name(a)).collect();
+    let off: Vec<String> = e.off.iter().map(|a| name(a)).collect();
+    let what = match off.is_empty() {
+        true => format!("some of {}", and_list(&ours)),
+        false => or_list(&off),
+    };
+    format!(
+        "{} {} {} too big for HUD customisation (OSD Customization in the pause menu): about {} of the {} slots one screen can hold, and the game closes when it opens. Races show the list as before. Turn {what} off in this profile before you open HUD customisation (it holds the board {} times, {} host scenes of {} walk slots each time)",
+        and_list(&ours),
+        match ours.len() > 1 {
+            true => "together make",
+            false => "makes",
+        },
+        screens::board_of("standings"),
+        e.board.editor(),
+        walk::SLOT_LIMIT,
+        walk::EDITOR_BOARDS,
+        e.board.instances(),
+        e.board.slots()
+    )
+}
+
 /// One archive change of another addon that the composer builds on.
 struct Change<'a> {
     resource: String,
@@ -155,6 +194,16 @@ fn theirs(cx: &Context, c: &Conflict, changes: &[Change], ours: &[String]) -> Ve
     conflict::addons_of(pick.iter().map(|ch| ch.who.as_str()))
 }
 
+/// The addons of `ids` to suggest turning off: the ones no other addon on requires, or all of them
+/// when every one is required.
+fn turn_off(cx: &Context, ids: &[String]) -> Vec<String> {
+    let free: Vec<String> = ids.iter().filter(|a| !(cx.required)(a)).cloned().collect();
+    match free.is_empty() {
+        true => ids.to_vec(),
+        false => free,
+    }
+}
+
 /// The refusal of a [`Conflict`], naming the addons whose records claim the part and the addons whose
 /// archive changes put the other claim there.
 fn conflict_text(cx: &Context, c: &Conflict, changes: &[Change]) -> String {
@@ -164,7 +213,7 @@ fn conflict_text(cx: &Context, c: &Conflict, changes: &[Change]) -> String {
         false => ours,
     };
     if let Kind::Walk { off, .. } = &c.kind {
-        let off: Vec<String> = off.iter().map(|a| (cx.name)(a)).collect();
+        let off: Vec<String> = turn_off(cx, off).iter().map(|a| (cx.name)(a)).collect();
         let what = match off.is_empty() {
             true => format!("some of {}", and_list(&ours)),
             false => or_list(&off),
@@ -195,12 +244,14 @@ fn conflict_text(cx: &Context, c: &Conflict, changes: &[Change]) -> String {
 
 /// Composes `inputs` for a build: the archive changes in `erp_ops` that touch what the composer writes
 /// are applied first to a scratch build, and the composer reads its resources from that. `template`
-/// edits the template the composer starts from.
+/// edits the template the composer starts from, and `screens` the game screens yield records hide
+/// nodes of.
 pub fn compose_in_build(
     cx: &Context,
     erp_ops: &[Op],
     inputs: &[Input],
     template: Option<TemplateBase>,
+    screens: Option<ScreenBase>,
 ) -> Result<Composed> {
     let shared = screen_build::shared_scenes(cx.stock, inputs)?;
     let mut written: BTreeSet<&str> = dials::written().into_iter().collect();
@@ -213,6 +264,11 @@ pub fn compose_in_build(
             .filter_map(|s| s.scene.as_deref()),
     );
     written.extend(shared.iter().map(String::as_str));
+    written.extend(super::yields::written(inputs));
+    let screen_written = screen_nodes::written(inputs);
+    written.extend(screen_written.iter().map(String::as_str));
+    let names: Vec<&str> = screen_written.iter().map(String::as_str).collect();
+    let screen_erps: BTreeSet<String> = cx.stock.carriers(&names)?.into_values().flatten().collect();
     if inputs.iter().any(|i| i.record.screen.is_some()) {
         written.extend(screen_build::written());
     }
@@ -228,11 +284,11 @@ pub fn compose_in_build(
         v.dedup();
         v
     };
-    for rel in cx
-        .puts
-        .iter()
-        .filter(|r| dials::SCENE_ERPS.contains(&r.as_str()) || SCREEN_ERPS.contains(&r.as_str()))
-    {
+    for rel in cx.puts.iter().filter(|r| {
+        dials::SCENE_ERPS.contains(&r.as_str())
+            || SCREEN_ERPS.contains(&r.as_str())
+            || screen_erps.contains(*r)
+    }) {
         scratch.load(rel)?;
         lines.push(format!(
             "{rel} is replaced whole by an addon; the composed overlay starts from that archive's resources"
@@ -249,7 +305,7 @@ pub fn compose_in_build(
             ErpOp::Overlay { source, .. } => resolve(source).ok(),
             _ => None,
         };
-        let names = touched(e, &written, &path);
+        let names = touched(e, &written, &screen_erps, &path);
         if names.is_empty() {
             continue;
         }
@@ -279,7 +335,7 @@ pub fn compose_in_build(
         inner: cx.stock,
         build: &scratch,
     };
-    let output = compose_with(&layered, inputs, template, cx.packer).map_err(|e| match e {
+    let output = compose_with(&layered, inputs, template, screens, cx.packer).map_err(|e| match e {
         Error::HudConflict(c) => Error::Other(conflict_text(cx, &c, &changes)),
         e => Error::Other(format!("the HUD elements do not compose: {e}")),
     })?;
@@ -321,11 +377,20 @@ pub fn compose_in_build(
         })
         .collect();
     lines.extend(output.lines.iter().cloned());
+    let editor = output.editor.as_ref().map(|e| {
+        let e = walk::EditorOver {
+            off: turn_off(cx, &e.off),
+            ..e.clone()
+        };
+        editor_text(cx.name, &e)
+    });
+    warnings.extend(editor.clone());
     Ok(Composed {
         output,
         ops,
         lines,
         warnings,
+        editor,
     })
 }
 
@@ -344,6 +409,7 @@ mod tests {
     const TOWER: &str = "pablo.tv-timing-tower";
     const S10: &str = "swofty.swofty-seasons-2010";
     const S11: &str = "swofty.swofty-seasons-2011";
+    const REQUIRED: [&str; 2] = [S10, S11];
     const PARENT: &str = "hud_track_position.osd_visibility_option.track_position";
 
     fn name(id: &str) -> String {
@@ -403,6 +469,7 @@ mod tests {
             baseline: &base,
             puts: &[],
             name: &name,
+            required: &|id| REQUIRED.contains(&id),
         };
         conflict_text(&cx, c, changes)
     }
@@ -514,20 +581,26 @@ mod tests {
     fn a_board_too_big_for_the_ui_tree_names_every_addon_on_it_and_which_to_turn_off() {
         let s = store("walk");
         let walk = |off: Vec<String>| Conflict {
-            resource: screens::CAP.into(),
+            resource: screens::STACKED.into(),
             addons: vec![S10.into(), S11.into(), TOWER.into()],
             kind: Kind::Walk {
                 screen: "standings".into(),
-                host: 14_101,
-                instances: 4,
-                slots: 73_904,
+                board: 57_116,
+                instances: 7,
+                slots: 74_616,
                 off,
             },
         };
         let all = walk(vec![S10.into(), S11.into(), TOWER.into()]);
         assert_eq!(
             text(&s, &all, &[]),
-            "the HUD elements do not compose: SWOFTY 2010, SWOFTY 2011 and TV Timing Tower together make the Track Position list too big for the game: about 73904 of the 65536 slots one screen can hold, and the game can close as soon as it shows it; turn SWOFTY 2010, SWOFTY 2011 or TV Timing Tower off in this profile (the board holds the 14101-slot host scene 4 times)"
+            "the HUD elements do not compose: SWOFTY 2010, SWOFTY 2011 and TV Timing Tower together make the Track Position list too big for the game: about 74616 of the 65536 slots one screen can hold, and the game can close as soon as it shows it; turn TV Timing Tower off in this profile (the board holds 7 host scenes, 57116 walk slots in all)"
+        );
+        let needed = walk(vec![S10.into(), S11.into()]);
+        assert!(
+            text(&s, &needed, &[]).contains("; turn SWOFTY 2010 or SWOFTY 2011 off in this profile ("),
+            "{}",
+            text(&s, &needed, &[])
         );
         let none = walk(vec![]);
         assert!(
@@ -535,6 +608,61 @@ mod tests {
                 .contains("; turn some of SWOFTY 2010, SWOFTY 2011 and TV Timing Tower off in this profile"),
             "{}",
             text(&s, &none, &[])
+        );
+    }
+
+    #[test]
+    fn a_walk_refusal_leaves_out_the_addons_another_enabled_addon_requires() {
+        let s = store("walk-required");
+        let c = Conflict {
+            resource: screens::STACKED.into(),
+            addons: vec![S10.into(), S11.into(), TOWER.into()],
+            kind: Kind::Walk {
+                screen: "standings".into(),
+                board: 57_116,
+                instances: 7,
+                slots: 74_616,
+                off: vec![S10.into(), S11.into(), TOWER.into()],
+            },
+        };
+        let t = text(&s, &c, &[]);
+        assert!(
+            t.contains("SWOFTY 2010, SWOFTY 2011 and TV Timing Tower together make"),
+            "{t}"
+        );
+        assert!(t.contains("; turn TV Timing Tower off in this profile ("), "{t}");
+    }
+
+    #[test]
+    fn a_board_too_big_for_hud_customisation_warns_with_every_addon_on_it_and_which_to_turn_off() {
+        let editor = |addons: Vec<&str>, off: Vec<&str>, hosts, records| walk::EditorOver {
+            addons: addons.into_iter().map(String::from).collect(),
+            off: off.into_iter().map(String::from).collect(),
+            board: walk::Board {
+                cap: 8,
+                hosts,
+                records,
+            },
+        };
+        let five = editor(vec![S10, S11, TOWER], vec![S10, S11, TOWER], 29_000, 5);
+        assert_eq!(
+            editor_text(&name, &five),
+            "SWOFTY 2010, SWOFTY 2011 and TV Timing Tower together make the Track Position list too big for HUD customisation (OSD Customization in the pause menu): about 87840 of the 65536 slots one screen can hold, and the game closes when it opens. Races show the list as before. Turn SWOFTY 2010, SWOFTY 2011 or TV Timing Tower off in this profile before you open HUD customisation (it holds the board 3 times, 6 host scenes of 29008 walk slots each time)"
+        );
+        let one = editor(vec![TOWER], vec![TOWER], 21_900, 1);
+        assert!(
+            editor_text(&name, &one).starts_with(
+                "TV Timing Tower makes the Track Position list too big for HUD customisation (OSD Customization in the pause menu): about 66540 of"
+            ),
+            "{}",
+            editor_text(&name, &one)
+        );
+        let none = editor(vec![S10, TOWER], vec![], 30_000, 2);
+        assert!(
+            editor_text(&name, &none)
+                .contains("Turn some of SWOFTY 2010 and TV Timing Tower off in this profile"),
+            "{}",
+            editor_text(&name, &none)
         );
     }
 

@@ -186,6 +186,34 @@ void race_fuel_tests()
     pit_stop_wheel_tests();
 }
 
+void setup_locks_tests()
+{
+    Value p1950 = swofty::json::parse(R"({"entrant_list":"f5_1950","rules":{"setup_locked":)"
+                                      R"(["front_wing","rear_wing","differential","brake_bias","drs_flap"]}})");
+    Value pnone = swofty::json::parse(R"({"entrant_list":"f1_2005","rules":{"refuelling":true}})");
+    Value pbad = swofty::json::parse(R"({"entrant_list":"f1_bad","rules":{"setup_locked":"front_wing"}})");
+    std::vector<std::pair<std::string, const Value *>> boxes = {
+        {"vmknolle.season-1950/f5_1950", &p1950}, {"mod.a/f1_2005", &pnone}, {"mod.a/f1_bad", &pbad}};
+    auto p = content::setup_locks_pick("f5_1950", boxes);
+    // front wing 0, rear wing 1, diff 2-6 and ramp diff 28, brake bias 18
+    check(p.mask == 0x1004007full, "f5_1950 locks wings, the differential group and brake bias");
+    check(p.package == "vmknolle.season-1950/f5_1950", "the pick names the box's package");
+    check(p.line.find("unknown labels left out: drs_flap") != std::string::npos, "an unknown label is named, not locked");
+    check(content::setup_locks_pick("f1_2005", boxes).mask == 0, "a box without setup_locked locks nothing");
+    check(content::setup_locks_pick("f1_bad", boxes).mask == 0, "setup_locked that is not a list locks nothing");
+    check(content::setup_locks_pick("f1_none", boxes).line.find("no content.package") != std::string::npos,
+          "a stock box keeps the game's locks");
+    check(content::setup_lock_bits("ballast") == (1ull << 25) && content::setup_lock_bits("tyre_pressures") == 0x1e00000ull,
+          "ballast is slider 25, dry pressures 21-24");
+    uint64_t added = 0;
+    // parc ferme bits {1, 7-17, 25, 28} stay; the box adds only what they lack
+    uint64_t parc = (1ull << 1) | 0x3ff80ull | (1ull << 25) | (1ull << 28);
+    check(content::setup_locks_merge(parc, p.mask, &added) == (parc | p.mask) && added == (p.mask & ~parc),
+          "the merge keeps the game's parc ferme bits");
+    check(content::setup_locks_enabled("1") && !content::setup_locks_enabled("0") && !content::setup_locks_enabled(""),
+          "SWOFTY_BOX_SETUP=1 only");
+}
+
 void points_tests()
 {
     std::printf("== session.points\n");
@@ -868,4 +896,29 @@ void setup_mode_cap_tests(const std::string &regs)
             staged = staged || (w.path == setup + "entrant_lists" && w.registry == "content.package");
         check(staged, "the trimmed field is written under content.package, so its applier stages it");
     });
+}
+
+void box_videos_tests()
+{
+    Value p1950 = swofty::json::parse(R"({"entrant_list":"f5_1950","videos":[{"from":"track_map/26/","to":"track_map/"},)"
+                                      R"({"from":"track_map/26/monaco","to":"own/monaco_1950"},{"from":"videos/x/","to":"y/"},)"
+                                      R"({"from":"a/../b","to":""},{"from":"c/"}]})");
+    Value pnone = swofty::json::parse(R"({"entrant_list":"f1_2005"})");
+    std::vector<std::pair<std::string, const Value *>> boxes = {{"vmknolle.season-1950/f5_1950", &p1950},
+                                                                {"mod.a/f1_2005", &pnone}};
+    auto p = content::videos_pick("f5_1950", boxes);
+    check(p.package == "vmknolle.season-1950/f5_1950" && p.redirects.size() == 2, "f5_1950 keeps its two valid redirects");
+    check(p.line.find("3 invalid entries skipped") != std::string::npos, "invalid entries are counted, not used");
+    check(content::videos_pick("f1_2005", boxes).redirects.empty(), "a box without videos plays the stock videos");
+    check(content::videos_pick("f1_none", boxes).line.find("no content.package") != std::string::npos,
+          "a stock box plays the stock videos");
+    auto r = content::video_redirect(p.redirects, "track_map/26/silverstone.bk2");
+    check(r && *r == "track_map/silverstone.bk2", "the 2026 track intro becomes the 2025 one");
+    r = content::video_redirect(p.redirects, "videos/Track_Map/26/silverstone.bk2");
+    check(r && *r == "videos/track_map/silverstone.bk2", "a videos/ prefix stays and case is ignored");
+    r = content::video_redirect(p.redirects, "track_map/26/monaco.bk2");
+    check(r && *r == "own/monaco_1950.bk2", "the longest from wins");
+    check(!content::video_redirect(p.redirects, "track_map/silverstone.bk2"), "a path no redirect names is left alone");
+    check(!content::video_redirect(p.redirects, "f1_swipe_short.bk2"), "other videos are left alone");
+    check(!content::video_redirect({}, "track_map/26/silverstone.bk2"), "no redirects, no change");
 }

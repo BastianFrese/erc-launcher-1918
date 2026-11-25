@@ -137,6 +137,14 @@ impl Collector {
         }
     }
 
+    /// A small file that goes in whatever the bundle budget has left (crash reports), still cut at
+    /// the per-file cap.
+    fn reserved_file(&mut self, path: String, from: &Path) {
+        let used = std::mem::take(&mut self.used);
+        self.file(path, from, None);
+        self.used += used;
+    }
+
     fn ea_diagnostics(&mut self) {
         if !cfg!(windows) {
             return;
@@ -200,6 +208,13 @@ impl Collector {
                         size(tail),
                         size(len)
                     )),
+                    Cut::Window { head, window, tail } => Some(format!(
+                        "first {}, {} from the window stage and last {} of {}",
+                        size(head),
+                        size(window),
+                        size(tail),
+                        size(len)
+                    )),
                 };
                 let note = match (kept, changed) {
                     (Some(kept), true) => Some(format!("{kept}, secrets redacted")),
@@ -214,6 +229,9 @@ impl Collector {
         }
     }
 }
+
+pub(super) const DATA_MOVE_DIR: &str = "data-move";
+const DATA_MOVE_CAP: u64 = 256 << 10;
 
 pub(super) const STALLS_SENT: usize = 2;
 
@@ -282,6 +300,22 @@ impl Bundle {
     }
 
     pub fn collect_with(store: &Store, report: &Report, limits: Limits, stamp: &str) -> Self {
+        Self::collect_in(
+            store,
+            report,
+            limits,
+            stamp,
+            &crate::data::paths::platform_data_dir(),
+        )
+    }
+
+    pub(super) fn collect_in(
+        store: &Store,
+        report: &Report,
+        limits: Limits,
+        stamp: &str,
+        default: &Path,
+    ) -> Self {
         let mut c = Collector {
             limits,
             used: 0,
@@ -312,6 +346,32 @@ impl Bundle {
         let from = Sources::new(store, report.game.dir.as_deref());
         let addons = serde_json::to_string_pretty(&from.addons_json()).unwrap_or_default();
         c.push("addons.json".into(), addons.into_bytes(), None);
+        let crashes = from.crashes(CRASHES_SENT);
+        let crash = crashes.first().cloned();
+        let mut crash_report = None;
+        let mut left_out = Vec::new();
+        let crash_from = c.entries.len();
+        for (i, c0) in crashes.iter().enumerate() {
+            let name = file_name(&c0.report);
+            let dir = if i == 0 { "crash" } else { "crash/earlier" };
+            let mut why = Vec::new();
+            let at = c.skipped.len();
+            c.reserved_file(format!("{dir}/{name}"), &c0.report);
+            why.extend(c.skipped[at..].iter().map(|s| format!("report left out: {s}")));
+            if i == 0 {
+                if let Some(dump) = &c0.dump {
+                    let at = c.skipped.len();
+                    c.binary(format!("crash/{}", file_name(dump)), dump, DUMP_CAP);
+                    why.extend(c.skipped[at..].iter().map(|s| format!("minidump left out: {s}")));
+                }
+                crash_report = std::fs::read_to_string(&c0.report).ok();
+            }
+            left_out.push(why.join("; "));
+        }
+        if let Some(listing) = dumps_listing(&crashes, &left_out) {
+            c.push("crash/dumps.txt".into(), listing.into_bytes(), None);
+        }
+        let crash_entries: Vec<Entry> = c.entries.drain(crash_from..).collect();
         let conflicts = crate::profile::conflicts::path(store, &store.active_profile());
         if conflicts.is_file() {
             c.file("conflicts.json".into(), &conflicts, None);
@@ -445,6 +505,16 @@ impl Bundle {
             );
         }
         c.ea_diagnostics();
+        for file in crate::data::relocate::sibling_files(default) {
+            if file.is_file() {
+                c.file_capped(
+                    format!("{DATA_MOVE_DIR}/{}", file_name(&file)),
+                    &file,
+                    None,
+                    DATA_MOVE_CAP,
+                );
+            }
+        }
         let not_stock = store.root.join("state/not-stock.json");
         if not_stock.is_file() {
             c.file("state/not-stock.json".into(), &not_stock, None);
@@ -469,23 +539,7 @@ impl Bundle {
                 c.file(format!("sessions/{session}/{rel}"), &file, redact);
             }
         }
-        let crashes = from.crashes(CRASHES_SENT);
-        let crash = crashes.first().cloned();
-        let mut crash_report = None;
-        for (i, c0) in crashes.iter().enumerate() {
-            let name = file_name(&c0.report);
-            let dir = if i == 0 { "crash" } else { "crash/earlier" };
-            c.file(format!("{dir}/{name}"), &c0.report, None);
-            if i == 0 {
-                if let Some(dump) = &c0.dump {
-                    c.binary(format!("crash/{}", file_name(dump)), dump, DUMP_CAP);
-                }
-                crash_report = std::fs::read_to_string(&c0.report).ok();
-            }
-        }
-        if let Some(listing) = dumps_listing(&crashes) {
-            c.push("crash/dumps.txt".into(), listing.into_bytes(), None);
-        }
+        c.entries.extend(crash_entries);
         let found = match (crash_report.as_deref(), crash.is_none()) {
             (Some(text), _) => CrashFound::Report(text),
             (None, true) => from.logged_report().map_or_else(

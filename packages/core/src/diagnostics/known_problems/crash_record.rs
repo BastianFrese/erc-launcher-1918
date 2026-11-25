@@ -226,13 +226,42 @@ pub(super) fn raw_crash_lines(loader: &str) -> Vec<&str> {
 /// When the game's fatal exception happened, from its first-chance line or
 /// else the line where it reached the top-level filter.
 pub(super) fn crash_time(e: &Evidence, f: &Fatal) -> Option<f64> {
+    crash_line(e, f).and_then(stamp)
+}
+
+/// The loader line of the game's fatal exception ([`crash_time`]).
+pub(super) fn crash_line<'a>(e: &'a Evidence, f: &Fatal) -> Option<&'a str> {
     f.at.and_then(|at| raw_crash_lines(&e.loader).get(at).copied())
         .or_else(|| {
             e.loader
                 .lines()
                 .find(|l| l.contains("[crash] unhandled ") && l.contains("reached the top-level filter"))
         })
-        .and_then(stamp)
+}
+
+/// The loader lines of the session the game crashed in: from its last session load start before the crash to the
+/// crash line. A log with no session load keeps everything before the crash; one with no crash line keeps all of it.
+pub(super) fn crashed_session<'a>(e: &'a Evidence, f: &Fatal) -> &'a str {
+    let loader = e.loader.as_str();
+    let end = crash_line(e, f).map_or(loader.len(), |l| l.as_ptr() as usize - loader.as_ptr() as usize);
+    let before = &loader[..end];
+    let start = before
+        .match_indices(super::weekend::SESSION_LOAD)
+        .filter(|(at, _)| {
+            before[*at..]
+                .lines()
+                .next()
+                .is_some_and(|l| l.trim_end().ends_with("-> Entering"))
+        })
+        .last()
+        .map_or(0, |(at, _)| at);
+    &before[start..]
+}
+
+/// The thread that wrote a loader line, from the `[  384]` after its time.
+pub(super) fn thread(line: &str) -> Option<u32> {
+    let rest = line.get(23..)?.trim_start().strip_prefix('[')?;
+    rest.split_once(']')?.0.trim().parse().ok()
 }
 
 /// The game function a stack frame names, as `Sess_Loader_SetupTrackAssets`

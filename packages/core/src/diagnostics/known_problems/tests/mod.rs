@@ -7,13 +7,16 @@ mod graphics;
 mod hang;
 mod hooks;
 mod logos;
+mod long_log;
 mod memory;
 mod saves;
 mod slow_init;
 mod stall;
+mod startup;
 mod stuck;
 mod system;
 mod tyres;
+mod withdrawn;
 
 use std::collections::{BTreeMap, BTreeSet};
 

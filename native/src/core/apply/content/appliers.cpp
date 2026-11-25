@@ -790,6 +790,21 @@ void apply_garages(Expansion &x, Report &report, std::string_view reg = "team.ga
                 report.lines.push_back(o.line);
                 continue;
             }
+            if (g.kind == "scene" || g.kind == "world") {
+                std::error_code fec;
+                auto size = std::filesystem::file_size(runtime::under_swofty("addons/" + g.addon + "/" + g.archive), fec);
+                std::size_t kept = 0;
+                for (auto &group : g.groups) {
+                    int rc = runtime::group_extend_box(group, g.game_path, fec ? 0 : uint64_t(size), g.box);
+                    std::string said = rc == SWOFTY_ASSET_OK ? " lists " + g.game_path + " first in box " + g.box + "'s sessions"
+                                                             : std::string(" not extended (the manifest is already parsed)");
+                    report.lines.push_back(tag + " " + g.id + ": " + group + said);
+                    kept += rc == SWOFTY_ASSET_OK;
+                }
+                if (!kept)
+                    report.refused++;
+                continue;
+            }
             std::size_t attached = 0;
             for (auto &group : g.groups) {
                 int rc = runtime::group_extend(group, g.game_path);
@@ -1243,6 +1258,13 @@ BoxOptionsPick box_options_for_box(const std::string &entrant_list)
     return box_options_pick(entrant_list, p.list);
 }
 
+SetupLocksPick setup_locks_for_box(const std::string &entrant_list)
+{
+    Packages p;
+    collect_packages(p);
+    return setup_locks_pick(entrant_list, p.list);
+}
+
 GridBox grid_for_box(const std::string &entrant_list)
 {
     Packages p;
@@ -1259,6 +1281,23 @@ size_t seats_for_box(const std::string &entrant_list)
     // 0 ist das Verhalten von 1.10.19: die Aufstellung wird nicht gedeckelt.
     (void)entrant_list;
     return 0;
+}
+
+VideosPick videos_for_box(const std::string &entrant_list)
+{
+    Packages p;
+    collect_packages(p);
+    return videos_pick(entrant_list, p.list);
+}
+
+bool any_video_redirect()
+{
+    Packages p;
+    collect_packages(p);
+    for (auto &[id, rec] : p.list)
+        if (rec && (*rec)["videos"].is_array() && (*rec)["videos"].size())
+            return true;
+    return false;
 }
 
 bool any_grid_rule()

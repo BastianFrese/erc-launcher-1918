@@ -147,13 +147,16 @@ inline constexpr Row ROWS[G_COUNT] = {
 struct Unread {
     const char *name;
     const char *needs;
+    const char *udp = nullptr;
 };
 
 inline constexpr Unread UNREAD[] = {
     {"session time left",
      "a session clock row read without a call (Sess_RaceRuleset_GetTimeRemaining interpolates RaceRuleset +0x2f0 from the "
-     "game timer)"},
-    {"total laps", "the race lap count: RaceRuleset +0x358 with the ruleset class proven on each session type"},
+     "game timer)",
+     "the UDP Session packet"},
+    {"total laps", "the race lap count: RaceRuleset +0x358 with the ruleset class proven on each session type",
+     "the UDP Session packet"},
     {"setup values", "the car setup record rows; CarOps gives several setup values"},
 };
 
@@ -210,7 +213,8 @@ struct BuildProof {
 
 inline constexpr uint32_t ALL_GROUPS = (1u << G_COUNT) - 1;
 
-// Groups whose layouts were compared on the KB build and Steam 26566308 only (re/research/live-steam-26566308.md).
+// Groups whose layouts were compared on the KB build, Steam 26566308 (re/research/live-steam-26566308.md) and EA 1.0.145
+// (re/research/ea-1-0-145.md), and not on the older EA App build.
 inline constexpr uint32_t STEAM_ONLY_GROUPS = bit(G_GRID) | bit(G_LAP_TIMES) | bit(G_TYRE_WEAR) | bit(G_TYRE_AGE);
 
 inline constexpr BuildProof KB_BUILD = {runtime::build_proof::known(runtime::build_proof::Build::kb)->pe_timestamp, "Steam",
@@ -238,11 +242,12 @@ inline constexpr BuildProof STEAM_26566308_BUILD = {
 
 // EA App 1.0.145: the Live State fields compare equal with the KB build's (re/tools/layoutcmp.py) except the game
 // manager's tail, 0x30 lower as on the EA App KB build (progress +0x2a0), and the ERS mode, moved as on Steam 1.0.145.
+// The grid, lap times, tyre wear and tyre age fields are the KB's at the same instructions.
 // The driver name getter is the KB's instruction for instruction (re/research/ea-1-0-145.md).
 inline constexpr BuildProof EA_1_0_145_BUILD = {
     runtime::build_proof::known(runtime::build_proof::Build::ea_1_0_145)->pe_timestamp,
     "EA 1.0.145",
-    ALL_GROUPS & ~STEAM_ONLY_GROUPS,
+    ALL_GROUPS,
     runtime::game_manager::tail_field(layout::progress::from_manager, "ea"),
     runtime::car_layout::ers_mode(runtime::build_proof::Build::ea_1_0_145),
     bit(G_DRIVER_NAMES)};

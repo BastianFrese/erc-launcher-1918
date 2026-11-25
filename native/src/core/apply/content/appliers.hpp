@@ -1,8 +1,10 @@
 #pragma once
 
 #include "core/apply/content/box_options.hpp"
+#include "core/apply/content/box_videos.hpp"
 #include "core/apply/content/career_rules.hpp"
 #include "core/apply/content/race_fuel.hpp"
+#include "core/apply/content/setup_locks.hpp"
 
 #include <cstdint>
 #include "core/boxes/box_grid_logic.hpp"
@@ -73,6 +75,9 @@ WeekendBox weekend_for_box(const std::string &entrant_list, const std::string &h
 // rules.formation_lap, rules.penalties and rules.corner_cutting (none where the package has no rule), and the line to
 // log.
 BoxOptionsPick box_options_for_box(const std::string &entrant_list);
+// The setup sliders the box with this entrant list locks (setup_locks.hpp): its content.package's rules.setup_locked as
+// lock mask bits (0 when the package has none), and the line to log.
+SetupLocksPick setup_locks_for_box(const std::string &entrant_list);
 // The grid rule the box with this entrant list runs: its content.package's rules.grid (none when the package has no
 // rule), and the line to log. any_grid_rule: whether any loaded content.package has a rules.grid.
 struct GridBox {
@@ -81,6 +86,10 @@ struct GridBox {
 };
 GridBox grid_for_box(const std::string &entrant_list);
 bool any_grid_rule();
+// The video redirects of the box with this entrant list (box_videos.hpp): its content.package's videos entries, and the
+// line to log. any_video_redirect: whether any loaded content.package has a videos entry.
+VideosPick videos_for_box(const std::string &entrant_list);
+bool any_video_redirect();
 // The drivers of the content.package of the box with this entrant list (0 when it has none): how far past 22 cars the
 // era picker raises its grid.
 size_t seats_for_box(const std::string &entrant_list);

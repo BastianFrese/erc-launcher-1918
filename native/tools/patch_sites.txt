@@ -88,6 +88,7 @@ core/diagnostics/perf/vq.cpp: void install() => none
 core/diagnostics/perf/vq.hpp: void install(); => none
 core/diagnostics/session_job_probe.cpp: if (auto r = runtime::loader::install(hook, at, FUNC, on_entry); !r) { => mid binding FUNC
 core/diagnostics/session_loader.cpp: if (auto r = runtime::loader::install(hook, at, name, fn); !r) { => mid binding UPDATE UNLOAD
+core/diagnostics/tyre_models.cpp: } else if (auto r = safetyhook::InlineHook::create(target, detour)) { => inline sig S_UPDATE_VEHICLE
 core/events/events.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(at), fn); => via
 core/events/events.cpp: h_flow = mid(S_FLOW, flow_mid); => mid sig S_FLOW
 core/events/events.cpp: h_session_enter = mid(S_SESSION_ENTER, session_enter_mid); => mid sig S_SESSION_ENTER
@@ -168,9 +169,13 @@ core/hooks/car_live.cpp: std::make_unique<GamePoint>("car.damage", "Car_FrontWin
 core/hooks/car_live.cpp: g_pit = std::make_unique<GamePoint>("session.pit", "Game_Pitlane_SetVehicleStatus", reinterpret_cast<void *>(&d_pit_status), => inline binding Game_Pitlane_SetVehicleStatus
 core/hooks/car_live.cpp: g_pit_tyres = std::make_unique<GamePoint>("session.pit_stop.tyres", "Game_PitLane_ApplyPitstopTyres", => inline binding Game_PitLane_ApplyPitstopTyres
 core/hooks/car_live.cpp: std::make_unique<session_points::MidPoint>("car.setup.applied", "site_Car_SetupTuningApplied", &m_setup, game_ops()); => mid binding site_Car_SetupTuningApplied
+core/hooks/car_live.cpp: g_apply = std::make_unique<GamePoint>("car.setup.apply_entry", "Car_Setup_ApplyTuning", => inline binding Car_Setup_ApplyTuning
+core/hooks/car_live.cpp: if (!VirtualProtect(p, sizeof want, PAGE_EXECUTE_READWRITE, &old)) => bytes=2 binding site_Game_Mfd_FuelMixMaxRaceGate
 core/hooks/dispatch.hpp: virtual bool install(bool late, const std::string &subscribers) = 0; => none
 core/hooks/game_point.hpp: bool install(bool late, const std::string &subscribers) override => none
 core/hooks/game_point.hpp: auto h = safetyhook::InlineHook::create(reinterpret_cast<void *>(at), detour_); => via
+core/hooks/game_points.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(at), LOGO_FNS[i]); => mid binding site_Game_DriverSelect_TeamLogoFormat site_Game_TeamSelect_TeamLogoFormat site_Game_DriverSelect_BadgeFormat site_Game_GridRundown_TeamLogoBind
+core/hooks/game_points.cpp: bool install(bool late, const std::string &subscribers) override => none
 core/hooks/game_points.hpp: slot = std::make_unique<GamePoint>(s.point, s.binding, detour, ops); => via
 core/hooks/game_points.hpp: make(add, ADD_ACTIVITY, reinterpret_cast<void *>(&d_add_activity), ce::AddActivity::version); => inline spec ADD_ACTIVITY
 core/hooks/game_points.hpp: make(decide, DECIDE, reinterpret_cast<void *>(&d_decide), ce::ContractDecide::version); => inline spec DECIDE
@@ -190,7 +195,11 @@ core/hooks/session_points.hpp: make(hide, HIDE, reinterpret_cast<void *>(&d_hide
 core/hooks/session_points.hpp: make(rules_init, RULES_INIT, reinterpret_cast<void *>(&d_rules_init)); => inline spec RULES_INIT
 core/hooks/session_points.hpp: make(director_update, DIRECTOR_UPDATE, reinterpret_cast<void *>(&d_director_update)); => inline spec DIRECTOR_UPDATE
 core/hooks/session_points.hpp: make(director_set_active, DIRECTOR_SET_ACTIVE, reinterpret_cast<void *>(&d_director_set_active)); => inline spec DIRECTOR_SET_ACTIVE
+core/hooks/setup_layout_hooks.cpp: auto b = runtime::loader::install(h_build, build, S_BUILD.what, reinterpret_cast<void *>(&d_build)); => inline sig S_BUILD
+core/hooks/setup_layout_hooks.cpp: auto p = runtime::loader::install(h_populate, populate, S_POPULATE.what, reinterpret_cast<void *>(&d_populate)); => inline sig S_POPULATE
+core/hooks/setup_layout_hooks.cpp: auto ch = runtime::loader::install(h_changed, changed, S_VALUE_CHANGED.what, reinterpret_cast<void *>(&d_changed)); => inline sig S_VALUE_CHANGED
 core/hooks/vtable_point.hpp: bool install(bool late, const std::string &subscribers) override => none
+core/hud/overlay/joy.cpp: safetyhook::InlineHook::create(fns[i], reinterpret_cast<void *>(detours[i]), safetyhook::InlineHook::StartDisabled); => outside dinput8
 core/loading/game_settings.cpp: list.push_back({Getter<K>::target, SWOFTY_MIXIN_WRAP, 100, (void *)&get<K>, (void **)&orig<K>}); => inline binding-consts target
 core/render/d3d12/arm_gate.cpp: if (!install(*e.hook, targets[i], detours[i], e.name)) => outside d3d12
 core/render/d3d12/device_hooks.cpp: ok = install(hooks.setname, (*reinterpret_cast<void ***>(buffer))[SETNAME_SLOT], => outside d3d12

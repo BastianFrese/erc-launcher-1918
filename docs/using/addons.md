@@ -16,7 +16,7 @@ The two cards at the top of the **Addons** page are the ways in:
 
 A file that isn't an addon, and that no addon such as the Simplified Importer imports, opens a dialog that names it. The dialog lists up to five files. **Go to Simplified Importer** opens the [Simplified Importer](/using/mods), and **Read the addon docs** opens the [addon reference](/reference/addons/) in your browser.
 
-The launcher copies the addon to `$DATA/addons/<id>/`, opens **Addons** and highlights it. Installing an addon with an id that's already installed replaces it. A new addon joins only the active profile, turned off, at the end of the list. Installed from `vanilla`, it joins no profile.
+The launcher copies the addon to `$DATA/addons/<id>/`, opens **Addons** and highlights it. Installing an addon with an id that's already installed replaces it. A new addon joins every modded profile, turned off, at the end of the list, also when you install it from `vanilla`. **Turn on** on the message that names it turns it on in the active profile.
 
 ## Find an addon
 
@@ -45,7 +45,13 @@ In the `vanilla` profile the list is read-only and shows every installed addon. 
 
 ## Turn on, turn off, move or uninstall several addons
 
-Hold **Ctrl** (**Cmd** on macOS) to show a tick box on every row. Ctrl-click a row, or click its tick box, to tick or untick it. A plain click on a row opens its panel. While at least one addon is ticked, a bar above the list shows how many and has **Turn on**, **Turn off**, **Uninstall** and **Clear**. **Escape** also clears the ticks. The ticks clear after an action from the bar.
+Hold **Ctrl** (**Cmd** on macOS) to show a tick box on every row and folder. Ctrl-click a row, or click its tick box, to tick or untick it. A plain click on a row opens its panel.
+
+Shift-click a row, or its tick box, to tick every row from the last row you clicked to that one. Rows that a search, a filter or a closed folder hides are not ticked.
+
+A folder's tick box ticks every addon in the folder, also when the folder is closed. During a search or with a filter on, it ticks only the folder's addons that the list shows. Once they are all ticked, it unticks them. The box shows a dash while only some of them are ticked. Ctrl-clicking a folder does the same as its tick box.
+
+While at least one addon is ticked, a bar above the list shows how many and has **Turn on**, **Turn off**, **Uninstall** and **Clear**. **Escape** also clears the ticks. The ticks clear after an action from the bar.
 
 - **Turn on** and **Turn off** change the active [profile](/using/profiles) the way a row's switch does. Always-on addons and shader-only addons are skipped, and a message says how many. **Turn off** leaves on the addons whose turning off warns about your saves, and a message names them.
 - **Uninstall** asks once for all the ticked addons, then removes them as **Uninstall** in a panel does. Built-in addons are skipped, and a message says how many.
@@ -54,11 +60,11 @@ Drag a ticked row to move every ticked addon with it, also those a search, a fil
 
 The list keeps its scroll position after an uninstall. Ticks are not available in the `vanilla` profile.
 
-## Add an addon to a profile
+## Addons in every profile {#add-an-addon-to-a-profile}
 
-Each modded profile lists only its own addons and the built-in ones. To use an addon you installed from another profile, select **Add addons** above the list, tick the ones you want and confirm, or select **Add to** with the profile's name on its card in the Addon Browser. It joins the profile turned off, at the end of the list.
+Every modded profile lists every installed addon. An addon is on only in the profiles where you turn it on, and stays in the list, turned off, in the others. To leave an addon out of a profile, turn it off there. Its settings and its place in that profile's order stay. [Uninstall](#remove-an-addon) is the only way to take an addon off the list, and it takes it out of every profile.
 
-**Remove from** with the profile's name, in the addon's panel, takes it out of this profile only. It stays installed for your other profiles, and its settings come back if you add it again.
+1.7.20 to 1.8.x listed only a profile's own addons, with **Add addons** above the list, **Add to** in the Addon Browser and **Remove from** in the addon's panel. 1.9.0 removed those buttons.
 
 ## Folders
 
@@ -95,7 +101,7 @@ F1 2012 Season         F1 2012 has more teams than this track has garages (with 
 - When addons load below something they need, a bar at the top of the page says how many, with one large **Fix load order** button. It reorders the profile with the smallest change that puts every addon below what it needs, and keeps the rest of your order. If a folder would pull an addon back above what it needs, the addon leaves that folder and a message names it. The page checks the new order afterwards and checks conflicts again, so you see the result.
 - If addons need each other above themselves, the bar is red, names them and has a **Turn off X** button.
 - **Needs X, which is off** and **Needs X, which isn't installed** stop Play. **Turn X on** and **Install X** fix them. A version outside the required range says which version is installed and opens the Addon Browser.
-- **Can't be on with X** is a declared conflict. **Turn X off** fixes it.
+- **Can't be on with X** is a declared conflict. **Turn X off** fixes it. Play stops on it before anything is built, and the play bar names both addons: **Y conflicts with X. Turn one of them off on the Addons page**.
 - **Changes rows that X adds** comes from the profile's last build: the addon's database changes waited for rows X adds. **Fix load order** puts it below X.
 - Addons in Built In, such as Simplified for Swofty, don't move and never show an order problem. **Fix load order** leaves them in place, and the addons below them win where they overlap. The build still loads them after every addon they require or load after.
 - **Your career K needs X, which is off** shows on X's row when a saved career lists X among the addons it needs. It also shows when X is not installed or outside the range the career needs.
@@ -133,6 +139,10 @@ Removing a DB Editor addon deletes its changes. To keep them, select **Export** 
 An addon made for a newer Swofty Launcher, or one whose `swofty.json` is damaged, is listed under **Can't be used** with the reason, such as "It needs a newer Swofty Launcher (unknown field `hud`)". The launcher leaves it out of builds, and **Uninstall** deletes it. The rest of your addons work as before. Installing such an addon is refused with the same reason.
 
 A profile saved by a newer launcher keeps the settings this launcher doesn't know, and saves them back unchanged.
+
+## Withdrawn versions {#withdrawn}
+
+An installed version that was withdrawn from the [Addon Browser](/using/addon-browser) shows **Withdrawn** on its row. Its panel says so and has **Turn off**. The launcher leaves it installed and doesn't turn it off. **Play** names the withdrawn addons that are on. When F1 25 crashes or stays on the loading screen, the crash screen names them too.
 
 ## Built-in addons
 

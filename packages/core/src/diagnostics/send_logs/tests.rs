@@ -221,6 +221,55 @@ fn includes_the_db_editor_packages_the_active_profile_runs() {
 }
 
 #[test]
+fn includes_the_data_folder_move_files_beside_the_default_folder() {
+    let root = tmp("datamove");
+    let (store, game) = fake_data(&root);
+    let default = root.join("beside").join("Swofty");
+    let side = crate::data::relocate::sibling_files(&default);
+    put(&side[0], "2026-11-25 10:00:00 [1] copying");
+    put(&side[1], "{\"from\":\"a\"}");
+    put(&side[3], "[]");
+    let bundle = Bundle::collect_in(&store, &report(&game), Limits::default(), "x", &default);
+    let zip = bundle.zip().unwrap();
+    let got: Vec<String> = names(&zip)
+        .into_iter()
+        .filter(|n| n.starts_with("data-move/"))
+        .collect();
+    assert_eq!(
+        got,
+        [
+            "data-move/swofty-data-history.json",
+            "data-move/swofty-data-move.json",
+            "data-move/swofty-data-move.log"
+        ]
+    );
+    assert!(entry(&zip, "data-move/swofty-data-move.log").contains("copying"));
+    let summary = entry(&zip, "summary.txt");
+    assert!(
+        summary.contains("journal present, pending delete none"),
+        "{summary}"
+    );
+    put(&side[0], noise(2 << 20, 7));
+    let big = Bundle::collect_in(&store, &report(&game), Limits::default(), "x", &default);
+    let log = big
+        .entries
+        .iter()
+        .find(|e| e.path == "data-move/swofty-data-move.log")
+        .unwrap();
+    assert!(log.data.len() < 300 << 10);
+    let none = Bundle::collect_in(
+        &store,
+        &report(&game),
+        Limits::default(),
+        "x",
+        &root.join("empty").join("Swofty"),
+    );
+    assert!(none.entries.iter().all(|e| !e.path.starts_with("data-move/")));
+    assert!(entry(&none.zip().unwrap(), "summary.txt").contains("journal none, pending delete none"));
+    std::fs::remove_dir_all(&root).ok();
+}
+
+#[test]
 fn redacts_secrets_from_config_and_environment() {
     let root = tmp("redact");
     let (store, game) = fake_data(&root);
@@ -1198,6 +1247,25 @@ fn bundles_the_running_games_logs_first_with_its_performance_summary() {
         "{addons}"
     );
     assert!(summary.find("\nPerformance\n") < summary.find("\nFiles\n"));
+    crate::catalog::withdrawn::Checks(
+        [(
+            "t.helper".to_owned(),
+            crate::catalog::withdrawn::Check {
+                version: semver::Version::new(1, 2, 3),
+                withdrawn: true,
+                checked: 1,
+            },
+        )]
+        .into(),
+    )
+    .save(&store.root)
+    .unwrap();
+    let bundle = Bundle::collect_with(&store, &report(&game), Limits::default(), "20261021-091501");
+    let summary = summary_of(&bundle);
+    assert!(
+        summary.contains("        Helper 1.2.3 (t.helper), installed, withdrawn from the Addon Browser\n"),
+        "{summary}"
+    );
     std::fs::remove_dir_all(&root).ok();
 }
 
@@ -1442,6 +1510,75 @@ fn keeps_the_last_five_crash_reports_and_lists_the_dumps() {
     assert!(listing.contains("report in crash/earlier/"), "{listing}");
     assert!(listing.contains("report and minidump in crash/"), "{listing}");
     assert_eq!(listing.lines().count(), 6, "{listing}");
+    std::fs::remove_dir_all(&root).ok();
+}
+
+#[test]
+fn crash_files_survive_a_bundle_filled_by_other_logs() {
+    let root = tmp("crashfull");
+    let (store, game) = fake_data(&root);
+    let loader = game.join("swofty");
+    put(&loader.join("crash-20261124-234944.txt"), CRASH);
+    put(&loader.join("crash-20261124-234944.dmp"), noise(200_000, 5));
+    put(
+        &loader.join("loader.log"),
+        String::from_utf8(vec![b'a'; 3 << 20]).unwrap(),
+    );
+    let limits = Limits {
+        file: FILE_CAP,
+        total: 1 << 20,
+    };
+    let bundle = Bundle::collect_with(&store, &report(&game), limits, "x");
+    let names: Vec<_> = bundle.entries.iter().map(|e| e.path.clone()).collect();
+    assert!(
+        names.contains(&"crash/crash-20261124-234944.txt".to_string()),
+        "{names:?}"
+    );
+    assert!(
+        names.contains(&"crash/crash-20261124-234944.dmp".to_string()),
+        "{names:?}"
+    );
+    let zip = bundle.zip().unwrap();
+    let listing = entry(&zip, "crash/dumps.txt");
+    assert!(!listing.contains("left out"), "{listing}");
+    std::fs::remove_dir_all(&root).ok();
+}
+
+#[test]
+fn crash_reports_ignore_an_exhausted_budget_and_dumps_say_why_a_dump_is_missing() {
+    let root = tmp("crashnone");
+    let (store, game) = fake_data(&root);
+    let loader = game.join("swofty");
+    put(&loader.join("crash-20261124-100000.txt"), CRASH);
+    put(&loader.join("crash-20261124-100000.dmp"), noise(1000, 6));
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    put(&loader.join("crash-20261124-234944.txt"), CRASH);
+    put(&loader.join("crash-20261124-234944.dmp"), noise(200_000, 5));
+    let limits = Limits {
+        file: FILE_CAP,
+        total: 100_000,
+    };
+    let bundle = Bundle::collect_with(&store, &report(&game), limits, "x");
+    let names: Vec<_> = bundle.entries.iter().map(|e| e.path.clone()).collect();
+    assert!(
+        names.contains(&"crash/crash-20261124-234944.txt".to_string()),
+        "{names:?}"
+    );
+    assert!(
+        names.contains(&"crash/earlier/crash-20261124-100000.txt".to_string()),
+        "{names:?}"
+    );
+    assert!(!names.iter().any(|n| n.ends_with(".dmp")), "{names:?}");
+    let zip = bundle.zip().unwrap();
+    let listing = entry(&zip, "crash/dumps.txt");
+    assert!(
+        listing.contains("minidump left out") && listing.contains("too big"),
+        "{listing}"
+    );
+    assert!(
+        listing.contains("minidump not sent, only the newest is"),
+        "{listing}"
+    );
     std::fs::remove_dir_all(&root).ok();
 }
 
@@ -2391,6 +2528,162 @@ fn a_cut_loader_log_keeps_its_start_and_its_end() {
     let (data, cut) = read_cut(&path, 1024, 0).unwrap();
     assert_eq!(cut, Cut::Tail);
     assert!(data.ends_with(b"line 0399 of the loader log\n") && data.len() <= 1024);
+}
+
+const STAGE_LINE: &str = "2026-11-22 22:49:43.000 [ 5116] stage: window (USER32!RegisterClassExW from \
+                          00000001439f2670 (.tls$)), addons were loaded at the early stage\n";
+
+fn staged_log(before: usize, hooks: usize, after: usize) -> Vec<String> {
+    let mut lines =
+        vec!["2026-11-22 22:49:36.133 [ 5116] swofty loader (version.dll proxy) attached\n".to_owned()];
+    lines.extend(
+        (0..before).map(|i| format!("2026-11-22 22:49:42.888 [ 5116] [assets] overlay: route {i:05}\n")),
+    );
+    lines.push(STAGE_LINE.to_owned());
+    lines.extend(
+        (0..hooks).map(|i| format!("2026-11-22 22:49:43.001 [ 5116] [hooks] attach after on point {i:03}\n")),
+    );
+    lines.extend(
+        (0..after).map(|i| format!("2026-11-22 22:49:54.349 [22268] [assets] registered group {i:05}\n")),
+    );
+    lines.push("2026-11-22 23:17:04.636 [ 5116] the last line\n".to_owned());
+    lines
+}
+
+#[test]
+fn a_cut_loader_log_keeps_its_window_stage() {
+    let dir = tmp("loader-window");
+    let path = dir.join("loader.log");
+    let lines = staged_log(400, 12, 400);
+    let log = lines.concat();
+    put(&path, &log);
+    let len = log.len() as u64;
+    let stage = lines.iter().position(|l| l == STAGE_LINE).unwrap();
+
+    for cap in [4096, 6000, 9000] {
+        let (data, cut) = read_cut(&path, cap, kept_head(&path, cap)).unwrap();
+        assert!(data.len() as u64 <= cap, "{} over {cap}", data.len());
+        let text = String::from_utf8(data).unwrap();
+        let got: Vec<&str> = text.split_inclusive('\n').collect();
+        let gaps: Vec<usize> = got
+            .iter()
+            .enumerate()
+            .filter(|(_, l)| l.starts_with("[swofty: left out "))
+            .map(|(i, _)| i)
+            .collect();
+        assert_eq!(gaps.len(), 2, "{text}");
+        let (head, window, tail) = (&got[..gaps[0]], &got[gaps[0] + 1..gaps[1]], &got[gaps[1] + 1..]);
+        assert_eq!(head, &lines[..head.len()]);
+        assert!(head.len() < stage);
+        assert_eq!(window, &lines[stage..stage + window.len()]);
+        assert!(window.len() > 12, "{cap}: {} window line(s)", window.len());
+        assert_eq!(tail, &lines[lines.len() - tail.len()..]);
+        assert!(stage + window.len() < lines.len() - tail.len());
+        let bytes = |l: &[String]| l.iter().map(String::len).sum::<usize>();
+        let first = bytes(&lines[head.len()..stage]);
+        let second = bytes(&lines[stage + window.len()..lines.len() - tail.len()]);
+        assert!(got[gaps[0]].starts_with(&format!("[swofty: left out {first} bytes (")));
+        assert!(got[gaps[1]].starts_with(&format!("[swofty: left out {second} bytes (")));
+        assert!(got[gaps[1]].ends_with(&format!(" of {} here]\n", size(len))));
+        assert_eq!(
+            cut,
+            Cut::Window {
+                head: head.concat().len() as u64,
+                window: window.concat().len() as u64,
+                tail: tail.concat().len() as u64,
+            }
+        );
+        assert!(window.concat().len() as u64 <= (cap - head.concat().len() as u64) / 2);
+    }
+}
+
+#[test]
+fn a_window_stage_inside_the_kept_ends_changes_nothing() {
+    let dir = tmp("loader-window-ends");
+    let path = dir.join("loader.log");
+    for (before, after) in [(2, 400), (400, 2)] {
+        let log = staged_log(before, 3, after).concat();
+        put(&path, &log);
+        let (data, cut) = read_cut(&path, 4096, kept_head(&path, 4096)).unwrap();
+        assert!(matches!(cut, Cut::Middle { .. }), "{before}/{after}: {cut:?}");
+        let text = String::from_utf8(data).unwrap();
+        assert_eq!(text.matches("[swofty: left out ").count(), 1);
+        assert_eq!(text.matches(STAGE_LINE).count(), 1);
+    }
+
+    let log = staged_log(400, 3, 400).concat();
+    put(&path, &log);
+    let (_, cut) = read_cut(&path, 1024, 0).unwrap();
+    assert_eq!(cut, Cut::Tail);
+    let (data, cut) = read_cut(&path, log.len() as u64, kept_head(&path, 4096)).unwrap();
+    assert_eq!(cut, Cut::None);
+    assert_eq!(data, log.as_bytes());
+}
+
+#[test]
+fn finds_the_window_stage_line_across_search_chunks() {
+    let dir = tmp("loader-window-chunks");
+    let path = dir.join("loader.log");
+    let needle = b"] stage: window (";
+    let prefix = STAGE_LINE.find("] stage").unwrap();
+    let filler = "2026-11-22 22:49:42.888 [ 5116] [assets] overlay: route filler\n";
+    for straddle in [0_usize, 5, needle.len() - 1] {
+        let stage = (1 << 20) - straddle - prefix;
+        let mut log = filler.repeat(stage / filler.len() - 1);
+        let pad = stage - log.len() - 1;
+        log.push_str(&"x".repeat(pad));
+        log.push('\n');
+        assert_eq!(log.len(), stage);
+        log.push_str(STAGE_LINE);
+        log.push_str(&filler.repeat(20));
+        put(&path, &log);
+        let (stage, len) = (stage as u64, log.len() as u64);
+        for from in [0, 1000, stage - 10, stage] {
+            let found = find_line(&path, from, len, needle).unwrap();
+            assert_eq!(found, Some(stage.max(from)), "straddle {straddle}, from {from}");
+        }
+        assert_eq!(find_line(&path, stage + 1, len, needle).unwrap(), Some(stage + 1));
+        assert_eq!(
+            find_line(&path, stage + prefix as u64 + 1, len, needle).unwrap(),
+            None
+        );
+        assert_eq!(find_line(&path, 0, stage + prefix as u64, needle).unwrap(), None);
+        assert_eq!(
+            find_line(&path, 0, stage + prefix as u64 + 1, needle).unwrap(),
+            Some(stage)
+        );
+    }
+}
+
+#[test]
+fn bundles_the_window_stage_of_a_long_session_loader_log() {
+    let root = tmp("loader-window-bundle");
+    let (store, game) = fake_data(&root);
+    put(
+        &store.root.join("sessions/20261122-224936/loader.log"),
+        staged_log(400, 12, 400).concat(),
+    );
+    let limits = Limits {
+        file: 4096,
+        total: 1 << 20,
+    };
+    let bundle = Bundle::collect_with(&store, &report(&game), limits, "x");
+    let entry = bundle
+        .entries
+        .iter()
+        .find(|e| e.path == "sessions/20261122-224936/loader.log")
+        .unwrap();
+    let text = String::from_utf8(entry.data.clone()).unwrap();
+    assert!(text.contains(STAGE_LINE), "{text}");
+    assert!(text.contains("[hooks] attach after on point 011\n"));
+    assert!(text.ends_with("the last line\n"));
+    assert!(entry.data.len() <= 4096);
+    let note = entry.note.as_deref().unwrap();
+    assert!(
+        note.starts_with("first ") && note.contains(" from the window stage and last "),
+        "{note}"
+    );
+    std::fs::remove_dir_all(&root).ok();
 }
 
 #[test]

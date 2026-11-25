@@ -63,6 +63,7 @@ type: std::unordered_set
 # defaulted virtual one.
 src/core/apply/content/vehicle_override.cpp: static loader::FunctionSet vehicle_override_core_set{loader::CoreSetId::vehicle_override, vehicle_override_mixins,
 src/core/boxes/box_grid.cpp: static loader::FunctionSet box_grid_core_set{loader::CoreSetId::box_grid, box_grid_mixins, box_grid_commit};
+src/core/boxes/box_grid.cpp: static loader::FunctionSet box_videos_core_set{loader::CoreSetId::box_videos, box_videos_mixins, box_videos_commit};
 src/core/boxes/car_category.cpp: static loader::FunctionSet car_category_core_set{loader::CoreSetId::car_category, car_category_mixins, car_category_commit};
 src/core/boxes/era_picker.cpp: static loader::FunctionSet career_alias_core_set{loader::CoreSetId::career_alias, career_alias_mixins, career_alias_commit};
 src/core/boxes/era_picker.cpp: static loader::FunctionSet era_core_set{loader::CoreSetId::era, era_mixins, era_commit};
@@ -76,6 +77,7 @@ src/core/diagnostics/tyre_models.cpp: static loader::FunctionSet tyre_models_cor
 src/core/garage/garage_placement.cpp: static loader::FunctionSet garage_placement_core_set{loader::CoreSetId::garage_placement, garage_placement_mixins};
 src/core/guards/ai/ai_corner_guard.cpp: guards::SiteGuard guard{guards::CoreSetId::ai_corner_guard,
 src/core/guards/ai/ai_line_set_guard.cpp: guards::SiteGuard guard{guards::CoreSetId::ai_line_set,
+src/core/guards/ai/ai_marker_cap_guard.cpp: guards::SiteGuard guard{guards::CoreSetId::ai_marker_cap,
 src/core/guards/career/myteam_vehicle_guard.cpp: guards::SiteGuard guard{guards::CoreSetId::myteam_vehicle_guard,
 src/core/guards/career/myteam_vehicle_heal.cpp: HealGuard guard;
 src/core/guards/career/myteam_vehicle_keep.cpp: KeepGuard guard;
@@ -108,6 +110,7 @@ src/core/guards/session/red_flag_recompute_guard.cpp: guards::SiteGuard guard{gu
 src/core/guards/session/session_enter.cpp: guards::SiteGuard guard{guards::CoreSetId::session_enter,
 src/core/guards/session/team_slots.cpp: guards::SiteGuard guard{guards::CoreSetId::team_slots,
 src/core/guards/session/thrustmaster_lcd.cpp: guards::SiteGuard guard{guards::CoreSetId::thrustmaster_lcd,
+src/core/guards/tracks/collision_pool_guard.cpp: CollisionPool guard;
 src/core/guards/tracks/track_acclim.cpp: guards::SiteGuard guard{guards::CoreSetId::track_acclim,
 src/core/guards/tracks/track_list_guard.cpp: TrackListGuard guard;
 src/core/guards/tracks/track_select.cpp: TrackSelectGuard guard;

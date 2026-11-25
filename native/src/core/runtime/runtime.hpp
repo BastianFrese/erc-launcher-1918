@@ -186,6 +186,7 @@ bool save_sandbox_test_mode();
 bool save_sandbox_launcher_mode();
 bool save_sandbox_armed();
 std::string save_sandbox_source();
+// The save file the last profile load read, or what read it when the core did not see the read.
 std::string save_sandbox_file();
 std::string career_saves_id_for_slot(const std::string &key);
 std::string career_saves_content_for_slot(const std::string &key);
@@ -229,8 +230,10 @@ void myteam_vehicle_heal_entrants(const myteam_heal::Load &load);
 bool myteam_keep_forced(const std::string &label);
 bool myteam_keep_substitute(SwoftyContext *c, uint32_t stat, const std::string &label);
 void watchdog_flow(uint32_t hash, uint32_t to, const char *name);
+void watchdog_load(const char *why);
 void hub_calendar_flow(uint32_t hash, uint32_t to);
 void hub_calendar_team_hq();
+void hub_calendar_load_loop();
 void hub_calendar_added(void *calendar, const void *activity, uint32_t day);
 void load_stall_flow(uint32_t hash, uint32_t to, const char *name);
 void session_job_probe_flow(uint32_t to, const char *name);
@@ -240,6 +243,10 @@ void load_stall_game_line(const char *line);
 void load_stall_setup();
 // The session loader entry probes behind the load-stall report's session loader section (session_loader.cpp).
 void session_loader_setup();
+// Logs the session loader's world tasks, one line each, at every StateUnloadSession Entering (session_loader.cpp).
+void session_loader_flow(uint32_t to, const char *name);
+// Finds the route record behind the load-stall report's front end boot route section (boot_route.cpp).
+void boot_route_setup();
 void tyre_models_tick();
 void tyre_models_drop();
 void garage_placement_reset();
@@ -281,6 +288,8 @@ uint32_t live_fill_feed(SwoftyTelemetryFeed &f);
 bool live_verify();
 const SwoftyTelemetryFeed &live_memory_view();
 std::vector<LiveEvent> live_take_events();
+// The live state's UDP source (core/live/live_udp.hpp): one packet from the sendto hook, any thread.
+void live_udp(const uint8_t *buf, size_t len);
 void placed_record_setup();
 void placed_record_crash_text(char *out, size_t cap);
 // The session host (services/session_host.cpp): the core's reports to the session plugin's listeners. Each does
@@ -369,6 +378,13 @@ bool frame_capture_request(const std::wstring &path);
 int frame_capture_poll(std::string *why);
 int group_add(const json::Value &entry);
 int group_extend(const std::string &group, const std::string &erp);
+// A stock group that lists `erp` (size bytes) first only while `box` is the session's box (content.box_assets kind scene).
+int group_extend_box(const std::string &group, const std::string &erp, uint64_t size, const std::string &box);
+// Switches the groups of group_extend_box to the box's ERP lists, or to their stock lists for any other box ("" = none).
+void box_groups_select(const std::string &box);
+// Video redirects per box (content.package videos, boxes/box_grid.cpp): the session's box ("" = none) whose redirects
+// Ne_VideoPlayer_OpenFile applies.
+void box_videos_select(const std::string &box);
 void own_item(uint32_t key, const std::string &addon, const std::string &what);
 int db_add(const json::Value &entry);
 void db_older_edits(const std::function<void(uint64_t key, int tag, const std::string &text)> &fn);

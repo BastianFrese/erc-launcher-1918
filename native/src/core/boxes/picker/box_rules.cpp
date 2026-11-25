@@ -117,9 +117,30 @@ void apply_fuel(const RuleTarget &t, const char *list)
     auto rules = swofty_core::apply::content::fuel_rules_for_box(list);
     rules.line = t.prefix + rules.line;
     swofty_core::hooks::race_fuel_rules(rules);
+    apply_setup_locks(t, list);
 }
 
-void clear_fuel() { swofty_core::hooks::race_fuel_rules({}); }
+void clear_fuel()
+{
+    swofty_core::hooks::race_fuel_rules({});
+    swofty_core::hooks::box_setup_locks(0, std::string());
+}
+
+// Setup locks per box: the pressed box's rules.setup_locked bits go to the setup apply point (hooks/car_live.cpp), which
+// adds them to every setup entry's lock mask; they travel with the fuel rules (a box press, a career season's load, a stock
+// press or leaving the boxes clears them). Off unless SWOFTY_BOX_SETUP=1.
+void apply_setup_locks(const RuleTarget &t, const char *list)
+{
+    namespace content = swofty_core::apply::content;
+    char v[16] = {};
+    if (!swofty_core::guards::env_off(content::SETUP_LOCKS_ENV, v,
+                                      [](const char *s) { return s && content::setup_locks_enabled(s); })) {
+        swofty_core::hooks::box_setup_locks(0, std::string());
+        return;
+    }
+    auto pick = content::setup_locks_for_box(list);
+    swofty_core::hooks::box_setup_locks(pick.mask, t.prefix + pick.line);
+}
 
 // Race time limit and weekend per box: rules.race_time_limit_s goes into every target mode's
 // race_time_limit_in_seconds; rules.weekend_mode's weekend options are exchanged with the first target mode's (a box
@@ -192,11 +213,15 @@ void put_back_box_options()
         box_rules.box_options_log.say("the player's " + put + " setting put back");
 }
 
-// Grid rules per box: the pressed box's rules.grid goes to box_grid.cpp; a box without the rule clears it.
+// Grid rules per box: the pressed box's rules.grid goes to box_grid.cpp; a box without the rule clears it. The box's
+// scene groups (content.box_assets kind scene) and its video redirects (content.package videos) switch with it, on a
+// box press and on a career season's load alike.
 void apply_grid(const RuleTarget &t, const char *list)
 {
     auto box = swofty_core::apply::content::grid_for_box(list);
     runtime::box_grid_set(box.rule, list);
+    runtime::box_groups_select(list ? std::string(list) : std::string());
+    runtime::box_videos_select(list ? std::string(list) : std::string());
     box_rules.grid_log.say(t.prefix + box.line);
 }
 
@@ -262,6 +287,7 @@ void put_back_drs()
 {
     forget_career_rules();
     runtime::box_grid_set(std::nullopt, std::string());
+    runtime::box_groups_select(std::string());
     runtime::quali_tyres_box(0, std::string());
     const std::string &h = box_rules.host;
     if (size_t n = box_rules.drs.put_back())

@@ -114,9 +114,12 @@ impl Shell {
                     div()
                         .id(SharedString::from(format!("tick-{id}")))
                         .child(checkbox(ticked, p))
-                        .on_click(cx.listener(move |this, _, _, cx| {
+                        .on_click(cx.listener(move |this, ev: &ClickEvent, _, cx| {
                             cx.stop_propagation();
-                            this.addons.selection.toggle(&id);
+                            match ev.modifiers().shift {
+                                true => this.addons.extend_selection(&id),
+                                false => this.addons.selection.toggle(&id),
+                            }
                             cx.notify();
                         })),
                 )
@@ -169,11 +172,17 @@ impl Shell {
             .on_click(cx.listener({
                 let id = id.clone();
                 move |this, ev: &ClickEvent, window, cx| {
+                    if !this.vanilla() && ev.modifiers().shift {
+                        this.addons.extend_selection(&id);
+                        cx.notify();
+                        return;
+                    }
                     if !this.vanilla() && ev.modifiers().secondary(cx) {
                         this.addons.selection.toggle(&id);
                         cx.notify();
                         return;
                     }
+                    this.addons.selection.set_anchor(&id);
                     window.focus(&this.root_focus, cx);
                     let opening = this.navigation.open_addon.as_ref() != Some(&id);
                     this.addons.opened_from = (opening && this.navigation.open_addon.is_none())
@@ -346,6 +355,13 @@ impl Shell {
             .flex_shrink_0()
             .gap(px(4.))
             .justify_end()
+            .when_some(self.withdrawn_note(m), |d, why| {
+                d.child(
+                    pill(IconName::TriangleAlert, tr("Withdrawn"), p.warning)
+                        .id(SharedString::from(format!("withdrawn-{id}")))
+                        .tooltip(move |window, cx| Tooltip::new(why.clone()).build(window, cx)),
+                )
+            })
             .when_some(
                 self.addons.status.get(&id).filter(|l| !l.is_empty()),
                 |d, lines| {
