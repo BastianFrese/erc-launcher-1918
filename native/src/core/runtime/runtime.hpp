@@ -132,6 +132,8 @@ int career_unblock(const void *from, uint32_t mode);
 void career_start_setup();
 void career_start_drop_module(void *module);
 bool career_start_live();
+bool era_picker_live();
+bool ui_screen_site_live();
 bool in_session_now();
 bool main_menu_account(std::string &name);
 uint32_t career_start_picked();
@@ -245,6 +247,10 @@ void load_stall_setup();
 void session_loader_setup();
 // Logs the session loader's world tasks, one line each, at every StateUnloadSession Entering (session_loader.cpp).
 void session_loader_flow(uint32_t to, const char *name);
+// Hooks the render model part pool's allocator and logs how full the pool is at session load and 5 s after the session
+// is ready (part_pool.cpp).
+void part_pool_setup();
+void part_pool_flow(uint32_t to, const char *name);
 // Finds the route record behind the load-stall report's front end boot route section (boot_route.cpp).
 void boot_route_setup();
 void tyre_models_tick();

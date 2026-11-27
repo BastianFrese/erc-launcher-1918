@@ -28,6 +28,25 @@ pub(super) fn heap_error(e: &Evidence) -> Option<(u32, String)> {
         })
 }
 
+/// How full Windows' memory commit was in the newest `[perf]` minute line that reports it, as a percentage of the
+/// commit limit.
+pub(super) fn commit_percent(e: &Evidence) -> Option<u32> {
+    let line = e
+        .loader
+        .lines()
+        .rev()
+        .find(|l| l.contains("[perf] ") && l.contains(" memory: ") && l.contains(" MiB used, commit "))?;
+    let rest = line.split(" MiB used, commit ").nth(1)?;
+    let (used, rest) = rest.split_once('/')?;
+    let limit: String = rest.chars().take_while(char::is_ascii_digit).collect();
+    let (used, limit) = (used.trim().parse::<u64>().ok()?, limit.parse::<u64>().ok()?);
+    (limit > 0).then(|| (used * 100 / limit).min(100) as u32)
+}
+
+pub(super) const PAGE_FILE_STEP: &str = "Let Windows manage the page file: search Windows for View advanced system settings, open Performance \
+     Settings, Advanced, Virtual memory, Change, and tick Automatically manage paging file size for all \
+     drives. Keep 20 GB or more free on drive C.";
+
 pub(super) fn windows_out_of_memory(code: u32, message: &str) -> bool {
     matches!(code, 0x5 | 0x58)
         || message.contains("useAddressSpace")
@@ -47,8 +66,42 @@ pub(super) fn classic_years(e: &Evidence) -> usize {
 
 pub(super) const CAREER_ADDONS: [&str; 2] = ["swofty.progressive", "career.classic-career"];
 
+pub(super) const SWOFTY_PROGRESSIVE: &str = "swofty.swofty-seasons-progressive";
+
 pub(super) fn needs_all_years(e: &Evidence) -> bool {
     e.enabled.iter().any(|id| CAREER_ADDONS.contains(&id.as_str()))
+}
+
+fn needs_swofty_packs(e: &Evidence) -> bool {
+    e.enabled.iter().any(|id| id == SWOFTY_PROGRESSIVE)
+}
+
+fn keep_packs(e: &Evidence) -> Option<&'static str> {
+    if needs_all_years(e) {
+        Some(KEEP_YEARS)
+    } else if needs_swofty_packs(e) {
+        Some(KEEP_SWOFTY_PACKS)
+    } else {
+        None
+    }
+}
+
+pub(super) const KEEP_SWOFTY_PACKS: &str = "Keep the SWOFTY season packs on (Progressive Career needs them for the next seasons); turn \
+     off imported tracks that aren't in your calendar and other content addons you don't need.";
+
+const HEAP_ENV_STEP: &str = "To give the game more of this memory, open config.json in the launcher's data folder \
+     (%LOCALAPPDATA%\\Swofty on Windows) and add \"SWOFTY_GAME_HEAP_MB\": \"1024\" under \"env\" in \"launch\", then restart the launcher and press Play.";
+
+/// The GAME_DEFAULT size the core picks on a PC under 12 GiB of RAM (`heap_sizes_logic.hpp` `small_mb`).
+const SMALL_RAM_HEAP_MIB: &str = "640 MiB";
+
+fn small_ram_heap(e: &Evidence) -> bool {
+    e.loader.lines().any(|l| {
+        l.contains("[heap] ")
+            && l.contains("GAME_DEFAULT")
+            && (l.contains("default for a machine under 12 GiB")
+                || l.contains(&format!("GAME_DEFAULT heap armed: {SMALL_RAM_HEAP_MIB} ")))
+    })
 }
 
 pub(super) const KEEP_YEARS: &str = "Keep every Classic Seasons year on (Progressive needs them for the next seasons); turn off \
@@ -107,18 +160,26 @@ pub(super) fn game_heap(e: &Evidence) -> Diagnosis {
     let tracks: Vec<String> = tracks.iter().map(|id| name(e, id)).collect();
     let mut heavy = tracks.clone();
     let years_on = classic_years(e);
-    let all_years = needs_all_years(e);
+    let keep = keep_packs(e);
+    let all_years = keep.is_some();
+    let small = small_ram_heap(e);
+    let more_ram = if small {
+        "The launcher gives the game less of this memory on a PC with under 12 GB of RAM."
+    } else {
+        "More memory in your PC doesn't change that."
+    };
     if years_on > 0 {
         heavy.push(years(years_on));
     }
     let mut what = if saving(e) {
         "F1 25 keeps a fixed amount of memory for game data, and it filled up while the game was saving your \
-         career, so the game closed. More memory in your PC doesn't change that."
+         career, so the game closed."
     } else {
-        "F1 25 keeps a fixed amount of memory for game data, and it filled up, so the game closed. More \
-         memory in your PC doesn't change that."
+        "F1 25 keeps a fixed amount of memory for game data, and it filled up, so the game closed."
     }
     .to_owned();
+    what.push(' ');
+    what.push_str(more_ram);
     if !heavy.is_empty() {
         what.push_str(&format!(
             " Imported tracks and season packs use a lot of it, and your profile has {} on.",
@@ -132,9 +193,16 @@ pub(super) fn game_heap(e: &Evidence) -> Diagnosis {
             true => (first.clone(), first.clone()),
             false => (list(&tracks), "one of them".to_owned()),
         };
-        steps.push(format!(
-            "Turn off {which} in your profile, or make a lighter profile without it for the sessions it crashes in."
-        ));
+        steps.push(if all_years {
+            format!(
+                "For Grand Prix and Time Trial, turn off {which} or make a lighter profile without it. Keep it on \
+                 for a career whose calendar races there."
+            )
+        } else {
+            format!(
+                "Turn off {which} in your profile, or make a lighter profile without it for the sessions it crashes in."
+            )
+        });
         if !all_years {
             steps[0].push_str(&format!(
                 " In a My Team career whose next round is at {at}, change that round with the Career Mode Editor \
@@ -142,13 +210,16 @@ pub(super) fn game_heap(e: &Evidence) -> Diagnosis {
             ));
         }
     }
-    steps.push(if all_years {
-        KEEP_YEARS.to_owned()
+    steps.push(if let Some(keep) = keep {
+        keep.to_owned()
     } else if years_on > 0 {
         "Turn on fewer imported tracks and only the Classic Seasons years you race.".to_owned()
     } else {
         "Play with fewer imported tracks and season addons on at once.".to_owned()
     });
+    if small {
+        steps.push(HEAP_ENV_STEP.to_owned());
+    }
     Diagnosis {
         id: "game_heap",
         title: "F1 25's game memory filled up".to_owned(),
@@ -159,8 +230,8 @@ pub(super) fn game_heap(e: &Evidence) -> Diagnosis {
 
 pub(super) fn windows_memory(e: &Evidence) -> Diagnosis {
     let years_on = classic_years(e);
-    let fewer = if needs_all_years(e) {
-        KEEP_YEARS.to_owned()
+    let fewer = if let Some(keep) = keep_packs(e) {
+        keep.to_owned()
     } else if years_on > 0 {
         format!(
             "Turn on only the Classic Seasons years you race; your profile has {} on.",
@@ -176,10 +247,7 @@ pub(super) fn windows_memory(e: &Evidence) -> Diagnosis {
                page file), not the graphics card's."
             .to_owned(),
         steps: vec![
-            "Let Windows manage the page file: search Windows for View advanced system settings, open Performance \
-             Settings, Advanced, Virtual memory, Change, and tick Automatically manage paging file size for all \
-             drives. Keep 20 GB or more free on drive C."
-                .to_owned(),
+            PAGE_FILE_STEP.to_owned(),
             "Close other programs, especially web browsers, while you play.".to_owned(),
             fewer,
         ],

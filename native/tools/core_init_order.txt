@@ -11,6 +11,7 @@
 # reads it, under each unit's rank; the build fails unless it is the order of the mixins and on-load sections. After
 # an intended change, copy native/build/init-order.txt here.
 init
+  src/core/guards/tracks/track_plane_guard.cpp
   src/core/guards/tracks/collision_pool_guard.cpp
   src/core/guards/ai/ai_marker_cap_guard.cpp
   src/core/guards/engine/phys_nonfinite_guard.cpp
@@ -31,6 +32,7 @@ init
   src/core/hud/room_cover.cpp
   src/core/weather/setup.cpp
   src/core/guards/ai/ai_line_set_guard.cpp
+  src/core/diagnostics/part_pool.cpp
   src/core/diagnostics/session_loader.cpp
   src/core/diagnostics/session_job_probe.cpp
   src/core/guards/session/session_enter.cpp
@@ -49,6 +51,9 @@ init
   src/core/hooks/setup_layout_hooks.cpp
   src/core/hooks/car_live.cpp
   src/core/hooks/session_points.cpp
+  src/core/hooks/track_select_point.cpp
+  src/core/hooks/mfd_pages_point.cpp
+  src/core/hooks/ui_hot_points.cpp
   src/core/hooks/game_points.cpp
   src/core/career/ops/track_fuel.cpp
   src/core/testing/save_sandbox.cpp
@@ -116,6 +121,7 @@ init
   src/core/frontend/popup.cpp
   src/core/career/resume_list.cpp
   src/core/career/career_start.cpp
+  src/core/career/content_tiles.cpp
   src/core/career/career_content.cpp
   src/core/career/career.cpp
   src/core/runtime/storage.cpp
@@ -215,6 +221,14 @@ inline
   src/core/hooks/core_events.cpp  swofty::tracks::data
   src/core/hooks/core_events.cpp  swofty::tracks::per_package
   src/core/hooks/core_events.cpp  swofty::tracks::sponsors
+  src/core/frontend/home_tiles.cpp  swofty::ui::strings
+  src/core/frontend/home_tiles.cpp  swofty::ui::addon_options
+  src/core/frontend/home_tiles.cpp  swofty::ui::texture_slices
+  src/core/frontend/home_tiles.cpp  swofty::ui::screens
+  src/core/frontend/home_tiles.cpp  swofty::ui::routes
+  src/core/frontend/home_tiles.cpp  swofty::ui::tiles
+  src/core/frontend/home_tiles.cpp  swofty::ui::options
+  src/core/frontend/home_tiles.cpp  swofty::ui::hud_widgets
 exit
   src/core/runtime/loader/mixin_manager.cpp
   src/core/runtime/loader/patch_set.cpp
@@ -227,6 +241,7 @@ exit
   src/core/diagnostics/crash/report_writer.cpp
   src/core/diagnostics/crash/dred.cpp
   src/core/runtime/settings.cpp
+  src/core/frontend/home_tiles.cpp
   src/core/frontend/ui.cpp
   src/core/frontend/ui_vm.cpp
   src/core/frontend/addon_page.cpp
@@ -268,6 +283,7 @@ exit
   src/core/runtime/storage.cpp
   src/core/career/career.cpp
   src/core/career/career_content.cpp
+  src/core/career/content_tiles.cpp
   src/core/career/career_start.cpp
   src/core/career/resume_list.cpp
   src/core/frontend/popup.cpp
@@ -337,6 +353,9 @@ exit
   src/core/testing/save_sandbox.cpp
   src/core/career/ops/track_fuel.cpp
   src/core/hooks/game_points.cpp
+  src/core/hooks/ui_hot_points.cpp
+  src/core/hooks/mfd_pages_point.cpp
+  src/core/hooks/track_select_point.cpp
   src/core/hooks/session_points.cpp
   src/core/hooks/car_live.cpp
   src/core/hooks/setup_layout_hooks.cpp
@@ -355,6 +374,7 @@ exit
   src/core/guards/session/session_enter.cpp
   src/core/diagnostics/session_job_probe.cpp
   src/core/diagnostics/session_loader.cpp
+  src/core/diagnostics/part_pool.cpp
   src/core/guards/ai/ai_line_set_guard.cpp
   src/core/hud/room_cover.cpp
   src/core/netplay/netplay.cpp
@@ -373,7 +393,9 @@ exit
   src/core/guards/engine/phys_nonfinite_guard.cpp
   src/core/guards/ai/ai_marker_cap_guard.cpp
   src/core/guards/tracks/collision_pool_guard.cpp
+  src/core/guards/tracks/track_plane_guard.cpp
 mixins
+  src/core/guards/tracks/track_plane_guard.cpp  SWOFTY_HOOK_GUARD(track_plane_set)
   src/core/guards/garage/pit_garage_state.cpp  SWOFTY_HOOK_GUARD(pit_garage_state)
   src/core/diagnostics/session_job_probe.cpp  SWOFTY_ON_LOAD
   src/core/hooks/car_live.cpp  SWOFTY_ON_LOAD
@@ -399,6 +421,7 @@ mixins
   src/core/frontend/home_tiles.cpp  SWOFTY_WRAP(FeHome_Handle_Command)
   src/core/frontend/home_tiles.cpp  SWOFTY_ON_LOAD
 on-load
+  src/core/guards/tracks/track_plane_guard.cpp  SWOFTY_HOOK_GUARD(track_plane_set), arms track_plane_set
   src/core/guards/garage/pit_garage_state.cpp  SWOFTY_HOOK_GUARD(pit_garage_state), arms pit_garage_state
   src/core/diagnostics/session_job_probe.cpp  SWOFTY_ON_LOAD
   src/core/hooks/car_live.cpp  SWOFTY_ON_LOAD
@@ -426,6 +449,7 @@ bindings
   src/core/netplay/netplay_drive.cpp
   src/core/frontend/home_tiles.cpp
 explicit
+  track_plane_set  src/core/guards/tracks/track_plane_guard.cpp  SWOFTY_HOOK_GUARD(track_plane_set), arms track_plane_set
   pit_garage_state  src/core/guards/garage/pit_garage_state.cpp  SWOFTY_HOOK_GUARD(pit_garage_state), arms pit_garage_state
   session_job_probe  src/core/diagnostics/session_job_probe.cpp  SWOFTY_ON_LOAD
   car_live  src/core/hooks/car_live.cpp  SWOFTY_ON_LOAD

@@ -59,6 +59,12 @@ core/assets/lang_override.cpp: void refresh_keys(const KeySet &keys) { install(g
 core/assets/lang_override.cpp: size_t s = install(gather(nullptr), nullptr); => none
 core/assets/lang_override.cpp: auto r = safetyhook::InlineHook::create(reinterpret_cast<void *>(g_find_at), reinterpret_cast<void *>(&find_hook)); => inline sig S_SET_FIND
 core/assets/lang_override.cpp: auto r = safetyhook::InlineHook::create(reinterpret_cast<void *>(at), reinterpret_cast<void *>(&init_hook)); => inline sig S_MODULE_INIT
+core/assets/lang_override.cpp: bool install(bool late, const std::string &subscribers) override => none
+core/hooks/mfd_pages_point.cpp: g_point = std::make_unique<GamePoint>(mfd_point::POINT, "Hud_MfdVm_RefreshPanelAvailability", => inline binding Hud_MfdVm_RefreshPanelAvailability
+core/hooks/track_select_point.cpp: bool install(bool late, const std::string &subscribers) override => none
+core/hooks/track_select_point.cpp: g_gp = std::make_unique<GamePoint>(ui_points::TRACK_SELECT_POINT, GP, reinterpret_cast<void *>(&d_gp), game_ops()); => inline binding Trk_GrandPrixTrackSelectVm_RefreshTrackList
+core/hooks/track_select_point.cpp: g_cs = std::make_unique<GamePoint>(ui_points::TRACK_SELECT_POINT, CS, reinterpret_cast<void *>(&d_cs), game_ops()); => inline binding Trk_SettingsSelectTrackTabVm_RefreshTrackList
+core/hooks/ui_hot_points.cpp: g_point = std::make_unique<GamePoint>(ui_hot::VM_POINT, "Vm_Resolve_RegistryNode", reinterpret_cast<void *>(&d_resolve), => inline binding Vm_Resolve_RegistryNode
 core/assets/overlay.cpp: auto r = safetyhook::InlineHook::create(reinterpret_cast<void *>(at), reinterpret_cast<void *>(fn)); => via
 core/assets/overlay.cpp: return hook(h_resolve, at, &resolve_hook, "overlay: Fs_Resolve_Mount"); => inline sig S_RESOLVE
 core/assets/overlay.cpp: hook(h_lang, at, &load_lang_hook, "lang: Loc_Load_LanguageFile"); => inline sig S_LOAD_LNG
@@ -86,6 +92,7 @@ core/diagnostics/perf/frames.cpp: if (!runtime::write_slot(reinterpret_cast<ULON
 core/diagnostics/perf/vq.cpp: p.write = runtime::import_write; => import *!VirtualQuery *!_beginthreadex
 core/diagnostics/perf/vq.cpp: void install() => none
 core/diagnostics/perf/vq.hpp: void install(); => none
+core/diagnostics/part_pool.cpp: auto made = safetyhook::MidHook::create(reinterpret_cast<void *>(at), on_alloc); => mid sig SITE
 core/diagnostics/session_job_probe.cpp: if (auto r = runtime::loader::install(hook, at, FUNC, on_entry); !r) { => mid binding FUNC
 core/diagnostics/session_loader.cpp: if (auto r = runtime::loader::install(hook, at, name, fn); !r) { => mid binding UPDATE UNLOAD
 core/diagnostics/tyre_models.cpp: } else if (auto r = safetyhook::InlineHook::create(target, detour)) { => inline sig S_UPDATE_VEHICLE
@@ -199,6 +206,7 @@ core/hooks/setup_layout_hooks.cpp: auto b = runtime::loader::install(h_build, bu
 core/hooks/setup_layout_hooks.cpp: auto p = runtime::loader::install(h_populate, populate, S_POPULATE.what, reinterpret_cast<void *>(&d_populate)); => inline sig S_POPULATE
 core/hooks/setup_layout_hooks.cpp: auto ch = runtime::loader::install(h_changed, changed, S_VALUE_CHANGED.what, reinterpret_cast<void *>(&d_changed)); => inline sig S_VALUE_CHANGED
 core/hooks/vtable_point.hpp: bool install(bool late, const std::string &subscribers) override => none
+core/hooks/ui_points.hpp: bool install(bool late, const std::string &subscribers) override => none
 core/hud/overlay/joy.cpp: safetyhook::InlineHook::create(fns[i], reinterpret_cast<void *>(detours[i]), safetyhook::InlineHook::StartDisabled); => outside dinput8
 core/loading/game_settings.cpp: list.push_back({Getter<K>::target, SWOFTY_MIXIN_WRAP, 100, (void *)&get<K>, (void **)&orig<K>}); => inline binding-consts target
 core/render/d3d12/arm_gate.cpp: if (!install(*e.hook, targets[i], detours[i], e.name)) => outside d3d12
@@ -284,3 +292,5 @@ core/netplay/netplay_bridge.cpp: install(ws, "ws2_32.dll", {F_SENDTO, F_RECVFROM
 core/netplay/netplay_bridge.cpp: install(ip, "iphlpapi.dll", {F_GAA}); => import iphlpapi.dll!*
 core/netplay/netplay_drive.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(loop), populate_mid); => mid sig S_POPULATE_LOOP
 core/netplay/netplay_room.cpp: auto h = safetyhook::MidHook::create(reinterpret_cast<void *>(tabs), tabs_mid); => mid sig S_ADD_TABS
+core/guards/tracks/track_plane_guard.cpp: runtime::loader::install(h_plane_set, at, S_PLANE_SET_TLS.what, reinterpret_cast<void *>(&plane_set)); => inline sig S_PLANE_SET_TLS
+core/guards/tracks/track_plane_guard.cpp: runtime::loader::install(h_call_site, record_at, S_NULL_RECORD_TLS.what, null_record); => mid sig S_NULL_RECORD_TLS

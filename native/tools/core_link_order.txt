@@ -208,6 +208,9 @@ src/core/apply/files.cpp
 src/core/testing/save_sandbox.cpp
 src/core/career/ops/track_fuel.cpp
 src/core/hooks/game_points.cpp
+src/core/hooks/ui_hot_points.cpp
+src/core/hooks/mfd_pages_point.cpp
+src/core/hooks/track_select_point.cpp
 src/core/hooks/session_points.cpp
 src/core/hooks/car_live.cpp
 src/core/hooks/setup_layout_hooks.cpp
@@ -228,6 +231,7 @@ src/core/guards/frontend/tile_list_select_guard.cpp
 src/core/guards/session/session_enter.cpp
 src/core/diagnostics/session_job_probe.cpp
 src/core/diagnostics/session_loader.cpp
+src/core/diagnostics/part_pool.cpp
 src/core/guards/ai/ai_line_set_guard.cpp
 src/core/weather/setup.cpp
 src/core/hud/room_cover.cpp
@@ -250,3 +254,4 @@ src/core/guards/engine/phys_nonfinite_guard.cpp
 src/core/frontend/tt_blocked.cpp
 src/core/guards/ai/ai_marker_cap_guard.cpp
 src/core/guards/tracks/collision_pool_guard.cpp
+src/core/guards/tracks/track_plane_guard.cpp

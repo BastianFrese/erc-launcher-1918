@@ -38,6 +38,9 @@ pub(super) fn module_at(text: &str) -> Option<String> {
     (!name.is_empty() && !name.starts_with("0x")).then(|| name.to_ascii_lowercase())
 }
 
+/// The start of the loader line of the game's fatal exception.
+pub(super) const FATAL_LINE: &str = "[crash] unhandled ";
+
 /// The loader's crash lines, without their time and thread.
 pub(super) fn crash_lines(loader: &str) -> Vec<&str> {
     loader
@@ -235,7 +238,7 @@ pub(super) fn crash_line<'a>(e: &'a Evidence, f: &Fatal) -> Option<&'a str> {
         .or_else(|| {
             e.loader
                 .lines()
-                .find(|l| l.contains("[crash] unhandled ") && l.contains("reached the top-level filter"))
+                .find(|l| l.contains(FATAL_LINE) && l.contains("reached the top-level filter"))
         })
 }
 
@@ -274,4 +277,19 @@ pub(super) fn game_function(frame: &str) -> Option<&str> {
         .skip(2);
     let name = words.next()?.split("+0x").next()?;
     (!name.is_empty() && name != "fn").then_some(name)
+}
+
+/// The offset in `F1_25.exe+0x39182a4` in a stack frame as written, from the frame's first such word.
+pub(super) fn frame_rva(frame: &str) -> Option<u64> {
+    let word = frame
+        .split_whitespace()
+        .find(|w| w.to_ascii_lowercase().starts_with("f1_25.exe+0x"))?;
+    u64::from_str_radix(&word[word.find("+0x")? + 3..], 16).ok()
+}
+
+/// Whether the crash's stack frames, after `skip` frames, are `rvas` of `F1_25.exe`, nearest first.
+pub(super) fn frames_start_with(f: &Fatal, skip: usize, rvas: &[u64]) -> bool {
+    rvas.iter()
+        .enumerate()
+        .all(|(i, rva)| f.frames.get(skip + i).and_then(|l| frame_rva(l)) == Some(*rva))
 }

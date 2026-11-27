@@ -2057,7 +2057,7 @@ checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
 name = "erc-launcher"
-version = "1.5.22"
+version = "1.5.23"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -7821,7 +7821,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-addon"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "semver",
  "serde",
@@ -7832,7 +7832,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-ads"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "open",
  "serde",
@@ -7844,7 +7844,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-ads-helper"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "gtk",
  "swofty-ads",
@@ -7853,14 +7853,14 @@ dependencies = [
 
 [[package]]
 name = "swofty-builtins"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "swofty-addon",
 ]
 
 [[package]]
 name = "swofty-cli"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "anyhow",
  "clap",
@@ -7876,7 +7876,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-core"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "aes 0.9.4",
  "flate2",
@@ -7909,7 +7909,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-formats"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "aes 0.9.4",
  "bcdec_rs",
@@ -7920,7 +7920,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-i18n"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "serde_json",
 ]
@@ -7940,7 +7940,7 @@ dependencies = [
 
 [[package]]
 name = "swofty-preview"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "image",
  "pollster 1.0.3",
@@ -7956,11 +7956,11 @@ dependencies = [
 
 [[package]]
 name = "swofty-sdk"
-version = "1.10.48"
+version = "1.10.59"
 
 [[package]]
 name = "swofty-shaders"
-version = "1.10.48"
+version = "1.10.59"
 dependencies = [
  "serde",
  "serde_json",

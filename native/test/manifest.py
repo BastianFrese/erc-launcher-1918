@@ -146,6 +146,7 @@ UNITS = [
     Unit('sequencer_records', 'Events sequencer record guard unit test'),
     Unit('session_enter', 'Session enter guard unit test'),
     Unit('session_job_probe', 'Session job list scan probe unit test'),
+    Unit('part_pool', 'Model part pool log unit test'),
     Unit('session_loader', 'Load-stall report session loader section unit test'),
     Unit('boot_route', 'Load-stall report front end boot route section unit test'),
     Unit('setup_vm', 'Setup screen car guard unit test'),
@@ -160,6 +161,9 @@ UNITS = [
          args=['../../apps/launcher/assets/fonts/DejaVuSans.ttf', 'fonts/swofty-test-cff.otf'],
          inputs=['../apps/launcher/assets/fonts/DejaVuSans.ttf', 'test/fonts/*.otf']),
     Unit('lang_scope', 'String scope unit test'),
+    Unit('f1_world_logic', 'F1 World list append logic unit test'),
+    Unit('tile_image', 'ui.tile image template and leaf choice unit test'),
+    Unit('tile_records', 'ui.tile record logic unit test', args=['content/tiles/tiles.json'], inputs=['test/content/tiles/*.json']),
     Unit('stall_order', 'Load-stall report running-threads order unit test'),
     Unit('standings_drop', 'Standings dropped scores unit test'),
     Unit('standings_read', 'Season standings read unit test'),
@@ -206,6 +210,7 @@ UNITS = [
     Unit('vehicle_override', 'Vehicle override (team.vehicle_override) unit test'),
     Unit('calendar_track', 'Career calendar track guard unit test'),
     Unit('car_category', 'Car category boxes unit test', 'zig'),
+    Unit('node_ref', 'ui::set_ref node handle link and release unit test', 'zig'),
     Unit('save_splice', 'Save splice unit test', 'zig'),
     Unit('career_saves', 'Career saves index unit test', 'zig'),
     Unit('plain_saves', 'Plain save store unit test', 'zig'),
@@ -267,7 +272,7 @@ CONTENT = [
                                   CONTENT_FLAGS + [SDK]),
                           CONTENT_IDS, CONTENT_ENGINE]),
     *[Program(test, [Objects([f'test/content/{test}.cpp'], CONTENT_FLAGS + [SDK]), CONTENT_IDS, CONTENT_ENGINE])
-      for test in ('vehicle_tower_test', 'package_id_test', 'id_pool_test', 'wear_test', 'box_world_test')],
+      for test in ('vehicle_tower_test', 'package_id_test', 'id_pool_test', 'wear_test', 'box_world_test', 'option_tags_test')],
     Program('appliers.windows.o', [Objects(['src/core/apply/content/appliers.cpp'], CONTENT_WINDOWS, WINDOWS)], 'obj'),
     Program('logos.windows.o', [Objects(['src/core/apply/content/logos.cpp'], CONTENT_WINDOWS, WINDOWS)], 'obj'),
     Program('bc7_test', [Objects(['test/content/bc7_test.cpp'], CONTENT_FLAGS + ['-ffp-contract=off'])]),
@@ -276,6 +281,7 @@ CONTENT = [
     Program('logo_build_test', [Objects(['test/content/logo_build_test.cpp'], CONTENT_FLAGS + ['-ffp-contract=off', '-Ithird_party/zstd']), ZSTD]),
     Program('garage_test', [Objects(['test/content/garage_test.cpp'], CONTENT_FLAGS + ['-ffp-contract=off', '-Ithird_party/zstd']), ZSTD]),
     Program('box_ui_test', [Objects(['test/content/box_ui_test.cpp'], CONTENT_FLAGS + ['-ffp-contract=off', '-Ithird_party/zstd', SDK]), ZSTD]),
+    Program('slices_test', [Objects(['test/content/slices_test.cpp'], CONTENT_FLAGS + [SDK])]),
     Program('logo_deliver_test', [Objects(['test/content/logo_deliver_test.cpp'],
                                           CONTENT_FLAGS + ['-ffp-contract=off', '-Ithird_party/zstd', SDK]), ZSTD]),
     Program('bc7_test.windows.o', [Objects(['test/content/bc7_test.cpp'], ['-Isrc', '-std=c++23', '-O2', '-Wall', '-Wextra',
@@ -296,7 +302,7 @@ CAREER_OPS_FLAGS = ['-Isrc', '-std=c++23', '-O1', '-Wall', '-Wextra', '-Werror',
 SDK_OPS_FLAGS = ['-std=c++23', '-O1', '-Wall', '-Wextra', '-Werror', '-Wno-nullability-completeness',
                  '-Wno-missing-designated-field-initializers', SDK]
 CAREER_OPS = [Program(t, [Objects([f'test/career_ops/{t}.cpp'], CAREER_OPS_FLAGS)])
-              for t in ('lineup_plan_test', 'teams_plan_test', 'ops_logic_test')] + [
+              for t in ('lineup_plan_test', 'teams_plan_test', 'ops_logic_test', 'finalise_chunks_test')] + [
     Program(f'{t}{ext}', [Objects([f'test/career_ops/{t}.cpp'], SDK_OPS_FLAGS, target)])
     for t in ('sdk_ops_test', 'sdk_ops_v4_test', 'sdk_ops_v6_test', 'sdk_ops_v7_test', 'sdk_ops_v8_test')
     for ext, target in (('', LINUX), ('.exe', WINDOWS))]
@@ -383,7 +389,7 @@ SCRIPTS = [
            ['bash', 'native/test/run_content_test.sh', '{out}'], programs=CONTENT),
     Script('bind', 'Binding resolver Wine test', ['bash', 'native/test/run_bind_test.sh'], wine=True),
     Script('career_ops', 'Career operations planner and SDK calls host test', each(
-        'lineup_plan_test', 'teams_plan_test', 'sdk_ops_test', 'ops_logic_test', 'sdk_ops_v4_test', 'sdk_ops_v6_test',
+        'lineup_plan_test', 'teams_plan_test', 'finalise_chunks_test', 'sdk_ops_test', 'ops_logic_test', 'sdk_ops_v4_test', 'sdk_ops_v6_test',
         'sdk_ops_v7_test', 'sdk_ops_v8_test'), cwd='test', programs=CAREER_OPS),
     Script('json', 'swofty::json unit test', ['bash', 'native/test/run_json_test.sh', '{out}'], programs=JSON),
     Script('build_gate', 'Loader build gate unit test', ['bash', 'native/test/run_build_gate_test.sh']),
@@ -420,6 +426,10 @@ SCRIPTS = [
     Script('career_list', 'Career list Wine test', ['bash', 'native/test/run_career_list_test.sh'], wine=True),
     Script('hooks', 'Hook points, events and services host test', ['{out}/hooks_test'], cwd='test', programs=[hook_test('hooks')]),
     Script('game_points', 'Game hook points host test', ['{out}/game_points_test'], cwd='test', programs=[hook_test('game_points')]),
+    Script('ui_hot', 'Hot UI points (lang.lookup, ui.vm.resolve) and view-model path host test', ['{out}/ui_hot_test'], cwd='test',
+           programs=[hook_test('ui_hot')]),
+    Script('ui_points', 'UI game points (era, home, screen built, route open, track select) and MFD page rules host test', ['{out}/ui_points_test'], cwd='test',
+           programs=[hook_test('ui_points')]),
     Script('session_points', 'Session control, AI controller and spectator points host test', ['{out}/session_points_test'],
            cwd='test', programs=[hook_test('session_points')]),
     Script('car_live', 'Live car operations host test', each('car_live_test', 'car_profile_test', 'car_identity_test', 'ai_racecraft_test', 'setup_layout_registry_test'), cwd='test',
