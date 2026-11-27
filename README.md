@@ -45,6 +45,23 @@ Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). Copyright Sw
 
 The plugin SDK in `packages/sdk` and the addon template in `templates/addon` use the MIT licence. The docs theme adapts MIT-licensed CSS from the Geode docs, Swofty UI's texture decoder is ported from MIT-licensed bcdec_rs and bcdec; see [THIRD_PARTY.md](THIRD_PARTY.md).
 
+## This fork
+
+This is **ERC Launcher**, a fork of [Swofty Launcher for F1 25](https://github.com/Swofty-Developments/SwoftyLauncher) maintained by Bastian Frese for the ERC league. The launcher, the native core and the room, relay and protocol servers are Swofty's work; the ERC parts are the season and league addons, the servers under `server/`, the news editor and the ERC branding.
+
+Two licences apply, because Swofty relicensed on 17 November 2026:
+
+| Part | Licence | Where |
+|---|---|---|
+| Code received from Swofty **from 17 November 2026** (commit `dfc9ed73` onward, from upstream 1.9.62) | PolyForm Noncommercial 1.0.0 | [LICENSE](LICENSE) |
+| Code received from Swofty **before that** (upstream up to 1.9.60, as used in ERC Launcher 1.2.1) | AGPL-3.0-or-later | [LICENSE-AGPL](LICENSE-AGPL) |
+| Plugin SDK and addon template | MIT | `packages/sdk/LICENSE`, `templates/addon/LICENSE` |
+| ERC additions by Bastian Frese | offered under the same terms as the file they belong to | — |
+
+An AGPL licence already granted cannot be withdrawn, so the older parts stay AGPL for every copy that was handed out under it. That is why both texts ship. PolyForm Noncommercial allows hobby, community and other noncommercial use, including redistribution, as long as this notice and the licence text travel with each copy; it does not allow selling the launcher or shipping it as part of a paid offering.
+
+Builds 1.3.0 and later contain code received after the relicensing and are therefore distributed under PolyForm Noncommercial 1.0.0, not AGPL. Please do not describe this repository as open source or as AGPL-licensed.
+
 ## Credits
 
 - [xanpavle](https://github.com/xanpavle) for [F1 25 RE-Optimization](https://github.com/xanpavle/F1-25-RE-Optimization), the renderer tuning, engine overrides and GPU-aware upscaler choice behind the `xanpavle.re-optimization` addon in the Addon Browser.
